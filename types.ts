@@ -95,6 +95,7 @@ export interface ReferencePlane {
 export interface ConverterConfig {
   widthMM: number;
   heightMM: number;
+  zScale: number; // Height scale (mm)
   stepX: number; // Sampling step
   stepY: number;
   rotation: 0 | 90 | 180 | -90;

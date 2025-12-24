@@ -18,6 +18,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     const [config, setConfig] = useState<ConverterConfig>({
         widthMM: 100,
         heightMM: 100,
+        zScale: 10,
         stepX: 1,
         stepY: 1,
         rotation: 0,
@@ -304,13 +305,30 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     // --- Presets ---
     const handleSavePreset = () => {
         if (!presetName) return;
-        const newPreset: ConversionPreset = {
-            id: Date.now().toString(),
-            name: presetName,
-            config: { ...config }
-        };
-        setPresets(prev => [...prev, newPreset]);
-        setSelectedPresetId(newPreset.id);
+        setPresets(prev => {
+            const idx = prev.findIndex(p => p.name === presetName);
+            if (idx >= 0) {
+                // Update existing
+                const updated = [...prev];
+                updated[idx] = { ...updated[idx], config: { ...config } };
+                return updated;
+            } else {
+                // Create new
+                const newPreset: ConversionPreset = {
+                    id: Date.now().toString(),
+                    name: presetName,
+                    config: { ...config }
+                };
+                setSelectedPresetId(newPreset.id);
+                return [...prev, newPreset];
+            }
+        });
+    };
+
+    const handleDeletePreset = () => {
+        if (!selectedPresetId) return;
+        setPresets(prev => prev.filter(p => p.id !== selectedPresetId));
+        setSelectedPresetId("");
         setPresetName("");
     };
 
@@ -319,6 +337,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
         if (p) {
             setConfig(p.config);
             setSelectedPresetId(id);
+            setPresetName(p.name);
         }
     };
 
@@ -331,7 +350,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center gap-2">
                         <ImageIcon size={20} className="text-[#ff4d00]" />
-                        <h2 className="text-lg font-bold">IMAGE TO POINT CLOUD CONVERTER</h2>
+                        <h2 className="text-lg font-bold">图片转点云转换器</h2>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full"><X size={20} /></button>
                 </div>
@@ -340,12 +359,12 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                     {/* Left: Image Canvas */}
                     <div className="w-2/3 bg-gray-900 relative overflow-hidden flex flex-col border-r border-gray-800">
                         <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur pointer-events-none">
-                            LEFT DRAW BOX (ROI) | RIGHT DRAG TO PAN | SCROLL TO ZOOM
+                            左键绘制区域 (ROI) | 右键拖拽平移 | 滚轮缩放
                         </div>
                         
                         {/* Interactive Zoom Panel */}
                         <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1 bg-black/60 backdrop-blur text-white p-1 rounded border border-white/20 shadow-lg">
-                            <button onClick={fitImageToContainer} className="hover:bg-white/20 p-1 rounded" title="Fit to Screen"><Maximize2 size={14}/></button>
+                            <button onClick={fitImageToContainer} className="hover:bg-white/20 p-1 rounded" title="适应屏幕"><Maximize2 size={14}/></button>
                             <div className="w-px h-3 bg-white/30 mx-1"></div>
                             <input 
                                 className="w-10 bg-transparent text-center text-xs font-mono focus:outline-none border-b border-transparent focus:border-white"
@@ -373,14 +392,14 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         
                         {/* Reference List */}
                         <div className="h-40 bg-white border-t border-gray-300 p-2 overflow-y-auto">
-                            <h3 className="text-xs font-bold mb-2 flex items-center gap-2"><Plus size={12}/> REFERENCE PLANES (FOR LEVELING)</h3>
+                            <h3 className="text-xs font-bold mb-2 flex items-center gap-2"><Plus size={12}/> 基准平面 (用于调平)</h3>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                                {config.references.length === 0 && <div className="text-gray-400 text-xs italic col-span-full">No reference planes defined. Data will be assumed flat.</div>}
+                                {config.references.length === 0 && <div className="text-gray-400 text-xs italic col-span-full">未定义基准面，数据默认平整。</div>}
                                 {config.references.map((ref, i) => (
                                     <div key={ref.id} className="flex items-center gap-2 text-xs border p-1 rounded bg-gray-50">
                                         <div className="font-bold w-6 text-center bg-gray-200 rounded">#{i+1}</div>
                                         <div className="flex-1 flex flex-col">
-                                            <span className="text-[9px] text-gray-500">OFFSET Z</span>
+                                            <span className="text-[9px] text-gray-500">Z轴偏移</span>
                                             <input 
                                                 type="number" step="0.001" 
                                                 value={ref.offsetZ} 
@@ -407,27 +426,35 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             
                             {/* Preset Manager */}
                             <div className="p-3 bg-gray-50 border rounded">
-                                <label className="text-xs font-bold block mb-1">CONFIGURATION PRESETS</label>
+                                <label className="text-xs font-bold block mb-1">配置预设</label>
                                 <div className="flex gap-2">
                                     <select 
                                         value={selectedPresetId}
                                         onChange={(e) => handleLoadPreset(e.target.value)}
                                         className="flex-1 text-xs border p-1.5"
                                     >
-                                        <option value="">-- Select Preset --</option>
+                                        <option value="">-- 选择预设 --</option>
                                         {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
+                                    <button 
+                                        onClick={handleDeletePreset} 
+                                        disabled={!selectedPresetId}
+                                        className={`p-1.5 rounded border ${!selectedPresetId ? 'text-gray-300 border-gray-200' : 'text-red-500 border-red-200 hover:bg-red-50'}`}
+                                        title="删除配置"
+                                    >
+                                        <Trash2 size={14}/>
+                                    </button>
                                 </div>
                                 <div className="flex gap-2 mt-2">
                                     <input 
                                         type="text" 
-                                        placeholder="Preset Name" 
+                                        placeholder="预设名称" 
                                         value={presetName}
                                         onChange={e => setPresetName(e.target.value)}
                                         className="flex-1 text-xs border p-1.5"
                                     />
                                     <button onClick={handleSavePreset} className="bg-gray-800 text-white text-xs px-3 py-1 rounded font-bold flex items-center gap-1">
-                                        <Save size={12}/> SAVE
+                                        <Save size={12}/> 保存
                                     </button>
                                 </div>
                             </div>
@@ -435,30 +462,39 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             {/* Dimensions */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">PHYSICAL WIDTH (mm)</label>
+                                    <label className="text-xs font-bold block text-gray-500">原始宽度 (mm)</label>
                                     <input type="number" value={config.widthMM} onChange={e => setConfig({...config, widthMM: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">PHYSICAL HEIGHT (mm)</label>
+                                    <label className="text-xs font-bold block text-gray-500">原始高度 (mm)</label>
                                     <input type="number" value={config.heightMM} onChange={e => setConfig({...config, heightMM: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                </div>
+                            </div>
+
+                            {/* Z Scale */}
+                            <div>
+                                <label className="text-xs font-bold block text-gray-500">高度缩放 (mm/Max)</label>
+                                <div className="flex items-center gap-2">
+                                    <input type="number" step="0.1" value={config.zScale} onChange={e => setConfig({...config, zScale: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                    <span className="text-[10px] text-gray-400 whitespace-nowrap">最大亮度对应高度</span>
                                 </div>
                             </div>
 
                             {/* Sampling */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">SAMPLE STEP X (px)</label>
+                                    <label className="text-xs font-bold block text-gray-500">采样步长 X (px)</label>
                                     <input type="number" min="1" step="1" value={config.stepX} onChange={e => setConfig({...config, stepX: parseInt(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">SAMPLE STEP Y (px)</label>
+                                    <label className="text-xs font-bold block text-gray-500">采样步长 Y (px)</label>
                                     <input type="number" min="1" step="1" value={config.stepY} onChange={e => setConfig({...config, stepY: parseInt(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
                                 </div>
                             </div>
 
                             {/* Rotation */}
                             <div>
-                                <label className="text-xs font-bold block text-gray-500 mb-1">ROTATION</label>
+                                <label className="text-xs font-bold block text-gray-500 mb-1">旋转</label>
                                 <div className="flex gap-2">
                                     {[0, 90, 180, -90].map(deg => (
                                         <button 
@@ -477,7 +513,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                 disabled={isProcessing}
                                 className="w-full py-3 bg-[#00a3cc] text-white font-bold rounded shadow hover:bg-[#008fb3] transition-colors flex items-center justify-center gap-2"
                             >
-                                {isProcessing ? "PROCESSING..." : "PROCESS POINT CLOUD"}
+                                {isProcessing ? "处理中..." : "生成点云数据"}
                                 {!isProcessing && <RotateCw size={16}/>}
                             </button>
                         </div>
@@ -485,7 +521,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         {/* Preview Area (Fixed Height 250px) */}
                         <div className="h-[280px] bg-gray-100 border-t border-gray-200 relative flex flex-col shrink-0">
                             <div className="p-2 border-b bg-gray-200 text-xs font-bold flex justify-between items-center">
-                                <span>PREVIEW</span>
+                                <span>预览</span>
                                 {previewData && (
                                     <div className="flex items-center gap-2">
                                         <button 
@@ -501,20 +537,20 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                             <Palette size={12}/>
                                         </button>
                                         <div className="w-px h-3 bg-gray-400 mx-1"></div>
-                                        <span>Z: {previewData.minZ.toFixed(2)}~{previewData.maxZ.toFixed(2)}</span>
+                                        <span>Z范围: {previewData.minZ.toFixed(2)}~{previewData.maxZ.toFixed(2)}</span>
                                     </div>
                                 )}
                             </div>
                             <div className="flex-1 relative flex items-center justify-center overflow-hidden group bg-gray-900">
                                 {!previewData ? (
-                                    <div className="text-gray-500 text-xs font-bold">NO DATA GENERATED</div>
+                                    <div className="text-gray-500 text-xs font-bold">暂无数据</div>
                                 ) : (
                                     <>
                                         <PreviewCanvas data={previewData} mode={previewMode} />
                                         <button 
                                             onClick={() => setShowLargePreview(true)}
                                             className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
-                                            title="Enlarge Preview"
+                                            title="放大预览"
                                         >
                                             <Maximize2 size={16}/>
                                         </button>
@@ -525,13 +561,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
                         {/* Footer Action */}
                         <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 shrink-0">
-                             <button onClick={onClose} className="px-4 py-2 text-gray-600 font-bold text-xs hover:bg-gray-200 rounded">CANCEL</button>
+                             <button onClick={onClose} className="px-4 py-2 text-gray-600 font-bold text-xs hover:bg-gray-200 rounded">取消</button>
                              <button 
                                 onClick={() => previewData && onConfirm(previewData)}
                                 disabled={!previewData}
                                 className={`px-6 py-2 text-white font-bold text-xs rounded shadow flex items-center gap-2 ${!previewData ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#ff4d00] hover:bg-[#e64600]'}`}
                              >
-                                <Check size={16}/> CONFIRM IMPORT
+                                <Check size={16}/> 确认导入
                              </button>
                         </div>
                     </div>
@@ -546,13 +582,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             onClick={() => setShowLargePreview(false)} 
                             className="absolute -top-10 right-0 text-white hover:text-gray-300 flex items-center gap-2"
                         >
-                            CLOSE <X size={24}/>
+                            关闭 <X size={24}/>
                         </button>
                         <div className="flex-1 bg-black border border-gray-700 rounded overflow-hidden flex items-center justify-center">
                             <PreviewCanvas data={previewData} mode={previewMode} />
                         </div>
                         <div className="mt-4 text-center text-white font-mono text-xs">
-                             PREVIEW MODE: {previewMode.toUpperCase()} | DATA SIZE: {previewData.w}x{previewData.h}
+                             预览模式: {previewMode.toUpperCase()} | 数据尺寸: {previewData.w}x{previewData.h}
                         </div>
                     </div>
                 </div>
