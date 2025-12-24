@@ -1,0 +1,5 @@
+{
+  "name": "Surface Inspector Pro",
+  "description": "A high-performance point cloud and surface analysis tool featuring 2D/3D visualization, gradient analysis, and interactive profiling.",
+  "requestFramePermissions": []
+}
