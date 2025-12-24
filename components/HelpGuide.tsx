@@ -49,7 +49,7 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
             <TabButton id="analysis" label="数据分析工具" icon={Activity} />
           </div>
           <div className="p-4 bg-gray-50 text-[10px] text-gray-400 text-center">
-            v2.5.0 - 专业版
+            v3.0.0 - 专业版
           </div>
         </div>
 
@@ -115,7 +115,7 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                     <KeyControl 
                         icon={<Crosshair size={20}/>} 
                         title="添加标记点" 
-                        desc="在 2D 地图任意位置双击左键，即可添加一个永久的测量/注释标记。可在标记列表中重命名。"
+                        desc={<span>在 2D 地图任意位置按住 <strong className="text-[#ff4d00] bg-orange-50 px-1 rounded">Ctrl + 鼠标左键点击</strong>，即可添加一个永久的测量/注释标记。可在标记列表中重命名。</span>}
                     />
                     <KeyControl 
                         icon={<Maximize2 size={20}/>} 
@@ -176,6 +176,7 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                     <p className="text-xs text-gray-600 mb-2">点击 3D 视图左上角的 <Settings size={12} className="inline"/> 图标。</p>
                     <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
                         <li><strong>对比度 (Intensity):</strong> 夸大 Z 轴高度的显示比例，让微小的表面起伏变得清晰可见。</li>
+                        <li><strong>增强颜色 (Enhance Color):</strong> 控制对比度调整是否同时增强颜色映射的对比度。</li>
                         <li><strong>最大限制 (Max Limit):</strong> 设置对比度滑块的上限，用于极微小特征的分析。</li>
                     </ul>
                 </div>
@@ -191,22 +192,22 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                         <AnalysisRow 
                             icon={<MousePointer2 size={16}/>} 
                             name="检查模式 (Inspect)" 
-                            desc="悬停在图表曲线上，2D 和 3D 视图会同步显示对应的“十字准星”位置。点击图表可冻结一个临时标记点，再次点击“添加”可将其保存。" 
+                            desc="悬停在图表曲线上，2D 和 3D 视图会同步显示对应的“十字准星”位置。点击图表可冻结一个临时标记点。" 
                         />
                         <AnalysisRow 
                             icon={<MoveVertical size={16}/>} 
                             name="Z 高度测量" 
-                            desc="在图表上点击两个点，测量它们之间的垂直高度差 (ΔZ)。" 
+                            desc="在图表上点击两个点，测量它们之间的垂直高度差 (ΔZ)。支持在 2D 地图上直接点击选取测量点。" 
                         />
                         <AnalysisRow 
                             icon={<MoveHorizontal size={16}/>} 
                             name="XY 距离测量" 
-                            desc="在图表上点击两个点，测量它们沿剖面路径的水平距离 (ΔXY)。" 
+                            desc="在图表上点击两个点，测量它们沿剖面路径的水平距离 (ΔXY)。支持在 2D 地图上直接点击选取测量点。" 
                         />
                         <AnalysisRow 
                             icon={<Activity size={16}/>} 
                             name="点到线偏差 (平面度)" 
-                            desc="高级功能。先点击两点定义一条参考基准线（虚线），然后点击后续任意点，系统将计算该点到基准线的垂直距离。" 
+                            desc="先点击两点定义参考基准线，然后点击任意点计算其到基准线的垂直距离。支持在 2D 地图上直接点击选取。" 
                         />
                     </div>
                  </div>

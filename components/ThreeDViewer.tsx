@@ -42,6 +42,7 @@ const ThreeDViewer = React.memo(({
   const [showSettings, setShowSettings] = useState(false);
   const [isAltLocked, setIsAltLocked] = useState(false);
   const [maxContrastRange, setMaxContrastRange] = useState(10.0);
+  const [enhanceColor, setEnhanceColor] = useState(true);
 
   // --- Camera Control Logic ---
   const setCameraView = (view: CameraView) => {
@@ -271,6 +272,7 @@ const ThreeDViewer = React.memo(({
       const [r, g, b] = getColorFunc(rawVal, colorMap, cMin, cMax);
       
       const applyContrast = (c: number) => {
+          if (!enhanceColor) return c;
           return Math.max(0, Math.min(255, (c - 128) * contrast + 128));
       };
 
@@ -281,7 +283,7 @@ const ThreeDViewer = React.memo(({
     geo.computeVertexNormals();
     mesh.geometry = geo;
 
-  }, [grid, boxSel, lineSel, tool, colorMap, viewMode, gradientMap, colorSettings, contrast]);
+  }, [grid, boxSel, lineSel, tool, colorMap, viewMode, gradientMap, colorSettings, contrast, enhanceColor]);
 
   // Update Markers Visibility & Position (Regular & Ghost)
   useEffect(() => {
@@ -382,13 +384,13 @@ const ThreeDViewer = React.memo(({
              {showSettings && (
                  <div className="bg-white/95 backdrop-blur border-2 border-gray-300 p-3 rounded shadow-lg flex flex-col gap-3 w-64 animate-scale-in origin-top-left">
                      <div className="flex items-center gap-2 text-xs font-bold text-gray-600 border-b pb-2">
-                         <Sliders size={12} /> CONTRAST & RELIEF CONTROL
+                         <Sliders size={12} /> 对比度与地形控制
                      </div>
                      
                      {/* Slider Section */}
                      <div>
                         <div className="flex justify-between text-[10px] text-gray-500 font-bold mb-1">
-                            <span>INTENSITY</span>
+                            <span>强度</span>
                             <span>{contrast.toFixed(1)}x</span>
                         </div>
                         <input 
@@ -402,7 +404,7 @@ const ThreeDViewer = React.memo(({
                      {/* Precise Inputs */}
                      <div className="grid grid-cols-2 gap-3">
                          <div>
-                             <label className="text-[9px] font-bold text-gray-500 block mb-1">CURRENT VALUE</label>
+                             <label className="text-[9px] font-bold text-gray-500 block mb-1">当前值</label>
                              <div className="flex items-center border border-gray-300 rounded bg-white hover:border-gray-400 transition-colors">
                                 <input 
                                     type="number" 
@@ -416,7 +418,7 @@ const ThreeDViewer = React.memo(({
                              </div>
                          </div>
                          <div>
-                             <label className="text-[9px] font-bold text-gray-500 block mb-1">MAX LIMIT</label>
+                             <label className="text-[9px] font-bold text-gray-500 block mb-1">最大限制</label>
                              <div className="flex items-center border border-gray-300 rounded bg-white hover:border-gray-400 transition-colors">
                                 <input 
                                     type="number" 
@@ -431,9 +433,19 @@ const ThreeDViewer = React.memo(({
                          </div>
                      </div>
 
-                     <div className="text-[9px] text-gray-400 border-t pt-2 mt-1 leading-tight">
-                        ADJUSTS Z-AXIS EXAGGERATION AND COLOR SEPARATION. <br/>
-                        HOLD <span className="font-bold text-black">ALT</span> + DRAG TO ROTATE AROUND Z-AXIS.
+                     <div className="flex items-center justify-between border-t pt-2 mt-1">
+                        <label className="text-[9px] font-bold text-gray-500">增强颜色</label>
+                        <input 
+                            type="checkbox" 
+                            checked={enhanceColor} 
+                            onChange={e => setEnhanceColor(e.target.checked)}
+                            className="accent-[#ff4d00]"
+                        />
+                     </div>
+
+                     <div className="text-[9px] text-gray-400 pt-1 leading-tight">
+                        调整 Z 轴夸张程度和颜色分离。<br/>
+                        按住 <span className="font-bold text-black">ALT</span> + 拖动可绕 Z 轴旋转。
                      </div>
                  </div>
              )}
@@ -449,7 +461,7 @@ const ThreeDViewer = React.memo(({
         {isAltLocked && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 animate-scale-in">
                 <div className="bg-black/50 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur">
-                    Z-AXIS LOCKED
+                    Z 轴锁定
                 </div>
             </div>
         )}

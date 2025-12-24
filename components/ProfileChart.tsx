@@ -40,18 +40,28 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 
     // 1. Extract Data Profile (Including Grid Coordinates)
     const rawData = useMemo(() => {
-        const pts: { x: number, y: number, gridX: number, gridY: number }[] = []; 
+        const pts: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }[] = []; 
         const source = mode === 'gradient' && gradientMap ? gradientMap : grid.data;
         if (!source) return [];
+
+        const getReal = (gx: number, gy: number) => {
+            const rx = grid.xs && grid.xs[gx] !== undefined ? grid.xs[gx] : gx;
+            const ry = grid.ys && grid.ys[gy] !== undefined ? grid.ys[gy] : gy;
+            return { rx, ry };
+        };
 
         if (tool === 'line') {
             const p1 = lineSel.s;
             const p2 = lineSel.e;
             const distTotal = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+            
+            // Get Start Point Physical Coords for distance reference
+            const startIx = Math.max(0, Math.min(grid.w - 1, Math.round(p1.x)));
+            const startIy = Math.max(0, Math.min(grid.h - 1, Math.round(p1.y)));
+            const startReal = getReal(startIx, startIy);
+
             if (distTotal === 0) {
-                 const ix = Math.max(0, Math.min(grid.w - 1, Math.round(p1.x)));
-                 const iy = Math.max(0, Math.min(grid.h - 1, Math.round(p1.y)));
-                 pts.push({ x: 0, y: source[iy * grid.w + ix], gridX: ix, gridY: iy });
+                 pts.push({ x: 0, y: source[startIy * grid.w + startIx], gridX: startIx, gridY: startIy, realX: startReal.rx, realY: startReal.ry });
             } else {
                 const steps = Math.ceil(distTotal); 
                 for (let i = 0; i <= steps; i++) {
@@ -60,7 +70,10 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                     const iy = Math.floor(p1.y + (p2.y - p1.y) * t);
                     
                     if (ix >= 0 && ix < grid.w && iy >= 0 && iy < grid.h) {
-                        pts.push({ x: i, y: source[iy * grid.w + ix], gridX: ix, gridY: iy });
+                        const { rx, ry } = getReal(ix, iy);
+                        // Physical distance from start
+                        const d = Math.sqrt((rx - startReal.rx) ** 2 + (ry - startReal.ry) ** 2);
+                        pts.push({ x: d, y: source[iy * grid.w + ix], gridX: ix, gridY: iy, realX: rx, realY: ry });
                     }
                 }
             }
@@ -69,7 +82,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             const cx = Math.floor(boxSel.x + boxSel.w / 2);
             const cy = Math.floor(boxSel.y + boxSel.h / 2);
             
-            if (axis === 'vertical') {
+            if (axis === 'vertical') { // Fixed X, Vary Y
                 const sy = Math.floor(boxSel.y);
                 const ey = Math.floor(boxSel.y + boxSel.h);
                 const validSy = Math.max(0, sy);
@@ -77,10 +90,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 
                 if (cx >= 0 && cx < grid.w) {
                     for (let y = validSy; y < validEy; y++) {
-                         pts.push({ x: y - validSy, y: source[y * grid.w + cx], gridX: cx, gridY: y });
+                         const { rx, ry } = getReal(cx, y);
+                         pts.push({ x: ry, y: source[y * grid.w + cx], gridX: cx, gridY: y, realX: rx, realY: ry });
                     }
                 }
-            } else {
+            } else { // Horizontal: Fixed Y, Vary X
                 const sx = Math.floor(boxSel.x);
                 const ex = Math.floor(boxSel.x + boxSel.w);
                 const validSx = Math.max(0, sx);
@@ -88,7 +102,8 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 
                 if (cy >= 0 && cy < grid.h) {
                     for (let x = validSx; x < validEx; x++) {
-                        pts.push({ x: x - validSx, y: source[cy * grid.w + x], gridX: x, gridY: cy });
+                        const { rx, ry } = getReal(x, cy);
+                        pts.push({ x: rx, y: source[cy * grid.w + x], gridX: x, gridY: cy, realX: rx, realY: ry });
                     }
                 }
             }
@@ -105,14 +120,23 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             chartInstanceRef.current = echarts.init(chartContainerRef.current);
             const zr = chartInstanceRef.current.getZr();
 
+            const findClosestPoint = (clickX: number) => {
+                 let minDist = Infinity;
+                 let closest = null;
+                 for(const p of rawData) {
+                     const d = Math.abs(p.x - clickX);
+                     if (d < minDist) { minDist = d; closest = p; }
+                 }
+                 return closest;
+            };
+
             // Click Handler
             zr.on('click', (params) => {
                 if (!chartInstanceRef.current) return;
                 const pointInGrid = chartInstanceRef.current.convertFromPixel({ seriesIndex: 0 }, [params.offsetX, params.offsetY]);
                 if (pointInGrid) {
                     const clickX = pointInGrid[0];
-                    const dataIndex = Math.max(0, Math.min(rawData.length - 1, Math.round(clickX)));
-                    const snappedPoint = rawData[dataIndex];
+                    const snappedPoint = findClosestPoint(clickX);
                     if (!snappedPoint) return;
 
                     if (chartTool === 'inspect') {
@@ -153,13 +177,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             // Hover Handler (Sync in ALL modes)
             zr.on('mousemove', (params) => {
                 if (!chartInstanceRef.current) return;
-                // No longer restricted by chartTool === 'inspect'
                 
                 const pointInGrid = chartInstanceRef.current.convertFromPixel({ seriesIndex: 0 }, [params.offsetX, params.offsetY]);
                 if (pointInGrid) {
                     const clickX = pointInGrid[0];
-                    const dataIndex = Math.max(0, Math.min(rawData.length - 1, Math.round(clickX)));
-                    const snappedPoint = rawData[dataIndex];
+                    const snappedPoint = findClosestPoint(clickX);
                     if (snappedPoint) {
                         onChartHover({ gridX: snappedPoint.gridX, gridY: snappedPoint.gridY, z: snappedPoint.y });
                     }
@@ -175,16 +197,24 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         }
         
         const chart = chartInstanceRef.current;
-        const xData = rawData.map(p => p.x);
-        const yData = rawData.map(p => p.y);
-        const xMin = 0;
-        const xMax = rawData.length > 0 ? rawData.length - 1 : 100;
+        const seriesData = rawData.map(p => ({
+            value: [p.x, p.y],
+            realX: p.realX,
+            realY: p.realY
+        }));
         
+        let xMin = Infinity, xMax = -Infinity;
         let yMin = Infinity, yMax = -Infinity;
-        for(const y of yData) {
-            if(isFinite(y)) {
-                if(y < yMin) yMin = y;
-                if(y > yMax) yMax = y;
+        
+        if (rawData.length === 0) { xMin = 0; xMax = 10; yMin = 0; yMax = 1; }
+        else {
+            for(const p of rawData) {
+                if (p.x < xMin) xMin = p.x;
+                if (p.x > xMax) xMax = p.x;
+                if (isFinite(p.y)) {
+                    if (p.y < yMin) yMin = p.y;
+                    if (p.y > yMax) yMax = p.y;
+                }
             }
         }
         if (!isFinite(yMin)) yMin = 0;
@@ -197,7 +227,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 
         const domWidth = chartContainerRef.current.clientWidth;
         const domHeight = chartContainerRef.current.clientHeight;
-        const gridLeft = 60, gridRight = 30, gridTop = 40, gridBottom = 30; // Increased Top for toolbar
+        const gridLeft = 60, gridRight = 30, gridTop = 20, gridBottom = 30;
         const chartW = domWidth - gridLeft - gridRight;
         const chartH = domHeight - gridTop - gridBottom;
         const xRange = xMax - xMin || 1;
@@ -279,7 +309,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             if (measState.p1 && measState.p2) {
                 const p1 = measState.p1;
                 const p2 = measState.p2;
-                const dxy = Math.abs(p2.x - p1.x); // Linear index distance
+                const dxy = Math.abs(p2.x - p1.x); // Physical Distance
                 
                 // Draw Horizontal Dimension Line
                 markLineData.push([
@@ -294,11 +324,19 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         const option: echarts.EChartsOption = {
             animation: false,
             grid: { top: gridTop, right: gridRight, bottom: gridBottom, left: gridLeft, containLabel: false },
-            tooltip: { trigger: 'axis', axisPointer: { type: 'cross' }, formatter: (params: any) => `X: ${params[0].axisValue}<br/>Z: ${params[0].data.toFixed(4)}` },
-            xAxis: { type: 'category', data: xData, boundaryGap: false, axisLabel: { interval: 'auto' } },
+            tooltip: { 
+                trigger: 'axis', 
+                axisPointer: { type: 'cross' }, 
+                formatter: (params: any) => {
+                    if (!params[0]) return '';
+                    const p = params[0].data;
+                    return `坐标: (${p.realX.toFixed(2)}, ${p.realY.toFixed(2)})<br/>图表位置: ${p.value[0].toFixed(2)}<br/>Z高度: ${p.value[1].toFixed(4)}`;
+                }
+            },
+            xAxis: { type: 'value', min: xMin, max: xMax, axisLabel: { formatter: (val: number) => val.toFixed(1) }, splitLine: { show: false } },
             yAxis: { type: 'value', min: axisMin, max: axisMax, axisLabel: { formatter: (val: number) => val.toFixed(2) }, splitLine: { show: true, lineStyle: { color: '#eee' } } },
             series: [{
-                name: 'Profile', type: 'line', data: yData, showSymbol: false,
+                name: 'Profile', type: 'line', data: seriesData, showSymbol: false,
                 lineStyle: { color: THEME.primary, width: 2 },
                 areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: THEME.primary + '33' }, { offset: 1, color: THEME.primary + '00' }]) },
                 markPoint: { symbol: 'circle', symbolSize: 10, data: markPointData, animation: false },
@@ -314,23 +352,22 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     }, [rawData, measState, chartTool, mode, grid, tempMarker, onSetMeasState, onChartHover, onChartClick]);
 
     return (
-        <div className="w-full h-full relative group">
-            <div ref={chartContainerRef} className="w-full h-full" />
+        <div className="w-full h-full flex flex-col relative group">
             
-            {/* --- Chart Toolbar --- */}
-            <div className="absolute top-2 right-2 flex items-center gap-1 z-20 pointer-events-auto bg-white/90 backdrop-blur border border-gray-300 rounded p-1 shadow-sm animate-scale-in origin-top-right">
-                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="Inspect Point">
-                    <MousePointer2 size={16} />
+            {/* --- Chart Toolbar (Top Bar) --- */}
+            <div className="flex items-center gap-1 p-1 bg-gray-50/80 border-b border-gray-100 shrink-0 z-20">
+                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Inspect Point">
+                    <MousePointer2 size={14} />
                  </button>
                  <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="Measure Z Height">
-                    <MoveVertical size={16} />
+                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure Z Height">
+                    <MoveVertical size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="Measure XY Distance">
-                    <MoveHorizontal size={16} />
+                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure XY Distance">
+                    <MoveHorizontal size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="Measure Point to Line Normal">
-                    <Slash size={16} />
+                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure Point to Line Normal">
+                    <Slash size={14} />
                  </button>
                  
                  {/* Reset for Measures */}
@@ -342,30 +379,36 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                         <RotateCcw size={14} />
                      </button>
                  )}
+                 
+                 <div className="flex-1"></div>
+
+                 {/* Instruction Overlay (Moved to Toolbar) */}
+                 {chartTool !== 'inspect' && (
+                    <div className="text-right animate-fade-in pointer-events-none mr-2">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded border shadow-sm ${
+                            measState.step === 'idle' ? 'text-blue-600 border-blue-200 bg-blue-50' : 'text-green-600 border-green-200 bg-green-50'
+                        }`}>
+                            {measState.step === 'idle' ? "CLICK START POINT" : (chartTool === 'measure_p2l' && measState.step === 'complete' ? "CLICK TO ADD DISTANCE" : "CLICK END POINT")}
+                        </span>
+                    </div>
+                 )}
             </div>
             
-            {/* Instruction Overlay */}
-            {chartTool !== 'inspect' && (
-                <div className="absolute top-10 right-2 pointer-events-none z-10 text-right animate-fade-in">
-                     <span className={`px-2 py-1 text-[10px] font-bold rounded border shadow-sm bg-white/80 ${
-                        measState.step === 'idle' ? 'text-blue-600 border-blue-200' : 'text-green-600 border-green-200'
-                     }`}>
-                        {measState.step === 'idle' ? "CLICK START POINT" : (chartTool === 'measure_p2l' && measState.step === 'complete' ? "CLICK TO ADD DISTANCE" : "CLICK END POINT")}
-                     </span>
-                </div>
-            )}
-
-            {/* Add Marker Button (Only in Inspect Mode + Locked Temp Marker) */}
-            {chartTool === 'inspect' && tempMarker && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto animate-scale-in">
-                    <button 
-                        onClick={onConfirmTempMarker}
-                        className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded-full shadow-xl hover:scale-105 transition-transform font-bold text-xs active:scale-95"
-                    >
-                        <Plus size={16} className="text-[#ff4d00]" /> ADD TO MARKER LIST
-                    </button>
-                </div>
-            )}
+            <div className="flex-1 relative w-full overflow-hidden">
+                <div ref={chartContainerRef} className="w-full h-full" />
+                
+                {/* Add Marker Button (Overlay on Chart) */}
+                {chartTool === 'inspect' && tempMarker && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto animate-scale-in">
+                        <button 
+                            onClick={onConfirmTempMarker}
+                            className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded-full shadow-xl hover:scale-105 transition-transform font-bold text-xs active:scale-95"
+                        >
+                            <Plus size={16} className="text-[#ff4d00]" /> ADD TO MARKER LIST
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

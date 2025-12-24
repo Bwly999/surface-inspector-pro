@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Check, Save, RotateCw, Image as ImageIcon, Plus, Trash2, Maximize2, Palette, Grid3X3 } from 'lucide-react';
+import { X, Check, Save, RotateCw, RotateCcw, Image as ImageIcon, Plus, Trash2, Maximize2, Palette, Grid3X3, FlipVertical } from 'lucide-react';
 import { ConverterConfig, ConversionPreset, GridData } from '../types';
 import { processImageToGrid } from '../utils/processUtils';
 import { THEME } from '../constants';
@@ -496,13 +496,23 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             <div>
                                 <label className="text-xs font-bold block text-gray-500 mb-1">旋转</label>
                                 <div className="flex gap-2">
-                                    {[0, 90, 180, -90].map(deg => (
+                                    {[
+                                        { deg: 0, label: '0°', hint: '原图', icon: <ImageIcon size={10} /> },
+                                        { deg: 90, label: '90°', hint: '顺时针', icon: <RotateCw size={10} /> },
+                                        { deg: 180, label: '180°', hint: '翻转', icon: <FlipVertical size={10}/> },
+                                        { deg: -90, label: '-90°', hint: '逆时针', icon: <RotateCcw size={10} /> }
+                                    ].map(item => (
                                         <button 
-                                            key={deg}
-                                            onClick={() => setConfig({...config, rotation: deg as any})}
-                                            className={`flex-1 py-2 text-xs font-bold border rounded ${config.rotation === deg ? 'bg-[#ff4d00] text-white border-[#ff4d00]' : 'hover:bg-gray-100'}`}
+                                            key={item.deg}
+                                            onClick={() => setConfig({...config, rotation: item.deg as any})}
+                                            className={`flex-1 py-1.5 flex flex-col items-center justify-center border rounded transition-all ${config.rotation === item.deg ? 'bg-[#ff4d00] text-white border-[#ff4d00] shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
                                         >
-                                            {deg}°
+                                            <div className="flex items-center gap-1 font-bold text-xs">
+                                                {item.icon} {item.label}
+                                            </div>
+                                            <div className={`text-[9px] ${config.rotation === item.deg ? 'text-white/80' : 'text-gray-400'}`}>
+                                                {item.hint}
+                                            </div>
                                         </button>
                                     ))}
                                 </div>

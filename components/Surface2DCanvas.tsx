@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { GridData, SelectionBox, SelectionLine, TransformState, ToolType, ViewMode, Marker, ColorSettings, MeasurementState } from '../types';
+import { GridData, SelectionBox, SelectionLine, TransformState, ToolType, ViewMode, Marker, ColorSettings, MeasurementState, ChartToolType } from '../types';
 import { getColor } from '../utils/colorUtils';
+import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
 import { THEME } from '../constants';
 import { Info } from 'lucide-react';
 
@@ -13,6 +14,7 @@ interface Surface2DCanvasProps {
   boxSel: SelectionBox;
   lineSel: SelectionLine;
   chartAxis: string;
+  chartTool: ChartToolType;
   markers: Marker[];
   showMarkers: boolean;
   showHoverInfo: boolean;
@@ -21,6 +23,7 @@ interface Surface2DCanvasProps {
   tempMarker: { gridX: number, gridY: number, z: number } | null;
   hoverMarker: { gridX: number, gridY: number, z: number } | null;
   measState: MeasurementState;
+  onSetMeasState: (s: MeasurementState | ((prev: MeasurementState) => MeasurementState)) => void;
   onSetBoxSel: (box: SelectionBox) => void;
   onSetLineSel: (line: React.SetStateAction<SelectionLine>) => void;
   onSetTransform: (t: React.SetStateAction<TransformState>) => void;
@@ -32,12 +35,12 @@ interface Surface2DCanvasProps {
 }
 
 const Surface2DCanvas = ({
-  grid, gradientMap, activeMap, viewMode, tool, boxSel, lineSel, chartAxis, markers, showMarkers, showHoverInfo, selectedMarkerId, colorSettings, tempMarker, hoverMarker, measState,
-  onSetBoxSel, onSetLineSel, onSetTransform, onSelectMarker, onUpdateMarkerPos, onAddMarker, onToggleCursor, transform
+  grid, gradientMap, activeMap, viewMode, tool, boxSel, lineSel, chartAxis, chartTool, markers, showMarkers, showHoverInfo, selectedMarkerId, colorSettings, tempMarker, hoverMarker, measState,
+  onSetMeasState, onSetBoxSel, onSetLineSel, onSetTransform, onSelectMarker, onUpdateMarkerPos, onAddMarker, onToggleCursor, transform
 }: Surface2DCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPanning, setIsPanning] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number, y: number, ox?: number, oy?: number, mode?: string, markerId?: string, markerOrigX?: number, markerOrigY?: number } | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number, y: number, ox?: number, oy?: number, mode?: string, markerId?: string, markerOrigX?: number, markerOrigY?: number, screenX?: number, screenY?: number } | null>(null);
   const [pendingLineStart, setPendingLineStart] = useState<{ x: number, y: number } | null>(null);
   const [cursorInfo, setCursorInfo] = useState<{ x: number, y: number, z: number, screenX: number, screenY: number, realX: number, realY: number } | null>(null);
 
@@ -290,6 +293,67 @@ const Surface2DCanvas = ({
     onSetTransform({ k: newK, x: newX, y: newY });
   };
 
+  const handleMapClick = (p: {x: number, y: number}) => {
+      const realX = grid.xs && grid.xs[Math.round(p.x)] !== undefined ? grid.xs[Math.round(p.x)] : p.x;
+      const realY = grid.ys && grid.ys[Math.round(p.y)] !== undefined ? grid.ys[Math.round(p.y)] : p.y;
+      const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
+      const z = grid.data[idx] || 0;
+
+      let chartX = 0;
+      let chartY = z; 
+
+      if (tool === 'line') {
+          const p1 = lineSel.s;
+          const p1Rx = grid.xs && grid.xs[Math.round(p1.x)] !== undefined ? grid.xs[Math.round(p1.x)] : p1.x;
+          const p1Ry = grid.ys && grid.ys[Math.round(p1.y)] !== undefined ? grid.ys[Math.round(p1.y)] : p1.y;
+
+          const proj = projectPointOntoLine(p.x, p.y, lineSel.s.x, lineSel.s.y, lineSel.e.x, lineSel.e.y);
+          
+          const projRx = grid.xs && grid.xs[Math.round(proj.x)] !== undefined ? grid.xs[Math.round(proj.x)] : proj.x;
+          const projRy = grid.ys && grid.ys[Math.round(proj.y)] !== undefined ? grid.ys[Math.round(proj.y)] : proj.y;
+          
+          chartX = Math.sqrt((projRx - p1Rx)**2 + (projRy - p1Ry)**2);
+      } else {
+          if (chartAxis === 'vertical') {
+              chartX = realY;
+          } else {
+              chartX = realX;
+          }
+      }
+
+      const pointObj = {
+          x: chartX,
+          y: chartY,
+          gridX: p.x,
+          gridY: p.y,
+          realX,
+          realY
+      };
+
+      onSetMeasState(prev => {
+           if (chartTool === 'measure_p2l') {
+                if (prev.step === 'idle') {
+                    return { ...prev, step: 'p1', baseLine: { p1: pointObj, p2: pointObj } };
+                } else if (prev.step === 'p1') {
+                    return { ...prev, step: 'complete', baseLine: { p1: prev.baseLine!.p1, p2: pointObj } }; 
+                } else if (prev.step === 'complete') {
+                    if (!prev.baseLine) return prev;
+                    const dist = pointToLineDistance(
+                        pointObj.x, pointObj.y, 
+                        prev.baseLine.p1.x, prev.baseLine.p1.y,
+                        prev.baseLine.p2.x, prev.baseLine.p2.y
+                    );
+                    return { ...prev, points: [...prev.points, { ...pointObj, dist }] };
+                }
+           } else if (chartTool === 'measure_z' || chartTool === 'measure_xy') {
+                if (prev.step === 'idle') return { ...prev, step: 'p1', p1: pointObj };
+                if (prev.step === 'p1') return { ...prev, step: 'complete', p2: pointObj };
+                return { step: 'p1', p1: pointObj, p2: null, baseLine: null, points: [] };
+           }
+           return prev;
+      });
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     const p = screenToData(e.clientX, e.clientY);
 
@@ -332,7 +396,27 @@ const Surface2DCanvas = ({
       return;
     }
     
-    // Line Tool: Click-Click Logic
+    // Measuring Mode: Block Line Start, Allow Box Drag (to restart), Allow Click (to pick)
+    if (chartTool && chartTool !== 'inspect') {
+        setDragStart({ x: p.x, y: p.y, mode: 'measure_pick', screenX: e.clientX, screenY: e.clientY });
+        // Do NOT start line/box selection logic here if we are measuring.
+        // BUT if user drags, maybe they want to start new Box?
+        // If tool === 'box', we can allow it to override measure if dragged.
+        if (tool === 'box') {
+             // Let logic flow to Box setDragStart below?
+             // No, we already set dragStart.
+             // We can set mode to 'box' if we detect drag later?
+             // Actually, keep it simple: If measuring, we capture mouse for picking. 
+             // If user wants to select Box, they drag. handleMouseMove handles drag.
+             // But we need to set the correct mode.
+             // Let's set mode to 'tool' (box), but store screen coords for click detection.
+        } else {
+             // For Line (Click-Click), we BLOCK start.
+             return; 
+        }
+    }
+
+    // Line Tool: Click-Click Logic (Only if NOT measuring)
     if (tool === 'line') {
         if (!pendingLineStart) {
             setPendingLineStart({ x: p.x, y: p.y });
@@ -345,7 +429,8 @@ const Surface2DCanvas = ({
         return;
     }
 
-    setDragStart({ x: p.x, y: p.y, mode: tool });
+    // Box Tool or others (Drag)
+    setDragStart({ x: p.x, y: p.y, mode: tool, screenX: e.clientX, screenY: e.clientY });
     onSelectMarker(null);
     if (tool === 'box') {
       onSetBoxSel({ x: p.x, y: p.y, w: 0, h: 0 });
@@ -360,6 +445,16 @@ const Surface2DCanvas = ({
   const handleMouseMove = (e: React.MouseEvent) => {
     const p = screenToData(e.clientX, e.clientY);
     
+    // Calculate relative coords for tooltip
+    const cvs = canvasRef.current;
+    let relX = e.clientX; 
+    let relY = e.clientY;
+    if (cvs) {
+        const rect = cvs.getBoundingClientRect();
+        relX = e.clientX - rect.left;
+        relY = e.clientY - rect.top;
+    }
+    
     // Get Z value
     let zVal = 0;
     if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
@@ -370,7 +465,7 @@ const Surface2DCanvas = ({
     const realX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(p.x)))] : p.x;
     const realY = grid.ys ? (grid.ys as Float32Array)[Math.max(0, Math.min(grid.h-1, Math.round(p.y)))] : p.y;
     
-    setCursorInfo({ x: p.x, y: p.y, z: zVal, screenX: e.clientX, screenY: e.clientY, realX, realY });
+    setCursorInfo({ x: p.x, y: p.y, z: zVal, screenX: relX, screenY: relY, realX, realY });
 
     if (isPanning && dragStart) {
         const dx = e.clientX - dragStart.x;
@@ -412,7 +507,21 @@ const Surface2DCanvas = ({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (dragStart && chartTool && chartTool !== 'inspect') {
+        const screenX = dragStart.screenX || e.clientX;
+        const screenY = dragStart.screenY || e.clientY;
+        const dx = e.clientX - screenX;
+        const dy = e.clientY - screenY;
+        // Detect Click (small movement)
+        if (Math.sqrt(dx*dx + dy*dy) < 5) {
+             const p = screenToData(e.clientX, e.clientY);
+             // Ensure click is within grid
+             if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
+                 handleMapClick(p);
+             }
+        }
+    }
     setIsPanning(false);
     setDragStart(null);
   };

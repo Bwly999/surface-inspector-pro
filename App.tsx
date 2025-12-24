@@ -85,6 +85,22 @@ export default function SurfaceInspector() {
     return () => clearTimeout(timer);
   }, [grid]);
 
+  // Sync Markers Z with Grid Data
+  useEffect(() => {
+      if (!grid.data || markers.length === 0) return;
+      setMarkers(prev => prev.map(m => {
+          const gx = Math.max(0, Math.min(grid.w - 1, Math.round(m.gridX)));
+          const gy = Math.max(0, Math.min(grid.h - 1, Math.round(m.gridY)));
+          const idx = gy * grid.w + gx;
+          const newZ = grid.data[idx] || 0;
+          
+          if (Math.abs(newZ - m.z) > 0.000001) { 
+              return { ...m, z: newZ };
+          }
+          return m;
+      }));
+  }, [grid]); // grid dependency covers data change
+
   // --- Handlers ---
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -278,8 +294,10 @@ export default function SurfaceInspector() {
                   点云 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4d00] to-red-600">表面微观分析系统</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold text-white bg-black px-1.5 py-0.5 rounded mono shadow-sm">PRO v2.5</span>
-                    <span className="text-[10px] font-medium text-gray-400 tracking-wide uppercase">工业级视觉检测工作站</span>
+                    <span className="text-[10px] font-bold text-white bg-black px-1.5 py-0.5 rounded mono shadow-sm">Pro v3.0</span>
+                    <span className="text-[10px] font-medium text-gray-400 tracking-wide uppercase">工业级视觉分析工具</span>
+                    <div className="w-px h-3 bg-gray-300"></div>
+                    <span className="text-[10px] font-bold text-gray-500 mono">2025-12-25</span>
                 </div>
             </div>
         </div>
@@ -442,6 +460,7 @@ export default function SurfaceInspector() {
                 boxSel={boxSel}
                 lineSel={lineSel}
                 chartAxis={chartAxis}
+                chartTool={chartTool} // New Prop
                 markers={markers}
                 showMarkers={showMarkerList}
                 showHoverInfo={showHoverInfo}
@@ -449,7 +468,8 @@ export default function SurfaceInspector() {
                 colorSettings={colorSettings}
                 tempMarker={tempMarker}
                 hoverMarker={hoverMarker}
-                measState={measState} // PASS MEASUREMENT STATE
+                measState={measState} 
+                onSetMeasState={setMeasState} // New Prop
                 onSetBoxSel={setBoxSel}
                 onSetLineSel={setLineSel}
                 onSetTransform={setTransform}
