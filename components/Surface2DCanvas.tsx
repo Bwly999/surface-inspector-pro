@@ -291,11 +291,32 @@ const Surface2DCanvas = ({
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    const p = screenToData(e.clientX, e.clientY);
+
+    // Ctrl + Click to Add Marker (Priority over everything)
+    if (e.ctrlKey && e.button === 0) {
+        if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
+          const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
+          const z = grid.data[idx] || 0;
+          const realX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(p.x)))] : p.x;
+          const realY = grid.ys ? (grid.ys as Float32Array)[Math.max(0, Math.min(grid.h-1, Math.round(p.y)))] : p.y;
+          
+          onAddMarker({
+              gridX: p.x,
+              gridY: p.y,
+              realX,
+              realY,
+              z,
+              type: 'point'
+          });
+        }
+        return;
+    }
+
     if (e.button === 0 && tool !== 'pan' && showMarkers) {
         const hitId = checkMarkerHit(e.clientX, e.clientY);
         if (hitId) {
             onSelectMarker(hitId);
-            const p = screenToData(e.clientX, e.clientY);
             const m = markers.find(mark => mark.id === hitId);
             setDragStart({ 
                 x: e.clientX, y: e.clientY, mode: 'marker', markerId: hitId,
@@ -310,8 +331,6 @@ const Surface2DCanvas = ({
       setDragStart({ x: e.clientX, y: e.clientY, ox: transform.x, oy: transform.y });
       return;
     }
-
-    const p = screenToData(e.clientX, e.clientY);
     
     // Line Tool: Click-Click Logic
     if (tool === 'line') {
@@ -335,25 +354,7 @@ const Surface2DCanvas = ({
 
   const handleDoubleClick = (e: React.MouseEvent) => {
       e.preventDefault();
-      if (tool === 'pan') return;
-      
-      const p = screenToData(e.clientX, e.clientY);
-      if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
-          const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
-          const z = grid.data[idx] || 0;
-          
-          const realX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(p.x)))] : p.x;
-          const realY = grid.ys ? (grid.ys as Float32Array)[Math.max(0, Math.min(grid.h-1, Math.round(p.y)))] : p.y;
-          
-          onAddMarker({
-              gridX: p.x,
-              gridY: p.y,
-              realX,
-              realY,
-              z,
-              type: 'point'
-          });
-      }
+      // Double click logic moved to Ctrl + Left Click in handleMouseDown
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
