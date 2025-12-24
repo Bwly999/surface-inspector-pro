@@ -38,11 +38,17 @@ const Surface2DCanvas = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number, y: number, ox?: number, oy?: number, mode?: string, markerId?: string, markerOrigX?: number, markerOrigY?: number } | null>(null);
+  const [pendingLineStart, setPendingLineStart] = useState<{ x: number, y: number } | null>(null);
   const [cursorInfo, setCursorInfo] = useState<{ x: number, y: number, z: number, screenX: number, screenY: number, realX: number, realY: number } | null>(null);
 
   // Zoom Input State
   const [zoomInput, setZoomInput] = useState<string>('100');
   const [isEditingZoom, setIsEditingZoom] = useState(false);
+
+  // Reset pending line on tool change
+  useEffect(() => {
+      setPendingLineStart(null);
+  }, [tool]);
 
   // Sync zoom input with transform when not editing
   useEffect(() => {
@@ -306,12 +312,24 @@ const Surface2DCanvas = ({
     }
 
     const p = screenToData(e.clientX, e.clientY);
+    
+    // Line Tool: Click-Click Logic
+    if (tool === 'line') {
+        if (!pendingLineStart) {
+            setPendingLineStart({ x: p.x, y: p.y });
+            onSetLineSel({ s: { x: p.x, y: p.y }, e: { x: p.x, y: p.y } });
+        } else {
+            onSetLineSel({ s: pendingLineStart, e: { x: p.x, y: p.y } });
+            setPendingLineStart(null);
+        }
+        onSelectMarker(null);
+        return;
+    }
+
     setDragStart({ x: p.x, y: p.y, mode: tool });
     onSelectMarker(null);
     if (tool === 'box') {
       onSetBoxSel({ x: p.x, y: p.y, w: 0, h: 0 });
-    } else if (tool === 'line') {
-      onSetLineSel({ s: { x: p.x, y: p.y }, e: { x: p.x, y: p.y } });
     }
   };
 
@@ -384,9 +402,12 @@ const Surface2DCanvas = ({
             const nx = w < 0 ? dragStart.x + w : dragStart.x;
             const ny = h < 0 ? dragStart.y + h : dragStart.y;
             onSetBoxSel({ x: nx, y: ny, w: Math.abs(w), h: Math.abs(h) });
-        } else if (tool === 'line') {
-            onSetLineSel({ s: lineSel.s, e: { x: p.x, y: p.y } });
         }
+    }
+    
+    // Preview Line during 2-click selection
+    if (tool === 'line' && pendingLineStart) {
+        onSetLineSel({ s: pendingLineStart, e: { x: p.x, y: p.y } });
     }
   };
 
