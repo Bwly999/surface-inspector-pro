@@ -197,17 +197,17 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                         <AnalysisRow 
                             icon={<MoveVertical size={16}/>} 
                             name="Z 高度测量" 
-                            desc="在图表上点击两个点，测量它们之间的垂直高度差 (ΔZ)。支持在 2D 地图上直接点击选取测量点。" 
+                            desc="在图表上点击两个点，测量它们之间的垂直高度差 (ΔZ)。支持在 2D 地图上移动鼠标并按 'T' 键选取测量点。" 
                         />
                         <AnalysisRow 
                             icon={<MoveHorizontal size={16}/>} 
                             name="XY 距离测量" 
-                            desc="在图表上点击两个点，测量它们沿剖面路径的水平距离 (ΔXY)。支持在 2D 地图上直接点击选取测量点。" 
+                            desc="在图表上点击两个点，测量它们沿剖面路径的水平距离 (ΔXY)。支持在 2D 地图上移动鼠标并按 'T' 键选取测量点。" 
                         />
                         <AnalysisRow 
                             icon={<Activity size={16}/>} 
                             name="点到线偏差 (平面度)" 
-                            desc="先点击两点定义参考基准线，然后点击任意点计算其到基准线的垂直距离。支持在 2D 地图上直接点击选取。" 
+                            desc="先点击两点定义参考基准线，然后点击任意点计算其到基准线的垂直距离。支持在 2D 地图上移动鼠标并按 'T' 键选取。" 
                         />
                     </div>
                  </div>

@@ -3,7 +3,7 @@ import * as echarts from 'echarts';
 import { GridData, SelectionBox, SelectionLine, ToolType, ViewMode, ChartAxis, MeasurementState, ChartToolType } from '../types';
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
-import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash } from 'lucide-react';
+import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info } from 'lucide-react';
 
 interface ProfileChartProps {
     grid: GridData;
@@ -31,6 +31,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartInstanceRef = useRef<echarts.ECharts | null>(null);
+    const [showTip, setShowTip] = useState(false);
 
     // Reset measurement when data/selection/tool changes
     useEffect(() => {
@@ -382,14 +383,34 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                  
                  <div className="flex-1"></div>
 
-                 {/* Instruction Overlay (Moved to Toolbar) */}
+                 {/* Instruction Overlay & Help */}
                  {chartTool !== 'inspect' && (
-                    <div className="text-right animate-fade-in pointer-events-none mr-2">
+                    <div className="flex items-center gap-2 animate-fade-in mr-2">
                         <span className={`px-2 py-0.5 text-[10px] font-bold rounded border shadow-sm ${
                             measState.step === 'idle' ? 'text-blue-600 border-blue-200 bg-blue-50' : 'text-green-600 border-green-200 bg-green-50'
                         }`}>
-                            {measState.step === 'idle' ? "CLICK START POINT" : (chartTool === 'measure_p2l' && measState.step === 'complete' ? "CLICK TO ADD DISTANCE" : "CLICK END POINT")}
+                            {measState.step === 'idle' 
+                                ? "点击选择起点" 
+                                : (chartTool === 'measure_p2l' && measState.step === 'complete' 
+                                    ? "点击添加测量点" 
+                                    : (chartTool === 'measure_p2l' ? "点击选择基准线终点" : "点击选择终点")
+                                )
+                            }
                         </span>
+                        <div className="relative">
+                            <button 
+                                onMouseEnter={() => setShowTip(true)} 
+                                onMouseLeave={() => setShowTip(false)}
+                                className="text-gray-400 hover:text-blue-500"
+                            >
+                                <Info size={14} />
+                            </button>
+                            {showTip && (
+                                <div className="absolute top-6 right-0 w-48 bg-black/80 text-white text-[10px] p-2 rounded shadow-lg z-50 pointer-events-none">
+                                    在2D图上移动鼠标并按 <strong>'T'</strong> 键可精确拾取测量点。
+                                </div>
+                            )}
+                        </div>
                     </div>
                  )}
             </div>

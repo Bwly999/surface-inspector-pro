@@ -39,6 +39,7 @@ const Surface2DCanvas = ({
   onSetMeasState, onSetBoxSel, onSetLineSel, onSetTransform, onSelectMarker, onUpdateMarkerPos, onAddMarker, onToggleCursor, transform
 }: Surface2DCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cursorInfoRef = useRef<{x: number, y: number} | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number, y: number, ox?: number, oy?: number, mode?: string, markerId?: string, markerOrigX?: number, markerOrigY?: number, screenX?: number, screenY?: number } | null>(null);
   const [pendingLineStart, setPendingLineStart] = useState<{ x: number, y: number } | null>(null);
@@ -354,6 +355,21 @@ const Surface2DCanvas = ({
       });
   };
 
+  // 'T' Key Listener for Picking
+  useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+          if ((e.key === 't' || e.key === 'T') && cursorInfoRef.current && chartTool && chartTool !== 'inspect') {
+              const p = cursorInfoRef.current;
+              // Ensure pick is within grid
+              if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
+                  handleMapClick(p);
+              }
+          }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [grid, tool, lineSel, chartAxis, chartTool, onSetMeasState]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     const p = screenToData(e.clientX, e.clientY);
 
@@ -396,27 +412,7 @@ const Surface2DCanvas = ({
       return;
     }
     
-    // Measuring Mode: Block Line Start, Allow Box Drag (to restart), Allow Click (to pick)
-    if (chartTool && chartTool !== 'inspect') {
-        setDragStart({ x: p.x, y: p.y, mode: 'measure_pick', screenX: e.clientX, screenY: e.clientY });
-        // Do NOT start line/box selection logic here if we are measuring.
-        // BUT if user drags, maybe they want to start new Box?
-        // If tool === 'box', we can allow it to override measure if dragged.
-        if (tool === 'box') {
-             // Let logic flow to Box setDragStart below?
-             // No, we already set dragStart.
-             // We can set mode to 'box' if we detect drag later?
-             // Actually, keep it simple: If measuring, we capture mouse for picking. 
-             // If user wants to select Box, they drag. handleMouseMove handles drag.
-             // But we need to set the correct mode.
-             // Let's set mode to 'tool' (box), but store screen coords for click detection.
-        } else {
-             // For Line (Click-Click), we BLOCK start.
-             return; 
-        }
-    }
-
-    // Line Tool: Click-Click Logic (Only if NOT measuring)
+    // Line Tool: Click-Click Logic
     if (tool === 'line') {
         if (!pendingLineStart) {
             setPendingLineStart({ x: p.x, y: p.y });
@@ -444,6 +440,7 @@ const Surface2DCanvas = ({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const p = screenToData(e.clientX, e.clientY);
+    cursorInfoRef.current = p;
     
     // Calculate relative coords for tooltip
     const cvs = canvasRef.current;
@@ -508,20 +505,6 @@ const Surface2DCanvas = ({
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (dragStart && chartTool && chartTool !== 'inspect') {
-        const screenX = dragStart.screenX || e.clientX;
-        const screenY = dragStart.screenY || e.clientY;
-        const dx = e.clientX - screenX;
-        const dy = e.clientY - screenY;
-        // Detect Click (small movement)
-        if (Math.sqrt(dx*dx + dy*dy) < 5) {
-             const p = screenToData(e.clientX, e.clientY);
-             // Ensure click is within grid
-             if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
-                 handleMapClick(p);
-             }
-        }
-    }
     setIsPanning(false);
     setDragStart(null);
   };
