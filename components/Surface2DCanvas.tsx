@@ -70,20 +70,28 @@ const Surface2DCanvas = ({
     setIsEditingZoom(false);
   };
 
-  // Render Canvas
+  const heatmapCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // 1. Generate Heatmap Cache
   useEffect(() => {
-    const cvs = canvasRef.current;
-    if (!cvs || !grid.data) return;
-    
-    const ctx = cvs.getContext('2d');
-    if (!ctx) return;
-
-    const imgData = ctx.createImageData(grid.w, grid.h);
-    const buf = new Uint32Array(imgData.data.buffer);
-
+    if (!grid.data) return;
     const isGradient = viewMode === 'gradient';
     const sourceData = isGradient && gradientMap ? gradientMap : grid.data;
     if (!sourceData) return;
+
+    if (!heatmapCanvasRef.current) {
+        heatmapCanvasRef.current = document.createElement('canvas');
+    }
+    const hCvs = heatmapCanvasRef.current;
+    if (hCvs.width !== grid.w || hCvs.height !== grid.h) {
+        hCvs.width = grid.w;
+        hCvs.height = grid.h;
+    }
+    const hCtx = hCvs.getContext('2d');
+    if (!hCtx) return;
+
+    const imgData = hCtx.createImageData(grid.w, grid.h);
+    const buf = new Uint32Array(imgData.data.buffer);
 
     const min = colorSettings.mode === 'absolute' ? colorSettings.min : (isGradient ? 0 : grid.minZ);
     const max = colorSettings.mode === 'absolute' ? colorSettings.max : (isGradient ? 1 : grid.maxZ);
@@ -93,11 +101,16 @@ const Surface2DCanvas = ({
       const [r, g, b] = getColor(rawVal, activeMap, min, max);
       buf[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
+    hCtx.putImageData(imgData, 0, 0);
+  }, [grid, gradientMap, activeMap, viewMode, colorSettings]);
 
-    const tempCvs = document.createElement('canvas');
-    tempCvs.width = grid.w;
-    tempCvs.height = grid.h;
-    tempCvs.getContext('2d')?.putImageData(imgData, 0, 0);
+  // 2. Render Canvas
+  useEffect(() => {
+    const cvs = canvasRef.current;
+    if (!cvs || !grid.data) return;
+    
+    const ctx = cvs.getContext('2d');
+    if (!ctx) return;
 
     const render = () => {
         const cw = cvs.width;
@@ -107,7 +120,10 @@ const Surface2DCanvas = ({
         ctx.translate(transform.x, transform.y);
         ctx.scale(transform.k, transform.k);
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(tempCvs, 0, 0);
+        
+        if (heatmapCanvasRef.current) {
+            ctx.drawImage(heatmapCanvasRef.current, 0, 0);
+        }
 
         ctx.lineWidth = 2 / transform.k;
 
