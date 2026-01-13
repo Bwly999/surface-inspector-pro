@@ -8,12 +8,11 @@ import { Box, Settings, Sliders, Monitor } from 'lucide-react';
 
 interface ThreeDViewerProps {
   grid: GridData;
+  activeLayer: ActiveLayer; // NEW
   boxSel: SelectionBox;
   lineSel: SelectionLine;
   tool: ToolType;
   colorMap: string;
-  viewMode: ViewMode;
-  gradientMap: Float32Array | null;
   markers: Marker[];
   showMarkers: boolean;
   selectedMarkerId: string | null;
@@ -25,7 +24,7 @@ interface ThreeDViewerProps {
 }
 
 const ThreeDViewer = React.memo(({ 
-    grid, boxSel, lineSel, tool, colorMap, viewMode, gradientMap, markers, showMarkers, selectedMarkerId, colorSettings, contrast, onContrastChange, tempMarker, hoverMarker
+    grid, activeLayer, boxSel, lineSel, tool, colorMap, markers, showMarkers, selectedMarkerId, colorSettings, contrast, onContrastChange, tempMarker, hoverMarker
 }: ThreeDViewerProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -219,7 +218,7 @@ const ThreeDViewer = React.memo(({
 
   // Update Geometry/Colors when data or contrast changes
   useEffect(() => {
-    if (!sceneRef.current || !grid.data) return;
+    if (!sceneRef.current || !activeLayer.data) return;
     const { mesh } = sceneRef.current;
 
     let rx = 0, ry = 0, rw = grid.w, rh = grid.h;
@@ -240,12 +239,13 @@ const ThreeDViewer = React.memo(({
     const colors: number[] = [];
     const positions = geo.attributes.position;
 
-    const isGradient = viewMode === 'gradient';
-    const sourceData = isGradient && gradientMap ? gradientMap : grid.data;
-    const range = grid.maxZ - grid.minZ || 1;
+    const sourceData = activeLayer.data;
+    // Calculate range from active layer for normalization
+    const range = activeLayer.max - activeLayer.min || 1;
+    const baseZ = activeLayer.min;
 
-    const cMin = colorSettings.mode === 'absolute' ? colorSettings.min : (isGradient ? 0 : grid.minZ);
-    const cMax = colorSettings.mode === 'absolute' ? colorSettings.max : (isGradient ? 1 : grid.maxZ);
+    const cMin = colorSettings.mode === 'absolute' ? colorSettings.min : baseZ;
+    const cMax = colorSettings.mode === 'absolute' ? colorSettings.max : activeLayer.max;
 
     // Apply contrast to Z-Height scaling:
     // Base scale is 15. We multiply by contrast to exaggerate the peaks/valleys when contrast is high.
@@ -257,19 +257,17 @@ const ThreeDViewer = React.memo(({
       const dx = rx + Math.floor(ix * (rw / segX));
       const dy = ry + Math.floor(iy * (rh / segY));
 
-      let rawVal = 0;
-      let heightVal = 0;
+      let val = 0;
 
       if (dx < grid.w && dy < grid.h) {
         const idx = dy * grid.w + dx;
-        rawVal = sourceData[idx] || 0;
-        heightVal = grid.data[idx] || 0;
+        val = sourceData[idx] || 0;
       }
 
-      const normalizedHeight = (heightVal - grid.minZ) / range;
+      const normalizedHeight = (val - baseZ) / range;
       positions.setZ(i, normalizedHeight * zScale);
 
-      const [r, g, b] = getColorFunc(rawVal, colorMap, cMin, cMax);
+      const [r, g, b] = getColorFunc(val, colorMap, cMin, cMax);
       
       const applyContrast = (c: number) => {
           if (!enhanceColor) return c;
@@ -283,7 +281,7 @@ const ThreeDViewer = React.memo(({
     geo.computeVertexNormals();
     mesh.geometry = geo;
 
-  }, [grid, boxSel, lineSel, tool, colorMap, viewMode, gradientMap, colorSettings, contrast, enhanceColor]);
+  }, [grid, boxSel, lineSel, tool, colorMap, activeLayer, colorSettings, contrast, enhanceColor]);
 
   // Update Markers Visibility & Position (Regular & Ghost)
   useEffect(() => {
@@ -304,7 +302,9 @@ const ThreeDViewer = React.memo(({
       
       const width = 40;
       const height = 40 * (rh/rw);
-      const range = grid.maxZ - grid.minZ || 1;
+
+      const range = activeLayer.max - activeLayer.min || 1;
+      const baseZ = activeLayer.min;
       const zScale = 15 * contrast; // Must match the mesh scaling
 
       const getPos = (gx: number, gy: number, zVal: number) => {
@@ -313,7 +313,15 @@ const ThreeDViewer = React.memo(({
            const relY = (gy - ry) / rh;
            const x = (relX - 0.5) * width;
            const y = (0.5 - relY) * height;
-           const z = ((zVal - grid.minZ) / range) * zScale;
+           
+           // Fetch strict value from active layer for correct height positioning
+           let effectiveZ = zVal;
+           const idx = Math.floor(gy) * grid.w + Math.floor(gx);
+           if (activeLayer.data) {
+               effectiveZ = activeLayer.data[idx] || 0;
+           }
+
+           const z = ((effectiveZ - baseZ) / range) * zScale;
            return { x, y, z };
       };
 
@@ -365,7 +373,7 @@ const ThreeDViewer = React.memo(({
           }
       }
 
-  }, [markers, showMarkers, selectedMarkerId, grid, boxSel, tool, tempMarker, hoverMarker, contrast]); 
+  }, [markers, showMarkers, selectedMarkerId, grid, boxSel, tool, tempMarker, hoverMarker, contrast, activeLayer]); 
 
   return (
     <div ref={containerRef} className="relative w-full h-full group touch-none">

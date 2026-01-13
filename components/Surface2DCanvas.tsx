@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { GridData, SelectionBox, SelectionLine, TransformState, ToolType, ViewMode, Marker, ColorSettings, MeasurementState, ChartToolType } from '../types';
+import { GridData, SelectionBox, SelectionLine, TransformState, ToolType, ViewMode, Marker, ColorSettings, MeasurementState, ChartToolType, ActiveLayer } from '../types';
 import { getColor } from '../utils/colorUtils';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
 import { THEME } from '../constants';
@@ -7,9 +7,8 @@ import { Info } from 'lucide-react';
 
 interface Surface2DCanvasProps {
   grid: GridData;
-  gradientMap: Float32Array | null;
+  activeLayer: ActiveLayer;
   activeMap: string;
-  viewMode: ViewMode;
   tool: ToolType;
   boxSel: SelectionBox;
   lineSel: SelectionLine;
@@ -35,7 +34,7 @@ interface Surface2DCanvasProps {
 }
 
 const Surface2DCanvas = ({
-  grid, gradientMap, activeMap, viewMode, tool, boxSel, lineSel, chartAxis, chartTool, markers, showMarkers, showHoverInfo, selectedMarkerId, colorSettings, tempMarker, hoverMarker, measState,
+  grid, activeLayer, activeMap, tool, boxSel, lineSel, chartAxis, chartTool, markers, showMarkers, showHoverInfo, selectedMarkerId, colorSettings, tempMarker, hoverMarker, measState,
   onSetMeasState, onSetBoxSel, onSetLineSel, onSetTransform, onSelectMarker, onUpdateMarkerPos, onAddMarker, onToggleCursor, transform
 }: Surface2DCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,10 +73,8 @@ const Surface2DCanvas = ({
 
   // 1. Generate Heatmap Cache
   useEffect(() => {
-    if (!grid.data) return;
-    const isGradient = viewMode === 'gradient';
-    const sourceData = isGradient && gradientMap ? gradientMap : grid.data;
-    if (!sourceData) return;
+    if (!activeLayer.data) return;
+    const sourceData = activeLayer.data;
 
     if (!heatmapCanvasRef.current) {
         heatmapCanvasRef.current = document.createElement('canvas');
@@ -93,8 +90,8 @@ const Surface2DCanvas = ({
     const imgData = hCtx.createImageData(grid.w, grid.h);
     const buf = new Uint32Array(imgData.data.buffer);
 
-    const min = colorSettings.mode === 'absolute' ? colorSettings.min : (isGradient ? 0 : grid.minZ);
-    const max = colorSettings.mode === 'absolute' ? colorSettings.max : (isGradient ? 1 : grid.maxZ);
+    const min = colorSettings.mode === 'absolute' ? colorSettings.min : activeLayer.min;
+    const max = colorSettings.mode === 'absolute' ? colorSettings.max : activeLayer.max;
 
     for (let i = 0; i < sourceData.length; i++) {
       const rawVal = sourceData[i];
@@ -102,12 +99,12 @@ const Surface2DCanvas = ({
       buf[i] = (255 << 24) | (b << 16) | (g << 8) | r;
     }
     hCtx.putImageData(imgData, 0, 0);
-  }, [grid, gradientMap, activeMap, viewMode, colorSettings]);
+  }, [grid, activeLayer, activeMap, colorSettings]);
 
   // 2. Render Canvas
   useEffect(() => {
     const cvs = canvasRef.current;
-    if (!cvs || !grid.data) return;
+    if (!cvs || !activeLayer.data) return;
     
     const ctx = cvs.getContext('2d');
     if (!ctx) return;
@@ -255,7 +252,7 @@ const Surface2DCanvas = ({
     };
     render();
 
-  }, [grid, gradientMap, activeMap, viewMode, transform, boxSel, lineSel, tool, chartAxis, markers, showMarkers, selectedMarkerId, dragStart, colorSettings, tempMarker, hoverMarker, measState]);
+  }, [grid, activeLayer, activeMap, transform, boxSel, lineSel, tool, chartAxis, markers, showMarkers, selectedMarkerId, dragStart, colorSettings, tempMarker, hoverMarker, measState]);
 
   const screenToData = (sx: number, sy: number) => {
     const cvs = canvasRef.current;
@@ -290,31 +287,42 @@ const Surface2DCanvas = ({
       return null;
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomIntensity = 0.1;
+  // Fix: Passive event listener issue for Wheel
+  useEffect(() => {
     const cvs = canvasRef.current;
     if (!cvs) return;
-    const rect = cvs.getBoundingClientRect();
-    const scaleX = cvs.width / rect.width;
-    const scaleY = cvs.height / rect.height;
-    const mouseX = (e.clientX - rect.left) * scaleX;
-    const mouseY = (e.clientY - rect.top) * scaleY;
-    const dataX = (mouseX - transform.x) / transform.k;
-    const dataY = (mouseY - transform.y) / transform.k;
-    const delta = e.deltaY < 0 ? 1 + zoomIntensity : 1 / (1 + zoomIntensity);
-    let newK = transform.k * delta;
-    newK = Math.max(0.1, Math.min(newK, 500)); 
-    const newX = mouseX - dataX * newK;
-    const newY = mouseY - dataY * newK;
-    onSetTransform({ k: newK, x: newX, y: newY });
-  };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomIntensity = 0.1;
+      const rect = cvs.getBoundingClientRect();
+      const scaleX = cvs.width / rect.width;
+      const scaleY = cvs.height / rect.height;
+      const mouseX = (e.clientX - rect.left) * scaleX;
+      const mouseY = (e.clientY - rect.top) * scaleY;
+      
+      onSetTransform(prev => {
+          const dataX = (mouseX - prev.x) / prev.k;
+          const dataY = (mouseY - prev.y) / prev.k;
+          const delta = e.deltaY < 0 ? 1 + zoomIntensity : 1 / (1 + zoomIntensity);
+          let newK = prev.k * delta;
+          newK = Math.max(0.1, Math.min(newK, 500)); 
+          const newX = mouseX - dataX * newK;
+          const newY = mouseY - dataY * newK;
+          return { k: newK, x: newX, y: newY };
+      });
+    };
+
+    cvs.addEventListener('wheel', onWheel, { passive: false });
+    return () => cvs.removeEventListener('wheel', onWheel);
+  }, [onSetTransform]);
 
   const handleMapClick = (p: {x: number, y: number}) => {
       const realX = grid.xs && grid.xs[Math.round(p.x)] !== undefined ? grid.xs[Math.round(p.x)] : p.x;
       const realY = grid.ys && grid.ys[Math.round(p.y)] !== undefined ? grid.ys[Math.round(p.y)] : p.y;
       const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
-      const z = grid.data[idx] || 0;
+      
+      const z = activeLayer.data[idx] || 0;
 
       let chartX = 0;
       let chartY = z; 
@@ -384,7 +392,7 @@ const Surface2DCanvas = ({
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [grid, tool, lineSel, chartAxis, chartTool, onSetMeasState]);
+  }, [grid, tool, lineSel, chartAxis, chartTool, onSetMeasState, activeLayer]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const p = screenToData(e.clientX, e.clientY);
@@ -393,7 +401,9 @@ const Surface2DCanvas = ({
     if (e.ctrlKey && e.button === 0) {
         if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
           const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
-          const z = grid.data[idx] || 0;
+          // Use activeLayer data for Z
+          const z = activeLayer.data[idx] || 0;
+
           const realX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(p.x)))] : p.x;
           const realY = grid.ys ? (grid.ys as Float32Array)[Math.max(0, Math.min(grid.h-1, Math.round(p.y)))] : p.y;
           
@@ -472,7 +482,7 @@ const Surface2DCanvas = ({
     let zVal = 0;
     if (p.x >= 0 && p.x < grid.w && p.y >= 0 && p.y < grid.h) {
         const idx = Math.floor(p.y) * grid.w + Math.floor(p.x);
-        zVal = grid.data[idx] || 0;
+        zVal = activeLayer.data[idx] || 0;
     }
     
     const realX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(p.x)))] : p.x;
@@ -494,7 +504,7 @@ const Surface2DCanvas = ({
          const ny = (dragStart.markerOrigY || 0) + dy;
          
          const idx = Math.max(0, Math.min(grid.h-1, Math.round(ny))) * grid.w + Math.max(0, Math.min(grid.w-1, Math.round(nx)));
-         const nz = grid.data[idx] || 0;
+         const nz = activeLayer.data[idx] || 0;
          
          const newRealX = grid.xs ? (grid.xs as Float32Array)[Math.max(0, Math.min(grid.w-1, Math.round(nx)))] : nx;
          const newRealY = grid.ys ? (grid.ys as Float32Array)[Math.max(0, Math.min(grid.h-1, Math.round(ny)))] : ny;
@@ -532,7 +542,6 @@ const Surface2DCanvas = ({
           width={800} 
           height={600} 
           className="block w-full h-full"
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onDoubleClick={handleDoubleClick}
           onMouseMove={handleMouseMove}

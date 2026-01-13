@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ChartToolType, MeasurementState } from './types';
+import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ChartToolType, MeasurementState, ActiveLayer } from './types';
 import { THEME, MAP_OPTIONS } from './constants';
-import { generateData, parseCSV, computeGradientMap } from './utils/dataUtils';
+import { generateData, parseCSV, computeGradientMap, computeCurvatureMap } from './utils/dataUtils';
 import ThreeDViewer from './components/ThreeDViewer';
 import ProfileChart from './components/ProfileChart';
 import Surface2DCanvas from './components/Surface2DCanvas';
@@ -26,6 +26,7 @@ export default function SurfaceInspector() {
   });
 
   const [gradientMap, setGradientMap] = useState<Float32Array | null>(null);
+  const [curvatureMap, setCurvatureMap] = useState<Float32Array | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Configuration State
@@ -80,7 +81,9 @@ export default function SurfaceInspector() {
     if (!grid.data) return;
     const timer = setTimeout(() => {
       const grad = computeGradientMap(grid.data, grid.w, grid.h, grid.minZ, grid.maxZ);
+      const curv = computeCurvatureMap(grid.data, grid.w, grid.h, grid.minZ, grid.maxZ);
       setGradientMap(grad);
+      setCurvatureMap(curv);
     }, 10);
     return () => clearTimeout(timer);
   }, [grid]);
@@ -100,6 +103,17 @@ export default function SurfaceInspector() {
           return m;
       }));
   }, [grid]); // grid dependency covers data change
+
+  // --- Derived State: Active Layer ---
+  const activeLayer = useMemo<ActiveLayer>(() => {
+      if (viewMode === 'gradient' && gradientMap) {
+          return { data: gradientMap, min: 0, max: 1, type: 'gradient' };
+      }
+      if (viewMode === 'curvature' && curvatureMap) {
+          return { data: curvatureMap, min: 0, max: 1, type: 'curvature' };
+      }
+      return { data: grid.data, min: grid.minZ, max: grid.maxZ, type: 'height' };
+  }, [viewMode, grid, gradientMap, curvatureMap]);
 
   // --- Handlers ---
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -435,6 +449,7 @@ export default function SurfaceInspector() {
             <div className="flex border-2 rounded-sm overflow-hidden" style={{ borderColor: THEME.border }}>
               <button onClick={() => setViewMode('height')} className={`px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'height' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'height' ? THEME.secondary : 'transparent' }}>高度图</button>
               <button onClick={() => setViewMode('gradient')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'gradient' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'gradient' ? THEME.secondary : 'transparent' }}><Zap size={12} /> 梯度图</button>
+              <button onClick={() => setViewMode('curvature')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'curvature' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'curvature' ? THEME.secondary : 'transparent' }}><Activity size={12} /> 曲率图</button>
             </div>
           </div>
 
@@ -453,14 +468,13 @@ export default function SurfaceInspector() {
              
              <Surface2DCanvas 
                 grid={grid}
-                gradientMap={gradientMap}
+                activeLayer={activeLayer}
                 activeMap={activeMap}
-                viewMode={viewMode}
                 tool={tool}
                 boxSel={boxSel}
                 lineSel={lineSel}
                 chartAxis={chartAxis}
-                chartTool={chartTool} // New Prop
+                chartTool={chartTool} 
                 markers={markers}
                 showMarkers={showMarkerList}
                 showHoverInfo={showHoverInfo}
@@ -469,7 +483,7 @@ export default function SurfaceInspector() {
                 tempMarker={tempMarker}
                 hoverMarker={hoverMarker}
                 measState={measState} 
-                onSetMeasState={setMeasState} // New Prop
+                onSetMeasState={setMeasState}
                 onSetBoxSel={setBoxSel}
                 onSetLineSel={setLineSel}
                 onSetTransform={setTransform}
@@ -489,13 +503,12 @@ export default function SurfaceInspector() {
           <div className="h-1/2 relative border-b-2" style={{ borderColor: THEME.border }}>
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-2 py-1 bg-white/90 backdrop-blur border-2 text-xs font-bold shadow-sm rounded-full animate-fade-in" style={{ borderColor: THEME.border, color: THEME.primary }}>等轴拓扑视图</div>
             <ThreeDViewer 
-                grid={grid} 
+                grid={grid}
+                activeLayer={activeLayer}
                 boxSel={boxSel} 
                 lineSel={lineSel} 
                 tool={tool} 
                 colorMap={activeMap} 
-                viewMode={viewMode} 
-                gradientMap={gradientMap} 
                 markers={markers}
                 showMarkers={showMarkerList}
                 selectedMarkerId={selectedMarkerId}
@@ -524,15 +537,14 @@ export default function SurfaceInspector() {
             <div className="flex-1 bg-white border-2 shadow-sm relative overflow-hidden transition-shadow duration-300 hover:shadow-md" style={{ borderColor: THEME.border }}>
               <ProfileChart
                 grid={grid}
+                activeLayer={activeLayer}
                 boxSel={boxSel}
                 lineSel={lineSel}
                 tool={tool}
-                mode={viewMode}
-                gradientMap={gradientMap}
                 axis={chartAxis}
                 chartTool={chartTool}
-                measState={measState} // PASS MEAS STATE
-                onSetMeasState={setMeasState} // PASS SETTER
+                measState={measState} 
+                onSetMeasState={setMeasState} 
                 onSetChartTool={setChartTool}
                 onChartClick={handleChartPointClick}
                 onChartHover={handleChartHover}

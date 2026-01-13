@@ -45,7 +45,7 @@ export interface Marker {
   color?: string;
 }
 
-export type ViewMode = 'height' | 'gradient';
+export type ViewMode = 'height' | 'gradient' | 'curvature';
 export type ToolType = 'box' | 'line' | 'pan';
 export type ChartAxis = 'horizontal' | 'vertical';
 export type CameraView = 'iso' | 'top' | 'front' | 'side';
@@ -79,6 +79,13 @@ export interface MeasurementState {
   // For P2L mode (multi-point)
   baseLine: { p1: {x: number, y: number, gridX: number, gridY: number}, p2: {x: number, y: number, gridX: number, gridY: number} } | null;
   points: { x: number, y: number, dist: number, gridX: number, gridY: number }[];
+}
+
+export interface ActiveLayer {
+  data: Float32Array;
+  min: number;
+  max: number;
+  type: ViewMode;
 }
 
 // --- Converter Types ---

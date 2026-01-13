@@ -1,17 +1,16 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
-import { GridData, SelectionBox, SelectionLine, ToolType, ViewMode, ChartAxis, MeasurementState, ChartToolType } from '../types';
+import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer } from '../types';
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
 import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info } from 'lucide-react';
 
 interface ProfileChartProps {
     grid: GridData;
+    activeLayer: ActiveLayer;
     boxSel: SelectionBox;
     lineSel: SelectionLine;
     tool: ToolType;
-    mode: ViewMode;
-    gradientMap: Float32Array | null;
     axis: ChartAxis;
     chartTool: ChartToolType;
     onSetChartTool: (t: ChartToolType) => void;
@@ -26,7 +25,7 @@ interface ProfileChartProps {
 }
 
 const ProfileChart: React.FC<ProfileChartProps> = ({ 
-    grid, boxSel, lineSel, tool, mode, gradientMap, axis, chartTool, onSetChartTool, onChartClick, onChartHover, tempMarker, onConfirmTempMarker,
+    grid, activeLayer, boxSel, lineSel, tool, axis, chartTool, onSetChartTool, onChartClick, onChartHover, tempMarker, onConfirmTempMarker,
     measState, onSetMeasState
 }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -42,7 +41,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     // 1. Extract Data Profile (Including Grid Coordinates)
     const rawData = useMemo(() => {
         const pts: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }[] = []; 
-        const source = mode === 'gradient' && gradientMap ? gradientMap : grid.data;
+        const source = activeLayer.data;
         if (!source) return [];
 
         const getReal = (gx: number, gy: number) => {
@@ -110,7 +109,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             }
         }
         return pts;
-    }, [grid, boxSel, lineSel, tool, mode, gradientMap, axis]);
+    }, [grid, boxSel, lineSel, tool, activeLayer, axis]);
 
     // 2. Chart Render Logic
     useEffect(() => {
@@ -347,10 +346,10 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 
         chart.setOption(option, { notMerge: true });
         const ro = new ResizeObserver(() => chart.resize());
-        ro.observe(chartContainerRef.current);
+        ro.observe(chartContainerRef.current!);
         return () => { ro.disconnect(); chart.dispose(); chartInstanceRef.current = null; };
 
-    }, [rawData, measState, chartTool, mode, grid, tempMarker, onSetMeasState, onChartHover, onChartClick]);
+    }, [rawData, measState, chartTool, grid, tempMarker, onSetMeasState, onChartHover, onChartClick]);
 
     return (
         <div className="w-full h-full flex flex-col relative group">

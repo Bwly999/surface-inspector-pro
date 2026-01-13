@@ -26,6 +26,49 @@ export const computeGradientMap = (data: Float32Array, width: number, height: nu
   return grad;
 };
 
+export const computeCurvatureMap = (data: Float32Array, width: number, height: number, minZ: number, maxZ: number): Float32Array => {
+  const curv = new Float32Array(data.length);
+  const range = maxZ - minZ || 1;
+  let maxCurv = 0;
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const n = (v: number) => (v - minZ) / range;
+
+      // Central differences for First Derivatives
+      // hx = (z(x+1, y) - z(x-1, y)) / 2
+      const hx = (n(data[idx + 1]) - n(data[idx - 1])) * 0.5;
+      const hy = (n(data[idx + width]) - n(data[idx - width])) * 0.5;
+
+      // Central differences for Second Derivatives
+      // hxx = z(x+1, y) - 2z(x, y) + z(x-1, y)
+      const hxx = n(data[idx + 1]) - 2 * n(data[idx]) + n(data[idx - 1]);
+      const hyy = n(data[idx + width]) - 2 * n(data[idx]) + n(data[idx - width]);
+      
+      // Mixed Partial Derivative
+      // hxy = (z(x+1, y+1) - z(x-1, y+1) - z(x+1, y-1) + z(x-1, y-1)) / 4
+      const hxy = (n(data[idx + width + 1]) - n(data[idx + width - 1]) - n(data[idx - width + 1]) + n(data[idx - width - 1])) * 0.25;
+
+      // Mean Curvature Formula
+      const num = (1 + hy * hy) * hxx - 2 * hx * hy * hxy + (1 + hx * hx) * hyy;
+      const den = 2 * Math.pow(1 + hx * hx + hy * hy, 1.5);
+      
+      const H = num / Math.max(1e-5, den); // Avoid div by zero
+      const mag = Math.abs(H);
+      
+      curv[idx] = mag;
+      if (mag > maxCurv) maxCurv = mag;
+    }
+  }
+
+  // Normalize to 0-1
+  if (maxCurv > 0) {
+    for (let i = 0; i < curv.length; i++) curv[i] /= maxCurv;
+  }
+  return curv;
+};
+
 export const parseCSV = (text: string): GridData | null => {
   const lines = text.split('\n');
   const points: { x: number, y: number, z: number }[] = [];
