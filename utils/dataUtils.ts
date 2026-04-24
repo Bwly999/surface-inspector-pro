@@ -105,7 +105,7 @@ export const parseCSV = (text: string): GridData | null => {
   if (points.length === 0) return null;
 
   const sX = Array.from(uX).sort((a, b) => a - b);
-  const sY = Array.from(uY).sort((a, b) => a - b);
+  const sY = Array.from(uY).sort((a, b) => b - a);
   const w = sX.length;
   const h = sY.length;
   const grid = new Float32Array(w * h);
@@ -125,7 +125,7 @@ export const parseCSV = (text: string): GridData | null => {
     const gy = yMap.get(p.y);
 
     if (gx !== undefined && gy !== undefined) {
-      const bufferRow = (h - 1) - gy;
+      const bufferRow = gy;
       const idx = bufferRow * w + gx;
       grid[idx] = p.z;
     }
