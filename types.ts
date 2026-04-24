@@ -45,6 +45,11 @@ export interface Marker {
   color?: string;
 }
 
+export interface DirectionalMaps {
+  x: Float32Array;
+  y: Float32Array;
+}
+
 export type ViewMode = 'height' | 'gradient' | 'curvature';
 export type ToolType = 'box' | 'line' | 'pan';
 export type ChartAxis = 'horizontal' | 'vertical';

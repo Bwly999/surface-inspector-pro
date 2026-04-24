@@ -1,72 +1,82 @@
 import { GridData } from "../types";
 
-export const computeGradientMap = (data: Float32Array, width: number, height: number, minZ: number, maxZ: number): Float32Array => {
+/**
+ * Replicates numpy.gradient for 2D data along a specific axis.
+ * @param data Flat data array
+ * @param width Grid width
+ * @param height Grid height
+ * @param spacing Physical spacing along the axis
+ * @param axis 'x' (axis 1) or 'y' (axis 0)
+ */
+export const npGradient = (data: Float32Array, width: number, height: number, spacing: number, axis: 'x' | 'y'): Float32Array => {
   const grad = new Float32Array(data.length);
-  const range = maxZ - minZ || 1;
-  let maxGrad = 0;
+  const size = axis === 'x' ? width : height;
+  const otherSize = axis === 'x' ? height : width;
+  const edgeOrder = size >= 3 ? 2 : 1;
 
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const n = (v: number) => (v - minZ) / range;
-
-      const gx = -1 * n(data[idx - width - 1]) - 2 * n(data[idx - 1]) - 1 * n(data[idx + width - 1]) +
-        1 * n(data[idx - width + 1]) + 2 * n(data[idx + 1]) + 1 * n(data[idx + width + 1]);
-      const gy = -1 * n(data[idx - width - 1]) - 2 * n(data[idx - width]) - 1 * n(data[idx - width + 1]) +
-        1 * n(data[idx + width - 1]) + 2 * n(data[idx + width]) + 1 * n(data[idx + width + 1]);
-
-      const mag = Math.sqrt(gx * gx + gy * gy);
-      grad[idx] = mag;
-      if (mag > maxGrad) maxGrad = mag;
+  for (let i = 0; i < otherSize; i++) {
+    for (let j = 0; j < size; j++) {
+      const idx = axis === 'x' ? (i * width + j) : (j * width + i);
+      const step = axis === 'x' ? 1 : width;
+      
+      if (size < 2) {
+        grad[idx] = 0;
+      } else if (edgeOrder === 1 || size < 3) {
+        if (j === 0) grad[idx] = (data[idx + step] - data[idx]) / spacing;
+        else if (j === size - 1) grad[idx] = (data[idx] - data[idx - step]) / spacing;
+        else grad[idx] = (data[idx + step] - data[idx - step]) / (2 * spacing);
+      } else {
+        if (j === 0) grad[idx] = (-1.5 * data[idx] + 2 * data[idx + step] - 0.5 * data[idx + 2 * step]) / spacing;
+        else if (j === size - 1) grad[idx] = (0.5 * data[idx - 2 * step] - 2 * data[idx - step] + 1.5 * data[idx]) / spacing;
+        else grad[idx] = (data[idx + step] - data[idx - step]) / (2 * spacing);
+      }
     }
-  }
-  if (maxGrad > 0) {
-    for (let i = 0; i < grad.length; i++) grad[i] /= maxGrad;
   }
   return grad;
 };
 
-export const computeCurvatureMap = (data: Float32Array, width: number, height: number, minZ: number, maxZ: number): Float32Array => {
-  const curv = new Float32Array(data.length);
-  const range = maxZ - minZ || 1;
-  let maxCurv = 0;
+export const computeGradientMaps = (data: Float32Array, width: number, height: number, dx: number, dy: number) => {
+  const x = npGradient(data, width, height, dx, 'x');
+  const y = npGradient(data, width, height, -dy, 'y'); // Use -dy because rows are in descending Y order
+  return { x, y };
+};
 
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const n = (v: number) => (v - minZ) / range;
-
-      // Central differences for First Derivatives
-      // hx = (z(x+1, y) - z(x-1, y)) / 2
-      const hx = (n(data[idx + 1]) - n(data[idx - 1])) * 0.5;
-      const hy = (n(data[idx + width]) - n(data[idx - width])) * 0.5;
-
-      // Central differences for Second Derivatives
-      // hxx = z(x+1, y) - 2z(x, y) + z(x-1, y)
-      const hxx = n(data[idx + 1]) - 2 * n(data[idx]) + n(data[idx - 1]);
-      const hyy = n(data[idx + width]) - 2 * n(data[idx]) + n(data[idx - width]);
-      
-      // Mixed Partial Derivative
-      // hxy = (z(x+1, y+1) - z(x-1, y+1) - z(x+1, y-1) + z(x-1, y-1)) / 4
-      const hxy = (n(data[idx + width + 1]) - n(data[idx + width - 1]) - n(data[idx - width + 1]) + n(data[idx - width - 1])) * 0.25;
-
-      // Mean Curvature Formula
-      const num = (1 + hy * hy) * hxx - 2 * hx * hy * hxy + (1 + hx * hx) * hyy;
-      const den = 2 * Math.pow(1 + hx * hx + hy * hy, 1.5);
-      
-      const H = num / Math.max(1e-5, den); // Avoid div by zero
-      const mag = Math.abs(H);
-      
-      curv[idx] = mag;
-      if (mag > maxCurv) maxCurv = mag;
-    }
+export const computeCurvatureMaps = (data: Float32Array, width: number, height: number, dx: number, dy: number) => {
+  const gradX = npGradient(data, width, height, dx, 'x');
+  const gradY = npGradient(data, width, height, -dy, 'y');
+  
+  const curv2_x = npGradient(gradX, width, height, dx, 'x');
+  const curv2_y = npGradient(gradY, width, height, -dy, 'y');
+  
+  const x = new Float32Array(data.length);
+  const y = new Float32Array(data.length);
+  
+  for (let i = 0; i < data.length; i++) {
+    x[i] = curv2_x[i] / Math.pow(1.0 + gradX[i] * gradX[i], 1.5);
+    y[i] = curv2_y[i] / Math.pow(1.0 + gradY[i] * gradY[i], 1.5);
   }
+  
+  return { x, y };
+};
 
-  // Normalize to 0-1
-  if (maxCurv > 0) {
-    for (let i = 0; i < curv.length; i++) curv[i] /= maxCurv;
+// Keeping these for backward compatibility during transition if needed, 
+// but we will update callers to use the new Maps versions.
+export const computeGradientMap = (data: Float32Array, width: number, height: number, dx: number, dy: number): Float32Array => {
+  const { x, y } = computeGradientMaps(data, width, height, dx, dy);
+  const mag = new Float32Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    mag[i] = Math.sqrt(x[i] * x[i] + y[i] * y[i]);
   }
-  return curv;
+  return mag;
+};
+
+export const computeCurvatureMap = (data: Float32Array, width: number, height: number, dx: number, dy: number): Float32Array => {
+  const { x, y } = computeCurvatureMaps(data, width, height, dx, dy);
+  const mag = new Float32Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    mag[i] = (x[i] + y[i]) * 0.5; // Mean curvature approximation
+  }
+  return mag;
 };
 
 export const parseCSV = (text: string): GridData | null => {
@@ -115,8 +125,6 @@ export const parseCSV = (text: string): GridData | null => {
     const gy = yMap.get(p.y);
 
     if (gx !== undefined && gy !== undefined) {
-      // Invert Y axis for visual consistency if needed, but standard is typically bottom-left origin
-      // The original code used (h - 1) - gy which flips the Y axis
       const bufferRow = (h - 1) - gy;
       const idx = bufferRow * w + gx;
       grid[idx] = p.z;

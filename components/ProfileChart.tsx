@@ -654,7 +654,8 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 formatter: (params: any) => {
                     if (!params[0]) return '';
                     const p = params[0].data;
-                    return `坐标: (${p.realX.toFixed(2)}, ${p.realY.toFixed(2)})<br/>图表位置: ${p.value[0].toFixed(2)}<br/>Z高度: ${p.value[1].toFixed(4)}`;
+                    const label = activeLayer.type === 'gradient' ? '梯度' : (activeLayer.type === 'curvature' ? '曲率' : 'Z高度');
+                    return `坐标: (${p.realX.toFixed(2)}, ${p.realY.toFixed(2)})<br/>图表位置: ${p.value[0].toFixed(2)}<br/>${label}: ${p.value[1].toFixed(4)}`;
                 }
             },
             xAxis: { type: 'value', min: xMin, max: xMax, axisLabel: { formatter: (val: number) => val.toFixed(1) }, splitLine: { show: false } },

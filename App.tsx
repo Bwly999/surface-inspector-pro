@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers, Palette, Trash2, Save, History, Plus } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ColorPreset, ChartToolType, MeasurementState, ActiveLayer } from './types';
+import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ColorPreset, ChartToolType, MeasurementState, ActiveLayer, DirectionalMaps } from './types';
 import { THEME, MAP_OPTIONS } from './constants';
-import { generateData, parseCSV, computeGradientMap, computeCurvatureMap } from './utils/dataUtils';
+import { generateData, parseCSV, computeGradientMaps, computeCurvatureMaps } from './utils/dataUtils';
 import { getGradientCSS } from './utils/colorUtils';
 import ThreeDViewer from './components/ThreeDViewer';
 import ProfileChart from './components/ProfileChart';
@@ -26,8 +26,9 @@ export default function SurfaceInspector() {
     ys: defaultData.ys
   });
 
-  const [gradientMap, setGradientMap] = useState<Float32Array | null>(null);
-  const [curvatureMap, setCurvatureMap] = useState<Float32Array | null>(null);
+  const [gradientMaps, setGradientMaps] = useState<DirectionalMaps | null>(null);
+  const [curvatureMaps, setCurvatureMaps] = useState<DirectionalMaps | null>(null);
+  const [mapDirection, setMapDirection] = useState<'x' | 'y'>('x');
   const [loading, setLoading] = useState(false);
 
   // Configuration State
@@ -98,10 +99,12 @@ export default function SurfaceInspector() {
   useEffect(() => {
     if (!grid.data) return;
     const timer = setTimeout(() => {
-      const grad = computeGradientMap(grid.data, grid.w, grid.h, grid.minZ, grid.maxZ);
-      const curv = computeCurvatureMap(grid.data, grid.w, grid.h, grid.minZ, grid.maxZ);
-      setGradientMap(grad);
-      setCurvatureMap(curv);
+      const dx = (grid.xs && grid.xs.length > 1) ? (grid.xs[1] - grid.xs[0]) : 1.0;
+      const dy = (grid.ys && grid.ys.length > 1) ? (grid.ys[1] - grid.ys[0]) : 1.0;
+      const grads = computeGradientMaps(grid.data, grid.w, grid.h, dx, dy);
+      const curvs = computeCurvatureMaps(grid.data, grid.w, grid.h, dx, dy);
+      setGradientMaps(grads);
+      setCurvatureMaps(curvs);
     }, 10);
     return () => clearTimeout(timer);
   }, [grid]);
@@ -140,11 +143,26 @@ export default function SurfaceInspector() {
 
   // --- Derived State: Active Layer ---
   const activeLayer = useMemo<ActiveLayer>(() => {
-      if (viewMode === 'gradient' && gradientMap) {
-          return { data: gradientMap, min: 0, max: 1, type: 'gradient' };
+      if (viewMode === 'gradient' && gradientMaps) {
+          const data = gradientMaps[mapDirection];
+          if (!data) return { data: grid.data, min: colorSettings.min, max: colorSettings.max, type: 'height' };
+          const sorted = new Float32Array(data).sort();
+          // Use absolute max of 2%/98% to center at zero
+          const pMin = sorted[Math.floor(sorted.length * 0.02)] || 0;
+          const pMax = sorted[Math.floor(sorted.length * 0.98)] || 0;
+          const absMax = Math.max(Math.abs(pMin), Math.abs(pMax));
+          const limit = absMax || 0.1;
+          return { data, min: -limit, max: limit, type: 'gradient' };
       }
-      if (viewMode === 'curvature' && curvatureMap) {
-          return { data: curvatureMap, min: 0, max: 1, type: 'curvature' };
+      if (viewMode === 'curvature' && curvatureMaps) {
+          const data = curvatureMaps[mapDirection];
+          if (!data) return { data: grid.data, min: colorSettings.min, max: colorSettings.max, type: 'height' };
+          const sorted = new Float32Array(data).sort();
+          const pMin = sorted[Math.floor(sorted.length * 0.02)] || 0;
+          const pMax = sorted[Math.floor(sorted.length * 0.98)] || 0;
+          const absMax = Math.max(Math.abs(pMin), Math.abs(pMax));
+          const limit = absMax || 0.01;
+          return { data, min: -limit, max: limit, type: 'curvature' };
       }
       
       // Calculate active display range
@@ -152,7 +170,7 @@ export default function SurfaceInspector() {
       const max = colorSettings.mode === 'relative' ? relativeRange.max : colorSettings.max;
       
       return { data: grid.data, min, max, type: 'height' };
-  }, [viewMode, grid.data, gradientMap, curvatureMap, colorSettings.mode, colorSettings.min, colorSettings.max, relativeRange]);
+  }, [viewMode, mapDirection, grid.data, gradientMaps, curvatureMaps, colorSettings.mode, colorSettings.min, colorSettings.max, relativeRange]);
 
   // --- Handlers ---
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -666,6 +684,18 @@ export default function SurfaceInspector() {
               <button onClick={() => setViewMode('gradient')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'gradient' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'gradient' ? THEME.secondary : 'transparent' }}><Zap size={12} /> 梯度图</button>
               <button onClick={() => setViewMode('curvature')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'curvature' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'curvature' ? THEME.secondary : 'transparent' }}><Activity size={12} /> 曲率图</button>
             </div>
+            {(viewMode === 'gradient' || viewMode === 'curvature') && (
+              <div className="flex border-2 rounded-sm overflow-hidden animate-scale-in" style={{ borderColor: THEME.border }}>
+                <button 
+                  onClick={() => setMapDirection('x')} 
+                  className={`px-3 py-2 text-[10px] font-black transition-all ${mapDirection === 'x' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                >X 方向</button>
+                <button 
+                  onClick={() => setMapDirection('y')} 
+                  className={`px-3 py-2 text-[10px] font-black transition-all ${mapDirection === 'y' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                >Y 方向</button>
+              </div>
+            )}
           </div>
 
           {/* 2D Canvas Container */}
