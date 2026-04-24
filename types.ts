@@ -93,6 +93,13 @@ export interface MeasurementState {
   activeGroupId: string | null;
 }
 
+export interface MeasurementPreset {
+  id: string;
+  name: string;
+  measState: MeasurementState;
+  mode: ChartToolType;
+}
+
 export interface ActiveLayer {
   data: Float32Array;
   min: number;

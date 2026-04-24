@@ -48,7 +48,7 @@ export default function SurfaceInspector() {
   const [showColorConfig, setShowColorConfig] = useState(false);
   const [contrast, setContrast] = useState(1.0);
 
-  const [showHoverInfo, setShowHoverInfo] = useState(false);
+  const [showHoverInfo, setShowHoverInfo] = useState(true);
   const [showMarkerList, setShowMarkerList] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   

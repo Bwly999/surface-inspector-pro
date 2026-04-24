@@ -1,9 +1,10 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
-import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer } from '../types';
+import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer, MeasurementPreset } from '../types';
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
-import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const P2L_COLORS = [
     '#ff4d4f', // Red
@@ -15,6 +16,68 @@ const P2L_COLORS = [
     '#eb2f96', // Pink
     '#fa541c', // Orange
 ];
+
+/**
+ * Adapts a saved measurement state to current profile data by snapping points to closest grid coordinates.
+ */
+const adaptStateToCurrentData = (savedState: MeasurementState, currentData: any[]): MeasurementState => {
+    const adaptPoint = (pt: any) => {
+        if (!pt) return null;
+        let minD = Infinity;
+        let bestMatch = null;
+        for (const dataPt of currentData) {
+            const d = Math.abs(dataPt.gridX - pt.gridX) + Math.abs(dataPt.gridY - pt.gridY);
+            if (d < minD) {
+                minD = d;
+                bestMatch = dataPt;
+            }
+        }
+        if (bestMatch && minD <= 5) {
+            return { 
+                ...pt, 
+                x: bestMatch.x, 
+                y: bestMatch.y, 
+                gridX: bestMatch.gridX, 
+                gridY: bestMatch.gridY, 
+                realX: bestMatch.realX, 
+                realY: bestMatch.realY 
+            };
+        }
+        return pt;
+    };
+
+    const adaptedGroups = savedState.p2lGroups.map(group => {
+        const adaptedBaseLine = group.baseLine ? {
+            p1: adaptPoint(group.baseLine.p1) || group.baseLine.p1,
+            p2: adaptPoint(group.baseLine.p2) || group.baseLine.p2
+        } : null;
+
+        const adaptedPoints = group.points.map(pt => {
+            const adapted = adaptPoint(pt) || pt;
+            if (adaptedBaseLine) {
+                adapted.dist = pointToLineDistance(
+                    adapted.x, adapted.y,
+                    adaptedBaseLine.p1.x, adaptedBaseLine.p1.y,
+                    adaptedBaseLine.p2.x, adaptedBaseLine.p2.y
+                );
+            }
+            return adapted;
+        });
+
+        return {
+            ...group,
+            baseLine: adaptedBaseLine,
+            points: adaptedPoints
+        };
+    });
+
+    return {
+        ...savedState,
+        p1: adaptPoint(savedState.p1),
+        p2: adaptPoint(savedState.p2),
+        p2lGroups: adaptedGroups
+    };
+};
 
 interface ProfileChartProps {
     grid: GridData;
@@ -46,8 +109,112 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     const [showP2LPanel, setShowP2LPanel] = useState(false);
     const [hoveredP2LId, setHoveredP2LId] = useState<string | null>(null);
 
+    // Preset State & Handlers
+    const [presets, setPresets] = useLocalStorage<MeasurementPreset[]>('profile-presets', []);
+    const [showPresetPanel, setShowPresetPanel] = useState(false);
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [presetName, setPresetName] = useState('');
+    const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+    const skipResetRef = useRef(false);
+
+    const handleOpenSaveDialog = () => {
+        setPresetName(`预设 ${new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')}`);
+        setEditingPresetId(null);
+        setShowSaveDialog(true);
+    };
+
+    const handleOpenEditDialog = (preset: MeasurementPreset, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setPresetName(preset.name);
+        setEditingPresetId(preset.id);
+        setShowSaveDialog(true);
+    };
+
+    const handleSavePreset = () => {
+        if (!presetName.trim()) return;
+
+        if (editingPresetId) {
+            // Update existing preset
+            setPresets(prev => prev.map(p => {
+                if (p.id === editingPresetId) {
+                    return {
+                        ...p,
+                        name: presetName.trim(),
+                        measState: JSON.parse(JSON.stringify(measState)),
+                        mode: chartTool
+                    };
+                }
+                return p;
+            }));
+        } else {
+            // Create new preset
+            const newPreset: MeasurementPreset = {
+                id: `preset-${Date.now()}`,
+                name: presetName.trim(),
+                measState: JSON.parse(JSON.stringify(measState)), // Deep copy
+                mode: chartTool
+            };
+            setPresets(prev => [...prev, newPreset]);
+        }
+
+        setShowSaveDialog(false);
+        setPresetName('');
+        setEditingPresetId(null);
+    };
+
+    const handleLoadPreset = (preset: MeasurementPreset) => {
+        const adaptedState = adaptStateToCurrentData(preset.measState, rawData);
+        
+        // Use skipResetRef to prevent the useEffect from clearing the loaded state
+        skipResetRef.current = true;
+        
+        // 1. Switch tool mode
+        onSetChartTool(preset.mode);
+        
+        // 2. Load the adapted state
+        onSetMeasState(adaptedState);
+        setShowPresetPanel(false);
+    };
+
+    const handleDeletePreset = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setPresets(prev => prev.filter(p => p.id !== id));
+    };
+
+    const handleExportPresets = () => {
+        if (presets.length === 0) return alert('没有可导出的预设');
+        const blob = new Blob([JSON.stringify(presets, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `surface-presets-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleImportPresets = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const imported = JSON.parse(evt.target?.result as string);
+                if (Array.isArray(imported)) {
+                    setPresets(prev => [...prev, ...imported]);
+                }
+            } catch (err) {
+                alert('导入失败：文件格式不正确');
+            }
+        };
+        reader.readAsText(file);
+    };
+
     // Reset measurement when data/selection/tool changes
     useEffect(() => {
+        if (skipResetRef.current) {
+            skipResetRef.current = false;
+            return;
+        }
         onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
         onChartHover(null); // Clear hover on tool change
     }, [grid, boxSel, lineSel, tool, axis, chartTool, onChartHover, onSetMeasState]);
@@ -675,42 +842,23 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             )}
             {/* --- Chart Toolbar (Top Bar) --- */}
             <div className="flex items-center gap-1 p-1 bg-gray-50/80 border-b border-gray-100 shrink-0 z-20">
-                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Inspect Point">
+                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="点位检视 (Inspect Point)">
                     <MousePointer2 size={14} />
                  </button>
                  <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure Z Height">
+                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="测量Z轴高度 (Measure Z Height)">
                     <MoveVertical size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure XY Distance">
+                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="测量XY轴距离 (Measure XY Distance)">
                     <MoveHorizontal size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Measure Point to Line Normal">
+                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="点到线测量 (Measure Point to Line)">
                     <Slash size={14} />
                  </button>
                  
-                 {chartTool === 'measure_p2l' && (
-                     <button 
-                        onClick={() => setShowP2LPanel(!showP2LPanel)} 
-                        className={`p-1.5 rounded transition-colors ${showP2LPanel ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-200'}`}
-                        title="Toggle Measurement Panel"
-                     >
-                        <Layers size={14} />
-                     </button>
-                 )}
-                 
-                 {/* Reset for Measures */}
-                 {(chartTool !== 'inspect' && chartTool !== 'measure_p2l' && measState.step !== 'idle') && (
-                     <button 
-                        onClick={() => onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null })}
-                        className="ml-2 text-gray-500 hover:text-black hover:rotate-180 transition-transform duration-300" title="Reset All Measurements"
-                     >
-                        <RotateCcw size={14} />
-                     </button>
-                 )}
-
+                 {/* Reset Actions */}
                  {chartTool === 'measure_p2l' && measState.activeGroupId && (
-                     <button 
+                      <button 
                         onClick={() => {
                             onSetMeasState(prev => ({
                                 ...prev,
@@ -720,11 +868,97 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                 )
                             }));
                         }}
-                        className="ml-2 text-orange-500 hover:text-orange-700 hover:rotate-180 transition-transform duration-300" title="Reset Current Group"
+                        className="ml-1 text-orange-500 hover:text-orange-700 hover:rotate-180 transition-transform duration-300" title="清空当前测量组 (Reset Current Group)"
+                      >
+                         <Eraser size={14} />
+                      </button>
+                 )}
+
+                 {(chartTool !== 'inspect' && (measState.step !== 'idle' || measState.p1 || measState.p2 || (chartTool === 'measure_p2l' && measState.p2lGroups.length > 0))) && (
+                     <button 
+                        onClick={() => onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null })}
+                        className="ml-1 text-gray-400 hover:text-red-500 hover:rotate-180 transition-transform duration-300" title="清空所有测量 (Reset ALL)"
                      >
-                        <RotateCcw size={14} />
+                        <RefreshCw size={14} />
                      </button>
                  )}
+
+                 {chartTool === 'measure_p2l' && (
+                     <button 
+                        onClick={() => setShowP2LPanel(!showP2LPanel)} 
+                        className={`p-1.5 rounded transition-colors ${showP2LPanel ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-200'}`}
+                        title="测量面板 (Toggle Measurement Panel)"
+                     >
+                        <Layers size={14} />
+                     </button>
+                 )}
+
+                 <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                 {/* Preset Actions */}
+                 <div className="relative">
+                    <button 
+                        onClick={handleOpenSaveDialog}
+                        className={`p-1.5 rounded transition-colors ${showSaveDialog ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                        title="保存测量预设 (Save Preset)"
+                    >
+                        <Save size={14} />
+                    </button>
+
+                    {/* Custom Save Dialog (Attached to Button) */}
+                    {showSaveDialog && (
+                        <div className="absolute left-0 top-full mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] animate-slide-down flex flex-col overflow-hidden">
+                            <div className="bg-black text-white px-2.5 py-1.5 flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                    <Save size={12} className="text-orange-500" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">
+                                        {editingPresetId ? '编辑测量预设' : '保存测量预设'}
+                                    </span>
+                                </div>
+                                <button onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-white">
+                                    <X size={12} />
+                                </button>
+                            </div>
+                            <div className="p-3 flex flex-col gap-2.5">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-[9px] text-gray-400 uppercase font-bold">预设名称</label>
+                                    <input 
+                                        autoFocus
+                                        type="text" 
+                                        value={presetName}
+                                        onChange={(e) => setPresetName(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                                        placeholder="输入预设名称..."
+                                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200 transition-all"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-gray-100">
+                                    <button 
+                                        onClick={() => setShowSaveDialog(false)}
+                                        className="px-2 py-1 text-[9px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-tighter"
+                                    >
+                                        取消
+                                    </button>
+                                    <button 
+                                        onClick={handleSavePreset}
+                                        disabled={!presetName.trim()}
+                                        className="px-3 py-1.5 bg-orange-500 text-white text-[9px] font-bold rounded shadow-md hover:bg-orange-600 disabled:opacity-50 disabled:grayscale uppercase tracking-wider active:scale-95 transition-all"
+                                    >
+                                        {editingPresetId ? '确认更新' : '确认保存'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                 </div>
+
+                 <button 
+                    onClick={() => setShowPresetPanel(!showPresetPanel)}
+
+                    className={`p-1.5 rounded transition-colors ${showPresetPanel ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                    title="预设历史记录 (Preset History)"
+                 >
+                    <History size={14} />
+                 </button>
                  
                  <div className="flex-1"></div>
 
@@ -762,6 +996,74 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             </div>
             
             <div className="flex-1 relative w-full overflow-hidden">
+                {/* Preset Panel overlay */}
+                {showPresetPanel && (
+                    <div className="absolute left-2 top-2 bottom-2 w-64 bg-white/90 backdrop-blur-md border border-white/50 rounded-lg shadow-2xl z-50 flex flex-col overflow-hidden animate-slide-in-left">
+                        <div className="p-3 border-b border-black/5 flex items-center justify-between bg-orange-50/50">
+                            <div className="flex items-center gap-2">
+                                <History size={16} className="text-orange-500" />
+                                <span className="text-xs font-bold text-gray-700">测量点位预设</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <label className="p-1 text-gray-400 hover:bg-white rounded cursor-pointer" title="导入预设 (JSON)">
+                                    <Upload size={14} />
+                                    <input type="file" accept=".json" onChange={handleImportPresets} className="hidden" />
+                                </label>
+                                <button onClick={handleExportPresets} className="p-1 text-gray-400 hover:bg-white rounded" title="导出预设 (JSON)">
+                                    <Download size={14} />
+                                </button>
+                                <button onClick={() => setShowPresetPanel(false)} className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
+                            {presets.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-4">
+                                    <History size={32} className="mb-2 opacity-10" />
+                                    <p className="text-[10px]">暂无保存的预设</p>
+                                    <p className="text-[9px] mt-1 opacity-60">点击工具栏图标保存当前测量点</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    {presets.map(p => (
+                                        <div 
+                                            key={p.id}
+                                            onClick={() => handleLoadPreset(p)}
+                                            className="group flex flex-col p-2 bg-white/50 border border-gray-100 rounded hover:border-orange-300 hover:bg-white hover:shadow-md cursor-pointer transition-all"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[11px] font-bold text-gray-700 truncate flex-1">{p.name}</span>
+                                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button 
+                                                        onClick={(e) => handleOpenEditDialog(p, e)}
+                                                        className="p-1 text-gray-400 hover:text-blue-500"
+                                                        title="修改名称并更新状态"
+                                                    >
+                                                        <Edit2 size={12} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => handleDeletePreset(p.id, e)}
+                                                        className="p-1 text-gray-400 hover:text-red-500"
+                                                        title="删除"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="mt-1 flex items-center gap-2 text-[9px] text-gray-400">
+                                                <span>P2L组: {p.measState.p2lGroups.length}</span>
+                                                <span>•</span>
+                                                <span>2点测量: {p.measState.p1 && p.measState.p2 ? '已设置' : '未设置'}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+                
                 <div ref={chartContainerRef} className="w-full h-full" />
                 
                 {/* Add Marker Button (Overlay on Chart) */}

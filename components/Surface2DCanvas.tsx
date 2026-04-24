@@ -607,11 +607,12 @@ const Surface2DCanvas = ({
            
            <div className="w-px h-3 bg-gray-400 mx-1"></div>
 
-           <button 
+           <button
              onClick={onToggleCursor}
              className={`p-0.5 rounded ${showHoverInfo ? 'bg-black text-white' : 'hover:bg-gray-200 text-gray-600'}`}
-             title="Toggle Cursor Info"
+             title="光标信息 (Toggle Cursor Info)"
            >
+
              <Info size={12}/>
            </button>
 
