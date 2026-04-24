@@ -103,6 +103,17 @@ function steppedHsl(t: number, min: number, max: number, steps: number) {
   return hslToRgb(hue / 360, s, l);
 }
 
+export const getGradientCSS = (mapName: string): string => {
+  const steps = 10;
+  const colors = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const [r, g, b] = getColor(t, mapName, 0, 1);
+    colors.push(`rgb(${r},${g},${b})`);
+  }
+  return `linear-gradient(to right, ${colors.join(', ')})`;
+};
+
 export const getColor = (val: number, mapName = 'coolwarm', min = 0, max = 1): number[] => {
   const mapper = COLOR_MAPS[mapName] || COLOR_MAPS.coolwarm;
   return mapper(val, min, max).map(Math.floor);

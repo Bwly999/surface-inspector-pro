@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers } from 'lucide-react';
+import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers, Palette } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ChartToolType, MeasurementState, ActiveLayer } from './types';
 import { THEME, MAP_OPTIONS } from './constants';
 import { generateData, parseCSV, computeGradientMap, computeCurvatureMap } from './utils/dataUtils';
+import { getGradientCSS } from './utils/colorUtils';
 import ThreeDViewer from './components/ThreeDViewer';
 import ProfileChart from './components/ProfileChart';
 import Surface2DCanvas from './components/Surface2DCanvas';
@@ -46,6 +47,17 @@ export default function SurfaceInspector() {
   });
   
   const [showColorConfig, setShowColorConfig] = useState(false);
+  const [minStr, setMinStr] = useState(colorSettings.min.toString());
+  const [maxStr, setMaxStr] = useState(colorSettings.max.toString());
+  const isEditingMin = useRef(false);
+  const isEditingMax = useRef(false);
+
+  // Sync string states when colorSettings change from outside (e.g. storage or reset)
+  useEffect(() => {
+    if (!isEditingMin.current) setMinStr(colorSettings.min.toString());
+    if (!isEditingMax.current) setMaxStr(colorSettings.max.toString());
+  }, [colorSettings.min, colorSettings.max]);
+
   const [contrast, setContrast] = useState(1.0);
 
   const [showHoverInfo, setShowHoverInfo] = useState(true);
@@ -67,6 +79,7 @@ export default function SurfaceInspector() {
 
   const [boxSel, setBoxSel] = useState<SelectionBox>({ x: 50, y: 50, w: 100, h: 100 });
   const [lineSel, setLineSel] = useState<SelectionLine>({ s: { x: 0, y: 0 }, e: { x: 100, y: 100 } });
+  const [relativeRange, setRelativeRange] = useState<{min: number, max: number}>({ min: 0, max: 1 });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +117,22 @@ export default function SurfaceInspector() {
       }));
   }, [grid]); // grid dependency covers data change
 
+  // Calculate Percentile Range (2% - 98%) for better visualization
+  useEffect(() => {
+    if (!grid.data || grid.data.length === 0) return;
+    
+    // Sort to find percentiles (using a small sample if performance is an issue, 
+    // but for 300x300 it's fine)
+    const sorted = new Float32Array(grid.data).sort();
+    const minIdx = Math.floor(sorted.length * 0.02);
+    const maxIdx = Math.floor(sorted.length * 0.98);
+    
+    setRelativeRange({
+        min: sorted[minIdx] ?? grid.minZ,
+        max: sorted[maxIdx] ?? grid.maxZ
+    });
+  }, [grid.data, grid.minZ, grid.maxZ]);
+
   // --- Derived State: Active Layer ---
   const activeLayer = useMemo<ActiveLayer>(() => {
       if (viewMode === 'gradient' && gradientMap) {
@@ -112,8 +141,13 @@ export default function SurfaceInspector() {
       if (viewMode === 'curvature' && curvatureMap) {
           return { data: curvatureMap, min: 0, max: 1, type: 'curvature' };
       }
-      return { data: grid.data, min: grid.minZ, max: grid.maxZ, type: 'height' };
-  }, [viewMode, grid, gradientMap, curvatureMap]);
+      
+      // Calculate active display range
+      const min = colorSettings.mode === 'relative' ? relativeRange.min : colorSettings.min;
+      const max = colorSettings.mode === 'relative' ? relativeRange.max : colorSettings.max;
+      
+      return { data: grid.data, min, max, type: 'height' };
+  }, [viewMode, grid.data, gradientMap, curvatureMap, colorSettings.mode, colorSettings.min, colorSettings.max, relativeRange]);
 
   // --- Handlers ---
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,6 +295,11 @@ export default function SurfaceInspector() {
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
         .animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        
         .logo-glow { text-shadow: 0 0 20px rgba(255, 77, 0, 0.3); }
         
         button:active { transform: scale(0.95); }
@@ -367,84 +406,150 @@ export default function SurfaceInspector() {
             </div>
             
             <div className="flex items-center gap-1 relative">
-                <select 
-                    value={activeMap} 
-                    onChange={e => setActiveMap(e.target.value)} 
-                    className="px-2 py-2 border-2 text-xs font-bold bg-white focus:outline-none uppercase border-r-0 hover:bg-gray-50 transition-colors" 
-                    style={{ borderColor: THEME.border }}
-                >
-                    {MAP_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>色谱: {opt.label}</option>
-                    ))}
-                </select>
-                <button 
+                <button
                     onClick={() => setShowColorConfig(!showColorConfig)}
-                    className={`p-2 border-2 transition-all duration-200 active:scale-95 ${showColorConfig ? 'bg-gray-200 shadow-inner' : 'bg-white hover:bg-gray-100'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 border-2 transition-all duration-200 active:scale-95 group ${showColorConfig ? 'bg-gray-200 shadow-inner' : 'bg-white hover:bg-gray-50'}`}
                     style={{ borderColor: THEME.border }}
-                    title="Color Map Configuration"
+                    title="Color Scale & Range Settings"
                 >
-                    <Settings size={14} className={showColorConfig ? 'rotate-90 transition-transform duration-300' : 'transition-transform duration-300'} />
+                    <div className="relative">
+                        <Palette size={16} className={`text-orange-600 ${showColorConfig ? 'scale-110 rotate-12' : 'group-hover:rotate-12'} transition-transform`} />
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse border border-white" />
+                    </div>
+                    <div className="flex flex-col items-start leading-tight">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">色谱</span>
+                        <span className="text-[11px] font-bold truncate max-w-[80px]">
+                            {MAP_OPTIONS.find(o => o.value === activeMap)?.label}
+                        </span>
+                    </div>
+                    <div 
+                        className="w-10 h-3 border border-black/20 ml-1 rounded-[1px] shadow-sm overflow-hidden"
+                        style={{ background: getGradientCSS(activeMap) }}
+                    />
+                    <Settings size={12} className={`ml-1 text-gray-400 ${showColorConfig ? 'rotate-90 text-orange-600' : ''} transition-all duration-300`} />
                 </button>
 
                 {/* Color Configuration Popover */}
                 {showColorConfig && (
-                    <div className="absolute top-full left-0 mt-2 bg-white border-2 border-black p-4 shadow-xl z-50 w-64 animate-scale-in origin-top-left">
-                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
-                             <span className="font-bold text-xs flex items-center gap-2"><Settings size={12}/> 色谱范围设置</span>
-                             <button onClick={() => setShowColorConfig(false)} className="text-red-500 font-bold hover:scale-110 transition-transform">X</button>
+                    <div className="absolute top-full left-0 mt-2 bg-white border-2 border-black p-4 shadow-xl z-50 w-72 animate-scale-in origin-top-left">
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-black">
+                             <span className="font-black text-[11px] flex items-center gap-2 uppercase tracking-widest">
+                                 <Palette size={14} className="text-orange-600"/> 色谱与范围设置
+                             </span>
+                             <button onClick={() => setShowColorConfig(false)} className="bg-black text-white px-1 text-[10px] font-black hover:bg-orange-600 transition-colors">CLOSE</button>
                         </div>
-                        
-                        <div className="space-y-3">
+
+                        <div className="space-y-4">
+                             {/* Map Selection Grid */}
                              <div>
-                                 <label className="text-[10px] font-bold text-gray-500 mb-1 block">范围模式</label>
-                                 <div className="flex border border-gray-300 rounded overflow-hidden">
+                                 <label className="text-[10px] font-black text-gray-500 mb-2 block uppercase tracking-tighter">选择色谱方案</label>
+                                 <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                     {MAP_OPTIONS.map(opt => (
+                                         <button
+                                            key={opt.value}
+                                            onClick={() => setActiveMap(opt.value)}
+                                            className={`flex items-center gap-2 p-1.5 border-2 transition-all ${activeMap === opt.value ? 'border-orange-500 bg-orange-50' : 'border-transparent hover:bg-gray-100'}`}
+                                         >
+                                             <div 
+                                                className="w-16 h-4 border border-black/10 rounded-sm"
+                                                style={{ background: getGradientCSS(opt.value) }}
+                                             />
+                                             <span className={`text-[10px] font-bold ${activeMap === opt.value ? 'text-orange-700' : 'text-gray-700'}`}>
+                                                 {opt.label}
+                                             </span>
+                                             {activeMap === opt.value && <div className="ml-auto w-2 h-2 bg-orange-500 rounded-full" />}
+                                         </button>
+                                     ))}
+                                 </div>
+                             </div>
+
+                             <div className="h-px bg-gray-200" />
+
+                             <div>
+                                 <label className="text-[10px] font-black text-gray-500 mb-2 block uppercase tracking-tighter">范围模式</label>
+                             <div className="flex border-2 border-black rounded-sm overflow-hidden p-0.5 bg-gray-100">
                                      <button 
                                         onClick={() => setColorSettings(s => ({...s, mode: 'relative'}))}
-                                        className={`flex-1 py-1 text-[10px] font-bold transition-colors ${colorSettings.mode === 'relative' ? 'bg-blue-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'relative' ? 'bg-black text-white shadow-lg' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
                                      >
-                                        相对
+                                        相对模式
                                      </button>
                                      <button 
                                         onClick={() => setColorSettings(s => ({...s, mode: 'absolute'}))}
-                                        className={`flex-1 py-1 text-[10px] font-bold transition-colors ${colorSettings.mode === 'absolute' ? 'bg-blue-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'absolute' ? 'bg-black text-white shadow-lg' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
                                      >
-                                        绝对
+                                        绝对模式
                                      </button>
+                                 </div>
+                                 <div className="mt-2 px-2 py-1 bg-gray-50 border border-gray-200 rounded-sm flex justify-between items-center">
+                                     <span className="text-[9px] font-bold text-gray-400">当前范围 (2%-98%):</span>
+                                     <span className="text-[10px] font-black text-black mono">
+                                         {relativeRange.min.toFixed(3)} ~ {relativeRange.max.toFixed(3)}
+                                     </span>
                                  </div>
                              </div>
 
                              {colorSettings.mode === 'absolute' && (
-                                 <div className="grid grid-cols-2 gap-2 animate-fade-in">
+                                 <div className="grid grid-cols-2 gap-3 animate-slide-down">
                                      <div>
-                                         <label className="text-[10px] font-bold text-gray-500 mb-1 block">最小 Z</label>
-                                         <input 
-                                             type="number" step="0.1"
-                                             value={colorSettings.min}
-                                             onChange={e => setColorSettings(s => ({...s, min: parseFloat(e.target.value)}))}
-                                             className="w-full border border-gray-300 p-1 text-xs focus:border-blue-500 outline-none transition-colors"
-                                         />
+                                         <label className="text-[10px] font-black text-gray-400 mb-1 block uppercase">MIN Z</label>
+                                         <div className="relative group">
+                                            <input 
+                                                type="number"
+                                                step="0.1"
+                                                value={minStr}
+                                                onFocus={() => { isEditingMin.current = true; }}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setMinStr(val);
+                                                    const num = parseFloat(val);
+                                                    if (!isNaN(num)) {
+                                                        setColorSettings(s => ({...s, min: num}));
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    isEditingMin.current = false;
+                                                    setMinStr(colorSettings.min.toString());
+                                                }}
+                                                className="w-full border-2 border-gray-200 p-2 text-xs font-bold focus:border-black focus:bg-orange-50 outline-none transition-all pr-1"
+                                            />
+                                         </div>
                                      </div>
                                      <div>
-                                         <label className="text-[10px] font-bold text-gray-500 mb-1 block">最大 Z</label>
-                                         <input 
-                                             type="number" step="0.1"
-                                             value={colorSettings.max}
-                                             onChange={e => setColorSettings(s => ({...s, max: parseFloat(e.target.value)}))}
-                                             className="w-full border border-gray-300 p-1 text-xs focus:border-blue-500 outline-none transition-colors"
-                                         />
+                                         <label className="text-[10px] font-black text-gray-400 mb-1 block uppercase">MAX Z</label>
+                                         <div className="relative group">
+                                            <input 
+                                                type="number"
+                                                step="0.1"
+                                                value={maxStr}
+                                                onFocus={() => { isEditingMax.current = true; }}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setMaxStr(val);
+                                                    const num = parseFloat(val);
+                                                    if (!isNaN(num)) {
+                                                        setColorSettings(s => ({...s, max: num}));
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    isEditingMax.current = false;
+                                                    setMaxStr(colorSettings.max.toString());
+                                                }}
+                                                className="w-full border-2 border-gray-200 p-2 text-xs font-bold focus:border-black focus:bg-orange-50 outline-none transition-all pr-1"
+                                            />
+                                         </div>
                                      </div>
                                  </div>
                              )}
-                             <div className="text-[10px] text-gray-400 italic pt-1">
+                             <div className="text-[9px] text-gray-400 font-medium italic border-l-2 border-orange-500 pl-2 py-1 bg-orange-50/30">
                                 {colorSettings.mode === 'relative' 
-                                  ? "颜色范围适应当前数据的最小/最大值。" 
-                                  : "颜色固定在指定的 Z 值范围内。"}
+                                  ? "颜色范围将根据当前数据自动调整。" 
+                                  : "颜色范围固定在用户定义的 Z 轴阈值。"}
                              </div>
                         </div>
                     </div>
                 )}
             </div>
-
             <div className="w-px bg-gray-300 mx-2" />
             <div className="flex border-2 rounded-sm overflow-hidden" style={{ borderColor: THEME.border }}>
               <button onClick={() => setViewMode('height')} className={`px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'height' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'height' ? THEME.secondary : 'transparent' }}>高度图</button>
