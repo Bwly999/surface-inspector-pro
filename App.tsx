@@ -63,7 +63,7 @@ export default function SurfaceInspector() {
   const [hoverMarker, setHoverMarker] = useState<{gridX: number, gridY: number, z: number} | null>(null);
 
   // Measurement State (Lifted from ProfileChart)
-  const [measState, setMeasState] = useState<MeasurementState>({ step: 'idle', p1: null, p2: null, baseLine: null, points: [] });
+  const [measState, setMeasState] = useState<MeasurementState>({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
 
   const [boxSel, setBoxSel] = useState<SelectionBox>({ x: 50, y: 50, w: 100, h: 100 });
   const [lineSel, setLineSel] = useState<SelectionLine>({ s: { x: 0, y: 0 }, e: { x: 100, y: 100 } });
@@ -131,7 +131,7 @@ export default function SurfaceInspector() {
             setTransform({ k: Math.min(500 / res.w, 500 / res.h), x: 0, y: 0 });
             setTempMarker(null);
             setHoverMarker(null);
-            setMeasState({ step: 'idle', p1: null, p2: null, baseLine: null, points: [] });
+            setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
           }
         }
         setLoading(false);
@@ -160,7 +160,7 @@ export default function SurfaceInspector() {
       setTransform({ k: Math.min(500 / newGrid.w, 500 / newGrid.h), x: 0, y: 0 });
       setTempMarker(null);
       setHoverMarker(null);
-      setMeasState({ step: 'idle', p1: null, p2: null, baseLine: null, points: [] });
+      setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
       setShowConverter(false);
   };
 

@@ -3,7 +3,18 @@ import * as echarts from 'echarts';
 import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer } from '../types';
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
-import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info } from 'lucide-react';
+import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+
+const P2L_COLORS = [
+    '#ff4d4f', // Red
+    '#1890ff', // Blue
+    '#52c41a', // Green
+    '#faad14', // Gold
+    '#722ed1', // Purple
+    '#13c2c2', // Cyan
+    '#eb2f96', // Pink
+    '#fa541c', // Orange
+];
 
 interface ProfileChartProps {
     grid: GridData;
@@ -31,10 +42,13 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartInstanceRef = useRef<echarts.ECharts | null>(null);
     const [showTip, setShowTip] = useState(false);
+    const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+    const [showP2LPanel, setShowP2LPanel] = useState(false);
+    const [hoveredP2LId, setHoveredP2LId] = useState<string | null>(null);
 
     // Reset measurement when data/selection/tool changes
     useEffect(() => {
-        onSetMeasState({ step: 'idle', p1: null, p2: null, baseLine: null, points: [] });
+        onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
         onChartHover(null); // Clear hover on tool change
     }, [grid, boxSel, lineSel, tool, axis, chartTool, onChartHover, onSetMeasState]);
 
@@ -111,6 +125,12 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         return pts;
     }, [grid, boxSel, lineSel, tool, activeLayer, axis]);
 
+    // Use Refs to avoid stale closures in ECharts event listeners
+    const measStateRef = useRef(measState);
+    const chartToolRef = useRef(chartTool);
+    useEffect(() => { measStateRef.current = measState; }, [measState]);
+    useEffect(() => { chartToolRef.current = chartTool; }, [chartTool]);
+
     // 2. Chart Render Logic
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -139,36 +159,79 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                     const snappedPoint = findClosestPoint(clickX);
                     if (!snappedPoint) return;
 
-                    if (chartTool === 'inspect') {
+                    const currentTool = chartToolRef.current;
+
+                    if (currentTool === 'inspect') {
                          onChartClick({ gridX: snappedPoint.gridX, gridY: snappedPoint.gridY, z: snappedPoint.y });
                     } 
-                    else if (chartTool === 'measure_p2l') {
-                        // Point-to-Line (Multi-point distance)
+                    else if (currentTool === 'measure_p2l') {
+                        // Point-to-Line (Multi-group distance)
                         onSetMeasState(prev => {
-                            if (prev.step === 'idle') {
-                                return { ...prev, step: 'p1', baseLine: { p1: snappedPoint, p2: snappedPoint } };
-                            } else if (prev.step === 'p1') {
-                                return { ...prev, step: 'complete', baseLine: { p1: prev.baseLine!.p1, p2: snappedPoint } }; 
-                            } else if (prev.step === 'complete') {
-                                // Add more measure points
-                                if (!prev.baseLine) return prev;
+                            let groups = [...prev.p2lGroups];
+                            let activeId = prev.activeGroupId;
+                            
+                            // 1. If no active group or current active is not suitable, create one and set P1 immediately
+                            let groupIdx = activeId ? groups.findIndex(g => g.id === activeId) : -1;
+                            
+                            if (groupIdx === -1) {
+                                const newId = `group-${Date.now()}`;
+                                const newGroup = {
+                                    id: newId,
+                                    name: `基准线 ${groups.length + 1}`,
+                                    color: P2L_COLORS[groups.length % P2L_COLORS.length],
+                                    visible: true,
+                                    baseLine: { p1: snappedPoint, p2: snappedPoint }, // Set P1 immediately
+                                    points: []
+                                };
+                                return { 
+                                    ...prev, 
+                                    step: 'p1', 
+                                    p2lGroups: [...groups, newGroup],
+                                    activeGroupId: newId
+                                };
+                            }
+
+                            const group = groups[groupIdx];
+
+                            // 2. Handle baseline drawing or point measurement
+                            if (!group.baseLine) {
+                                // Case: Group exists but baseline not started (e.g. after "New Baseline" click)
+                                const updatedGroup = { ...group, baseLine: { p1: snappedPoint, p2: snappedPoint } };
+                                groups[groupIdx] = updatedGroup;
+                                return { ...prev, step: 'p1', p2lGroups: groups };
+                            } else if (group.baseLine.p1.x === group.baseLine.p2.x && group.baseLine.p1.y === group.baseLine.p2.y) {
+                                // Case: Baseline has P1, now setting P2
+                                const updatedGroup = { ...group, baseLine: { p1: group.baseLine.p1, p2: snappedPoint } };
+                                groups[groupIdx] = updatedGroup;
+                                return { ...prev, step: 'complete', p2lGroups: groups };
+                            } else {
+                                // Case: Baseline is complete, add measure points
                                 const dist = pointToLineDistance(
                                     snappedPoint.x, snappedPoint.y, 
-                                    prev.baseLine.p1.x, prev.baseLine.p1.y,
-                                    prev.baseLine.p2.x, prev.baseLine.p2.y
+                                    group.baseLine.p1.x, group.baseLine.p1.y,
+                                    group.baseLine.p2.x, group.baseLine.p2.y
                                 );
-                                return { ...prev, points: [...prev.points, { x: snappedPoint.x, y: snappedPoint.y, dist, gridX: snappedPoint.gridX, gridY: snappedPoint.gridY }] };
+                                const newPoint = { 
+                                    id: `pt-${Date.now()}`,
+                                    x: snappedPoint.x, 
+                                    y: snappedPoint.y, 
+                                    dist, 
+                                    gridX: snappedPoint.gridX, 
+                                    gridY: snappedPoint.gridY 
+                                };
+                                const updatedGroup = { ...group, points: [...group.points, newPoint] };
+                                groups[groupIdx] = updatedGroup;
+                                return { ...prev, p2lGroups: groups };
                             }
-                            return prev;
                         });
                     }
-                    else if (chartTool === 'measure_z' || chartTool === 'measure_xy') {
+                    else if (currentTool === 'measure_z' || currentTool === 'measure_xy') {
                         // Two-Point Measurements
                         onSetMeasState(prev => {
                             if (prev.step === 'idle') return { ...prev, step: 'p1', p1: snappedPoint };
                             if (prev.step === 'p1') return { ...prev, step: 'complete', p2: snappedPoint };
                             // If complete, restart
-                            return { step: 'p1', p1: snappedPoint, p2: null, baseLine: null, points: [] };
+                            return { step: 'p1', p1: snappedPoint, p2: null, p2lGroups: [], activeGroupId: null };
                         });
                     }
                 }
@@ -181,18 +244,52 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 const pointInGrid = chartInstanceRef.current.convertFromPixel({ seriesIndex: 0 }, [params.offsetX, params.offsetY]);
                 if (pointInGrid) {
                     const clickX = pointInGrid[0];
+                    const clickY = pointInGrid[1];
                     const snappedPoint = findClosestPoint(clickX);
                     if (snappedPoint) {
                         onChartHover({ gridX: snappedPoint.gridX, gridY: snappedPoint.gridY, z: snappedPoint.y });
                     }
+
+                    // P2L Hover Detection (High Precision Pixel-based)
+                    const currentTool = chartToolRef.current;
+                    const currentMeasState = measStateRef.current;
+
+                    if (currentTool === 'measure_p2l') {
+                        let nearestId: string | null = null;
+                        let minPixelDist = Infinity;
+                        const pixelThreshold = 15; // Hit area in pixels
+
+                        for (const group of currentMeasState.p2lGroups) {
+                            if (!group.visible) continue;
+                            for (const pt of group.points) {
+                                // Convert data point to screen pixels
+                                const ptPixel = chartInstanceRef.current.convertToPixel({ seriesIndex: 0 }, [pt.x, pt.y]);
+                                if (!ptPixel) continue;
+
+                                const dx = params.offsetX - ptPixel[0];
+                                const dy = params.offsetY - ptPixel[1];
+                                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                                if (dist < pixelThreshold && dist < minPixelDist) {
+                                    minPixelDist = dist;
+                                    nearestId = pt.id;
+                                }
+                            }
+                        }
+                        setHoveredP2LId(nearestId);
+                    } else {
+                        setHoveredP2LId(null);
+                    }
                 } else {
                     onChartHover(null);
+                    setHoveredP2LId(null);
                 }
             });
             
             // Mouse Leave
             zr.on('globalout', () => {
                 onChartHover(null);
+                setHoveredP2LId(null);
             });
         }
         
@@ -253,32 +350,92 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
              }
         }
 
-        // 2. Measurement: Point-to-Line (Multi)
+        // 2. Measurement: Point-to-Line (Multi-Group)
         if (chartTool === 'measure_p2l') {
-             if (measState.baseLine) {
-                 markPointData.push({ coord: [measState.baseLine.p1.x, measState.baseLine.p1.y], itemStyle: { color: THEME.accent }, label: { show: false } });
-                 if (measState.step !== 'p1') {
-                    markPointData.push({ coord: [measState.baseLine.p2.x, measState.baseLine.p2.y], itemStyle: { color: THEME.accent }, label: { show: false } });
-                    // Draw Baseline
-                    markLineData.push([{ coord: [measState.baseLine.p1.x, measState.baseLine.p1.y], lineStyle: { color: THEME.accent, type: 'dashed' } }, { coord: [measState.baseLine.p2.x, measState.baseLine.p2.y] }]);
+             const activeP2LItems: any[] = [];
+             const hoveredP2LItems: any[] = [];
+
+             measState.p2lGroups.forEach(group => {
+                 if (!group.visible) return;
+
+                 if (group.baseLine) {
+                     markPointData.push({ coord: [group.baseLine.p1.x, group.baseLine.p1.y], itemStyle: { color: group.color }, label: { show: false } });
+                     if (group.baseLine.p1 !== group.baseLine.p2) {
+                        markPointData.push({ coord: [group.baseLine.p2.x, group.baseLine.p2.y], itemStyle: { color: group.color }, label: { show: false } });
+                        // Draw Baseline
+                        markLineData.push([{ 
+                            coord: [group.baseLine.p1.x, group.baseLine.p1.y], 
+                            lineStyle: { color: group.color, type: 'dashed', width: group.id === measState.activeGroupId ? 2 : 1, opacity: 0.8 } 
+                        }, { 
+                            coord: [group.baseLine.p2.x, group.baseLine.p2.y] 
+                        }]);
+                     }
                  }
-             }
-             // Draw Distance Lines
-             measState.points.forEach(pt => {
-                  markPointData.push({ coord: [pt.x, pt.y], itemStyle: { color: THEME.measure }, label: { show: false } });
-                  if (measState.baseLine) {
-                      const { p1, p2 } = measState.baseLine;
-                      const vP1 = { x: p1.x * scaleX, y: p1.y * scaleY };
-                      const vP2 = { x: p2.x * scaleX, y: p2.y * scaleY };
-                      const vPt = { x: pt.x * scaleX, y: pt.y * scaleY };
-                      const vProj = projectPointOntoLine(vPt.x, vPt.y, vP1.x, vP1.y, vP2.x, vP2.y);
-                      const projData = { x: vProj.x / scaleX, y: vProj.y / scaleY };
-                      markLineData.push([
-                        { coord: [pt.x, pt.y], lineStyle: { color: THEME.measure }, label: { show: true, position: 'end', formatter: `H: ${pt.dist.toFixed(4)}`, color: '#fff', backgroundColor: THEME.measure, padding: [2,4], borderRadius: 3 } },
-                        { coord: [projData.x, projData.y] }
-                      ]);
-                  }
+
+                 // Draw Distance Lines for this group
+                 group.points.forEach(pt => {
+                      const isHovered = pt.id === hoveredP2LId;
+                      markPointData.push({ 
+                          coord: [pt.x, pt.y], 
+                          itemStyle: { 
+                              color: group.color, 
+                              borderColor: isHovered ? '#fff' : 'transparent',
+                              borderWidth: isHovered ? 2 : 0,
+                              shadowBlur: isHovered ? 10 : 0,
+                              shadowColor: group.color
+                          }, 
+                          label: { show: false },
+                          symbolSize: isHovered ? 12 : 10,
+                          z: isHovered ? 100 : 10
+                      });
+                      
+                      if (group.baseLine && group.baseLine.p1 !== group.baseLine.p2) {
+                          const { p1, p2 } = group.baseLine;
+                          const vP1 = { x: p1.x * scaleX, y: p1.y * scaleY };
+                          const vP2 = { x: p2.x * scaleX, y: p2.y * scaleY };
+                          const vPt = { x: pt.x * scaleX, y: pt.y * scaleY };
+                          const vProj = projectPointOntoLine(vPt.x, vPt.y, vP1.x, vP1.y, vP2.x, vP2.y);
+                          const projData = { x: vProj.x / scaleX, y: vProj.y / scaleY };
+                          
+                          const item = [
+                            { 
+                                coord: [pt.x, pt.y], 
+                                lineStyle: { 
+                                    color: group.color, 
+                                    opacity: isHovered ? 1 : 0.9, 
+                                    width: isHovered ? 2.5 : 1.5,
+                                    shadowBlur: isHovered ? 5 : 0,
+                                    shadowColor: group.color
+                                }, 
+                                label: { 
+                                    show: true, 
+                                    position: 'end', 
+                                    formatter: `${pt.dist.toFixed(4)}`, 
+                                    color: '#fff', 
+                                    backgroundColor: isHovered ? '#000' : group.color, // Hovered one gets black background for max contrast
+                                    borderColor: isHovered ? group.color : 'transparent',
+                                    borderWidth: isHovered ? 1 : 0,
+                                    padding: isHovered ? [4, 8] : [3, 6], 
+                                    borderRadius: 4,
+                                    fontSize: isHovered ? 13 : 11,
+                                    fontWeight: 'bold',
+                                    distance: isHovered ? 15 : 10,
+                                    shadowBlur: isHovered ? 10 : 4,
+                                    shadowColor: isHovered ? group.color : 'rgba(0,0,0,0.3)',
+                                    z: isHovered ? 1000 : 100
+                                } 
+                            },
+                            { coord: [projData.x, projData.y] }
+                          ];
+
+                          if (isHovered) hoveredP2LItems.push(item);
+                          else activeP2LItems.push(item);
+                      }
+                 });
              });
+             // Push normal items first, then hovered items so they draw on top
+             markLineData.push(...activeP2LItems);
+             markLineData.push(...hoveredP2LItems);
         }
 
         // 3. Measurement: Z-Height (2 Points)
@@ -349,11 +506,173 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         ro.observe(chartContainerRef.current!);
         return () => { ro.disconnect(); chart.dispose(); chartInstanceRef.current = null; };
 
-    }, [rawData, measState, chartTool, grid, tempMarker, onSetMeasState, onChartHover, onChartClick]);
+    }, [rawData, measState, chartTool, grid, tempMarker, onSetMeasState, onChartHover, onChartClick, hoveredP2LId]);
+
+    // Auto-show panel when tool is selected for the first time
+    useEffect(() => {
+        if (chartTool === 'measure_p2l' && measState.p2lGroups.length > 0) {
+            setShowP2LPanel(true);
+        }
+    }, [chartTool]);
+
+    const toggleGroupExpand = (id: string) => {
+        setExpandedGroups(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleCreateNewP2L = () => {
+        onSetMeasState(prev => {
+            const newId = `group-${Date.now()}`;
+            const newGroup = {
+                id: newId,
+                name: `基准线 ${prev.p2lGroups.length + 1}`,
+                color: P2L_COLORS[prev.p2lGroups.length % P2L_COLORS.length],
+                visible: true,
+                baseLine: null,
+                points: []
+            };
+            return {
+                ...prev,
+                step: 'p1',
+                p2lGroups: [...prev.p2lGroups, newGroup],
+                activeGroupId: newId
+            };
+        });
+    };
+
+    const handleDeleteP2LGroup = (id: string) => {
+        onSetMeasState(prev => {
+            const groups = prev.p2lGroups.filter(g => g.id !== id);
+            return {
+                ...prev,
+                p2lGroups: groups,
+                activeGroupId: prev.activeGroupId === id ? (groups.length > 0 ? groups[groups.length - 1].id : null) : prev.activeGroupId
+            };
+        });
+    };
+
+    const toggleP2LGroupVisibility = (id: string) => {
+        onSetMeasState(prev => ({
+            ...prev,
+            p2lGroups: prev.p2lGroups.map(g => g.id === id ? { ...g, visible: !g.visible } : g)
+        }));
+    };
+
+    const handleDeleteP2LPoint = (groupId: string, pointId: string) => {
+        onSetMeasState(prev => ({
+            ...prev,
+            p2lGroups: prev.p2lGroups.map(g => g.id === groupId ? { ...g, points: g.points.filter(p => p.id !== pointId) } : g)
+        }));
+    };
 
     return (
         <div className="w-full h-full flex flex-col relative group">
             
+            {/* P2L Multi-Group Panel */}
+            {chartTool === 'measure_p2l' && showP2LPanel && (
+                <div className="absolute right-2 top-12 bottom-2 w-56 bg-white/70 backdrop-blur-md border border-white/50 rounded shadow-2xl z-40 flex flex-col overflow-hidden animate-slide-in-right">
+                    <div className="p-2 border-b border-black/5 flex items-center justify-between bg-black/5">
+                        <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">P2L 测量组</span>
+                        <div className="flex items-center gap-1">
+                            <button 
+                                onClick={handleCreateNewP2L}
+                                className="p-1 text-blue-600 hover:bg-white/50 rounded transition-colors"
+                                title="新建基准线"
+                            >
+                                <Plus size={14} />
+                            </button>
+                            <button 
+                                onClick={() => setShowP2LPanel(false)}
+                                className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded transition-colors"
+                            >
+                                <Plus size={14} className="rotate-45" />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
+                        {measState.p2lGroups.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+                                <Slash size={24} className="mb-2 opacity-20" />
+                                <p className="text-[10px]">点击图表开始绘制<br/>第一条基准线</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-1">
+                                {measState.p2lGroups.map(group => (
+                                    <div 
+                                        key={group.id} 
+                                        className={`rounded border transition-all ${
+                                            measState.activeGroupId === group.id 
+                                                ? 'border-blue-400 ring-1 ring-blue-100 bg-white' 
+                                                : 'border-gray-100 bg-gray-50/30'
+                                        }`}
+                                    >
+                                        <div className="flex items-center p-1.5 gap-2">
+                                            <button 
+                                                onClick={() => onSetMeasState(prev => ({ ...prev, activeGroupId: group.id }))}
+                                                className="flex-1 flex items-center gap-2 text-left"
+                                            >
+                                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: group.color }}></div>
+                                                <span className={`text-[11px] truncate ${measState.activeGroupId === group.id ? 'font-bold text-black' : 'text-gray-600'}`}>
+                                                    {group.name}
+                                                </span>
+                                            </button>
+                                            
+                                            <button 
+                                                onClick={() => toggleP2LGroupVisibility(group.id)}
+                                                className={`p-1 rounded hover:bg-gray-100 ${group.visible ? 'text-blue-500' : 'text-gray-300'}`}
+                                            >
+                                                {group.visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                            </button>
+                                            
+                                            <button 
+                                                onClick={() => handleDeleteP2LGroup(group.id)}
+                                                className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+
+                                            <button 
+                                                onClick={() => toggleGroupExpand(group.id)}
+                                                className="p-1 rounded hover:bg-gray-100 text-gray-400"
+                                            >
+                                                {expandedGroups[group.id] ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                            </button>
+                                        </div>
+
+                                        {expandedGroups[group.id] && (
+                                            <div className="px-1.5 pb-1.5 pt-0 border-t border-gray-50">
+                                                <div className="text-[9px] text-gray-400 mb-1 flex justify-between">
+                                                    <span>点列表 ({group.points.length})</span>
+                                                    <span>距离(um)</span>
+                                                </div>
+                                                {group.points.length === 0 ? (
+                                                    <div className="text-[9px] text-gray-300 italic py-1 text-center">无测量点</div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        {group.points.map(pt => (
+                                                            <div key={pt.id} className="flex items-center justify-between text-[10px] group/item py-0.5 px-1 hover:bg-gray-100 rounded">
+                                                                <span className="text-gray-500">#{pt.id.slice(-3)}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-mono font-medium">{pt.dist.toFixed(4)}</span>
+                                                                    <button 
+                                                                        onClick={() => handleDeleteP2LPoint(group.id, pt.id)}
+                                                                        className="opacity-0 group-hover/item:opacity-100 text-gray-400 hover:text-red-500"
+                                                                    >
+                                                                        <Trash2 size={10} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
             {/* --- Chart Toolbar (Top Bar) --- */}
             <div className="flex items-center gap-1 p-1 bg-gray-50/80 border-b border-gray-100 shrink-0 z-20">
                  <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="Inspect Point">
@@ -370,11 +689,38 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                     <Slash size={14} />
                  </button>
                  
-                 {/* Reset for Measures */}
-                 {chartTool !== 'inspect' && measState.step !== 'idle' && (
+                 {chartTool === 'measure_p2l' && (
                      <button 
-                        onClick={() => onSetMeasState({ step: 'idle', p1: null, p2: null, baseLine: null, points: [] })}
-                        className="ml-2 text-gray-500 hover:text-black hover:rotate-180 transition-transform duration-300" title="Reset Measurement"
+                        onClick={() => setShowP2LPanel(!showP2LPanel)} 
+                        className={`p-1.5 rounded transition-colors ${showP2LPanel ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-200'}`}
+                        title="Toggle Measurement Panel"
+                     >
+                        <Layers size={14} />
+                     </button>
+                 )}
+                 
+                 {/* Reset for Measures */}
+                 {(chartTool !== 'inspect' && chartTool !== 'measure_p2l' && measState.step !== 'idle') && (
+                     <button 
+                        onClick={() => onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null })}
+                        className="ml-2 text-gray-500 hover:text-black hover:rotate-180 transition-transform duration-300" title="Reset All Measurements"
+                     >
+                        <RotateCcw size={14} />
+                     </button>
+                 )}
+
+                 {chartTool === 'measure_p2l' && measState.activeGroupId && (
+                     <button 
+                        onClick={() => {
+                            onSetMeasState(prev => ({
+                                ...prev,
+                                step: 'idle',
+                                p2lGroups: prev.p2lGroups.map(g => 
+                                    g.id === prev.activeGroupId ? { ...g, baseLine: null, points: [] } : g
+                                )
+                            }));
+                        }}
+                        className="ml-2 text-orange-500 hover:text-orange-700 hover:rotate-180 transition-transform duration-300" title="Reset Current Group"
                      >
                         <RotateCcw size={14} />
                      </button>
@@ -390,10 +736,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                         }`}>
                             {measState.step === 'idle' 
                                 ? "点击选择起点" 
-                                : (chartTool === 'measure_p2l' && measState.step === 'complete' 
-                                    ? "点击添加测量点" 
-                                    : (chartTool === 'measure_p2l' ? "点击选择基准线终点" : "点击选择终点")
-                                )
+                                : (chartTool === 'measure_p2l' 
+                                    ? (measState.p2lGroups.find(g => g.id === measState.activeGroupId)?.baseLine?.p1 === measState.p2lGroups.find(g => g.id === measState.activeGroupId)?.baseLine?.p2
+                                        ? "点击选择基准线终点"
+                                        : "点击添加测量点")
+                                    : "点击选择终点")
                             }
                         </span>
                         <div className="relative">

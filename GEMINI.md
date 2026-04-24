@@ -1,10 +1,11 @@
 # Surface Inspector Pro - Project Context
 
 ## Project Overview
-**Surface Inspector Pro** (v2.5) is a specialized web-based application designed for **surface metrology and micro-topography analysis**. It allows users to visualize, measure, and analyze 3D surface data (point clouds) through interactive 2D and 3D interfaces.
+**Surface Inspector Pro** (v3.0) is a specialized web-based application designed for **surface metrology and micro-topography analysis**. It allows users to visualize, measure, and analyze 3D surface data (point clouds) through interactive 2D and 3D interfaces.
 
 ## Tech Stack
 *   **Core:** React 19, TypeScript, Vite
+*   **Package Manager:** pnpm
 *   **Visualization:** Three.js (3D), HTML5 Canvas (2D)
 *   **Charting:** ECharts
 *   **Styling:** Tailwind CSS (Utility classes) + Custom CSS animations
@@ -29,10 +30,10 @@ The core data structure is **`GridData`**:
     *   Includes "Contrast" control to exaggerate Z-axis relief.
 *   **`components/Surface2DCanvas.tsx`**:
     *   Renders a high-performance 2D heatmap/heightmap.
-    *   Handles interactive tools: Box Selection, Line Measurement, Pan/Zoom.
+    *   Handles interactive tools: Box Selection, Line Measurement (2-click), Pan/Zoom, Keyboard Picking ('T' key).
 *   **`components/ProfileChart.tsx`**:
     *   Displays cross-sectional signal profiles based on user selection (Horizontal/Vertical cuts).
-    *   Supports measurement tools (Points, Baseline).
+    *   Supports physical measurement tools (ΔZ, ΔXY, P2L).
 
 ### Data Flow
 1.  **Input:** User imports CSV or Image.
@@ -46,9 +47,10 @@ The core data structure is **`GridData`**:
 ## Development Workflow
 
 ### Scripts
-*   **Start Dev Server:** `npm run dev` (Runs on Vite)
-*   **Build for Production:** `npm run build`
-*   **Preview Build:** `npm run preview`
+*   **Install Dependencies:** `pnpm install`
+*   **Start Dev Server:** `pnpm run dev` (Runs on Vite)
+*   **Build for Production:** `pnpm run build`
+*   **Preview Build:** `pnpm run preview`
 
 ### Directory Structure
 ```

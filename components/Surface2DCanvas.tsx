@@ -213,13 +213,27 @@ const Surface2DCanvas = ({
         if (measState.p1) drawX(measState.p1.gridX, measState.p1.gridY, THEME.measure);
         if (measState.p2) drawX(measState.p2.gridX, measState.p2.gridY, THEME.measure);
         
-        if (measState.baseLine) {
-            drawX(measState.baseLine.p1.gridX, measState.baseLine.p1.gridY, THEME.accent);
-            if(measState.step !== 'p1') drawX(measState.baseLine.p2.gridX, measState.baseLine.p2.gridY, THEME.accent);
-        }
-        
-        measState.points.forEach(p => {
-            drawX(p.gridX, p.gridY, THEME.measure);
+        // Multi-group P2L visualization
+        measState.p2lGroups.forEach(group => {
+            if (!group.visible) return;
+            if (group.baseLine) {
+                drawX(group.baseLine.p1.gridX, group.baseLine.p1.gridY, group.color);
+                if (group.baseLine.p1 !== group.baseLine.p2) {
+                    drawX(group.baseLine.p2.gridX, group.baseLine.p2.gridY, group.color);
+                    // Draw Baseline
+                    ctx.beginPath();
+                    ctx.strokeStyle = group.color;
+                    ctx.lineWidth = 1 / transform.k;
+                    ctx.setLineDash([4 / transform.k, 4 / transform.k]);
+                    ctx.moveTo(group.baseLine.p1.gridX, group.baseLine.p1.gridY);
+                    ctx.lineTo(group.baseLine.p2.gridX, group.baseLine.p2.gridY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            group.points.forEach(p => {
+                drawX(p.gridX, p.gridY, group.color);
+            });
         });
 
         // 5. Permanent Markers
@@ -357,23 +371,49 @@ const Surface2DCanvas = ({
 
       onSetMeasState(prev => {
            if (chartTool === 'measure_p2l') {
-                if (prev.step === 'idle') {
-                    return { ...prev, step: 'p1', baseLine: { p1: pointObj, p2: pointObj } };
-                } else if (prev.step === 'p1') {
-                    return { ...prev, step: 'complete', baseLine: { p1: prev.baseLine!.p1, p2: pointObj } }; 
-                } else if (prev.step === 'complete') {
-                    if (!prev.baseLine) return prev;
+                let groups = [...prev.p2lGroups];
+                let activeId = prev.activeGroupId;
+                
+                // Colors should match ProfileChart.tsx
+                const P2L_COLORS = ['#ff4d4f', '#1890ff', '#52c41a', '#faad14', '#722ed1', '#13c2c2', '#eb2f96', '#fa541c'];
+
+                if (groups.length === 0 || !activeId) {
+                    const newId = `group-${Date.now()}`;
+                    const newGroup = {
+                        id: newId,
+                        name: `基准线 ${groups.length + 1}`,
+                        color: P2L_COLORS[groups.length % P2L_COLORS.length],
+                        visible: true,
+                        baseLine: { p1: pointObj, p2: pointObj },
+                        points: []
+                    };
+                    return { ...prev, step: 'p1', p2lGroups: [...groups, newGroup], activeGroupId: newId };
+                }
+
+                const groupIdx = groups.findIndex(g => g.id === activeId);
+                if (groupIdx === -1) return prev;
+                const group = groups[groupIdx];
+
+                if (!group.baseLine) {
+                    groups[groupIdx] = { ...group, baseLine: { p1: pointObj, p2: pointObj } };
+                    return { ...prev, step: 'p1', p2lGroups: groups };
+                } else if (prev.step === 'p1' || group.baseLine.p1 === group.baseLine.p2) {
+                    groups[groupIdx] = { ...group, baseLine: { p1: group.baseLine.p1, p2: pointObj } };
+                    return { ...prev, step: 'complete', p2lGroups: groups };
+                } else {
                     const dist = pointToLineDistance(
                         pointObj.x, pointObj.y, 
-                        prev.baseLine.p1.x, prev.baseLine.p1.y,
-                        prev.baseLine.p2.x, prev.baseLine.p2.y
+                        group.baseLine.p1.x, group.baseLine.p1.y,
+                        group.baseLine.p2.x, group.baseLine.p2.y
                     );
-                    return { ...prev, points: [...prev.points, { ...pointObj, dist }] };
+                    const newPoint = { id: `pt-${Date.now()}`, ...pointObj, dist };
+                    groups[groupIdx] = { ...group, points: [...group.points, newPoint] };
+                    return { ...prev, p2lGroups: groups };
                 }
            } else if (chartTool === 'measure_z' || chartTool === 'measure_xy') {
                 if (prev.step === 'idle') return { ...prev, step: 'p1', p1: pointObj };
                 if (prev.step === 'p1') return { ...prev, step: 'complete', p2: pointObj };
-                return { step: 'p1', p1: pointObj, p2: null, baseLine: null, points: [] };
+                return { step: 'p1', p1: pointObj, p2: null, p2lGroups: [], activeGroupId: null };
            }
            return prev;
       });

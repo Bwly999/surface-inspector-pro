@@ -72,13 +72,25 @@ export interface ColorSettings {
   max: number;
 }
 
+export interface P2LGroup {
+  id: string;
+  name: string;
+  color: string;
+  visible: boolean;
+  baseLine: { 
+    p1: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }, 
+    p2: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number } 
+  } | null;
+  points: { id: string, x: number, y: number, dist: number, gridX: number, gridY: number }[];
+}
+
 export interface MeasurementState {
   step: 'idle' | 'p1' | 'complete'; 
-  p1: { x: number, y: number, gridX: number, gridY: number } | null;
-  p2: { x: number, y: number, gridX: number, gridY: number } | null;
-  // For P2L mode (multi-point)
-  baseLine: { p1: {x: number, y: number, gridX: number, gridY: number}, p2: {x: number, y: number, gridX: number, gridY: number} } | null;
-  points: { x: number, y: number, dist: number, gridX: number, gridY: number }[];
+  p1: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number } | null;
+  p2: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number } | null;
+  // Multi-group P2L
+  p2lGroups: P2LGroup[];
+  activeGroupId: string | null;
 }
 
 export interface ActiveLayer {
