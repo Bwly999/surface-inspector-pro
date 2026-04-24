@@ -344,37 +344,42 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white w-[95vw] h-[90vh] rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-800">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white w-[95vw] h-[90vh] border-2 border-black flex flex-col overflow-hidden hard-shadow-md">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-2">
-                        <ImageIcon size={20} className="text-[#ff4d00]" />
-                        <h2 className="text-lg font-bold">图片转点云转换器</h2>
+                <div className="flex items-center justify-between p-5 border-b-2 border-black bg-white dot-grid">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-[#ff4d00] uppercase tracking-tighter">Data Importer</span>
+                        <div className="flex items-center gap-2">
+                            <ImageIcon size={20} className="text-[#ff4d00]" />
+                            <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">图片转点云转换器 / Image to Cloud</h2>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full"><X size={20} /></button>
+                    <button onClick={onClose} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-all btn-press">
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Left: Image Canvas */}
-                    <div className="w-2/3 bg-gray-900 relative overflow-hidden flex flex-col border-r border-gray-800">
-                        <div className="absolute top-2 left-2 z-10 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur pointer-events-none">
+                    <div className="w-2/3 bg-gray-900 relative overflow-hidden flex flex-col border-r-2 border-black">
+                        <div className="absolute top-4 left-4 z-10 bg-black text-white text-[10px] font-black px-3 py-1.5 border-2 border-white/20 uppercase tracking-widest hard-shadow-sm">
                             左键绘制区域 (ROI) | 右键拖拽平移 | 滚轮缩放
                         </div>
                         
                         {/* Interactive Zoom Panel */}
-                        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1 bg-black/60 backdrop-blur text-white p-1 rounded border border-white/20 shadow-lg">
-                            <button onClick={fitImageToContainer} className="hover:bg-white/20 p-1 rounded" title="适应屏幕"><Maximize2 size={14}/></button>
-                            <div className="w-px h-3 bg-white/30 mx-1"></div>
+                        <div className="absolute bottom-6 left-6 z-20 flex items-center gap-1 bg-white border-2 border-black p-1 hard-shadow-sm">
+                            <button onClick={fitImageToContainer} className="hover:bg-gray-100 p-1.5 transition-colors btn-press" title="适应屏幕"><Maximize2 size={14}/></button>
+                            <div className="w-px h-4 bg-gray-300 mx-1"></div>
                             <input 
-                                className="w-10 bg-transparent text-center text-xs font-mono focus:outline-none border-b border-transparent focus:border-white"
+                                className="w-12 bg-transparent text-center text-xs font-black mono focus:outline-none"
                                 value={zoomInputValue}
                                 onChange={e => setZoomInputValue(e.target.value)}
                                 onFocus={() => setIsEditingZoom(true)}
                                 onBlur={handleManualZoom}
                                 onKeyDown={e => e.key === 'Enter' && handleManualZoom()}
                             />
-                            <span className="text-[10px] pr-1">%</span>
+                            <span className="text-[10px] font-black pr-2">%</span>
                         </div>
 
                         <div ref={containerRef} className="flex-1 overflow-hidden relative select-none">
@@ -391,15 +396,15 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         </div>
                         
                         {/* Reference List */}
-                        <div className="h-40 bg-white border-t border-gray-300 p-2 overflow-y-auto">
-                            <h3 className="text-xs font-bold mb-2 flex items-center gap-2"><Plus size={12}/> 基准平面 (用于调平)</h3>
-                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                                {config.references.length === 0 && <div className="text-gray-400 text-xs italic col-span-full">未定义基准面，数据默认平整。</div>}
+                        <div className="h-44 bg-white border-t-2 border-black p-4 overflow-y-auto dot-grid">
+                            <h3 className="text-xs font-black mb-3 flex items-center gap-2 uppercase tracking-tighter"><Plus size={14} className="text-[#ff4d00]"/> 基准平面设置 / Reference Planes</h3>
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                                {config.references.length === 0 && <div className="text-gray-400 text-xs font-bold italic col-span-full py-4 border-2 border-dashed border-gray-200 bg-gray-50/50 text-center">未定义基准面，数据默认平整。</div>}
                                 {config.references.map((ref, i) => (
-                                    <div key={ref.id} className="flex items-center gap-2 text-xs border p-1 rounded bg-gray-50">
-                                        <div className="font-bold w-6 text-center bg-gray-200 rounded">#{i+1}</div>
+                                    <div key={ref.id} className="flex items-center gap-3 text-xs border-2 border-black p-2 bg-white hard-shadow-sm animate-scale-in">
+                                        <div className="font-black w-8 h-8 flex items-center justify-center bg-black text-white text-[10px]">#{i+1}</div>
                                         <div className="flex-1 flex flex-col">
-                                            <span className="text-[9px] text-gray-500">Z轴偏移</span>
+                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Z-Offset</span>
                                             <input 
                                                 type="number" step="0.001" 
                                                 value={ref.offsetZ} 
@@ -407,11 +412,11 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                                     const val = parseFloat(e.target.value);
                                                     setConfig(c => ({...c, references: c.references.map(r => r.id === ref.id ? {...r, offsetZ: val} : r)}))
                                                 }}
-                                                className="w-full border px-1"
+                                                className="w-full border-b border-black font-black text-[11px] outline-none py-0.5"
                                             />
                                         </div>
-                                        <button onClick={() => setConfig(c => ({...c, references: c.references.filter(r => r.id !== ref.id)}))} className="text-red-500 hover:bg-red-100 p-1.5 rounded">
-                                            <Trash2 size={12}/>
+                                        <button onClick={() => setConfig(c => ({...c, references: c.references.filter(r => r.id !== ref.id)}))} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                                            <Trash2 size={14}/>
                                         </button>
                                     </div>
                                 ))}
@@ -420,18 +425,18 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                     </div>
 
                     {/* Right: Controls & Preview */}
-                    <div className="w-1/3 bg-white flex flex-col min-w-[320px]">
+                    <div className="w-1/3 bg-white flex flex-col min-w-[340px] dot-grid">
                         {/* Config Panel */}
-                        <div className="p-4 border-b border-gray-200 space-y-4 overflow-y-auto flex-1">
+                        <div className="p-6 border-b-2 border-black space-y-6 overflow-y-auto flex-1">
                             
                             {/* Preset Manager */}
-                            <div className="p-3 bg-gray-50 border rounded">
-                                <label className="text-xs font-bold block mb-1">配置预设</label>
+                            <div className="p-4 bg-white border-2 border-black hard-shadow-sm">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-2">配置预设 / Presets</label>
                                 <div className="flex gap-2">
                                     <select 
                                         value={selectedPresetId}
                                         onChange={(e) => handleLoadPreset(e.target.value)}
-                                        className="flex-1 text-xs border p-1.5"
+                                        className="flex-1 text-xs font-bold border-2 border-black p-2 outline-none focus:bg-orange-50 transition-colors"
                                     >
                                         <option value="">-- 选择预设 --</option>
                                         {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -439,22 +444,22 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                     <button 
                                         onClick={handleDeletePreset} 
                                         disabled={!selectedPresetId}
-                                        className={`p-1.5 rounded border ${!selectedPresetId ? 'text-gray-300 border-gray-200' : 'text-red-500 border-red-200 hover:bg-red-50'}`}
+                                        className={`p-2 border-2 border-black transition-all btn-press ${!selectedPresetId ? 'bg-gray-100 text-gray-300' : 'bg-white text-red-500 hover:bg-red-50'}`}
                                         title="删除配置"
                                     >
                                         <Trash2 size={14}/>
                                     </button>
                                 </div>
-                                <div className="flex gap-2 mt-2">
+                                <div className="flex gap-2 mt-3">
                                     <input 
                                         type="text" 
-                                        placeholder="预设名称" 
+                                        placeholder="预设名称..." 
                                         value={presetName}
                                         onChange={e => setPresetName(e.target.value)}
-                                        className="flex-1 text-xs border p-1.5"
+                                        className="flex-1 text-xs font-bold border-2 border-black p-2 outline-none focus:bg-orange-50 transition-colors"
                                     />
-                                    <button onClick={handleSavePreset} className="bg-gray-800 text-white text-xs px-3 py-1 rounded font-bold flex items-center gap-1">
-                                        <Save size={12}/> 保存
+                                    <button onClick={handleSavePreset} className="bg-black text-white text-[10px] px-4 py-2 font-black flex items-center gap-2 transition-all btn-press hard-shadow-sm uppercase">
+                                        <Save size={12}/> Save
                                     </button>
                                 </div>
                             </div>
@@ -462,55 +467,55 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             {/* Dimensions */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">原始宽度 (mm)</label>
-                                    <input type="number" value={config.widthMM} onChange={e => setConfig({...config, widthMM: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Width (mm)</label>
+                                    <input type="number" value={config.widthMM} onChange={e => setConfig({...config, widthMM: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">原始高度 (mm)</label>
-                                    <input type="number" value={config.heightMM} onChange={e => setConfig({...config, heightMM: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Height (mm)</label>
+                                    <input type="number" value={config.heightMM} onChange={e => setConfig({...config, heightMM: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                             </div>
 
                             {/* Z Scale */}
                             <div>
-                                <label className="text-xs font-bold block text-gray-500">高度缩放 (mm/Max)</label>
-                                <div className="flex items-center gap-2">
-                                    <input type="number" step="0.1" value={config.zScale} onChange={e => setConfig({...config, zScale: parseFloat(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
-                                    <span className="text-[10px] text-gray-400 whitespace-nowrap">最大亮度对应高度</span>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Z Scale (mm/Max)</label>
+                                <div className="flex items-center gap-3">
+                                    <input type="number" step="0.1" value={config.zScale} onChange={e => setConfig({...config, zScale: parseFloat(e.target.value)})} className="flex-1 border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
+                                    <span className="text-[9px] text-gray-400 font-bold uppercase w-24 leading-tight italic">Max Brightness Height</span>
                                 </div>
                             </div>
 
                             {/* Sampling */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">采样步长 X (px)</label>
-                                    <input type="number" min="1" step="1" value={config.stepX} onChange={e => setConfig({...config, stepX: parseInt(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Step X (px)</label>
+                                    <input type="number" min="1" step="1" value={config.stepX} onChange={e => setConfig({...config, stepX: parseInt(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold block text-gray-500">采样步长 Y (px)</label>
-                                    <input type="number" min="1" step="1" value={config.stepY} onChange={e => setConfig({...config, stepY: parseInt(e.target.value)})} className="w-full border p-1.5 font-mono text-sm"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Step Y (px)</label>
+                                    <input type="number" min="1" step="1" value={config.stepY} onChange={e => setConfig({...config, stepY: parseInt(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                             </div>
 
                             {/* Rotation */}
                             <div>
-                                <label className="text-xs font-bold block text-gray-500 mb-1">旋转</label>
-                                <div className="flex gap-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-2 block">旋转 / Rotation</label>
+                                <div className="grid grid-cols-2 gap-2">
                                     {[
-                                        { deg: 0, label: '0°', hint: '原图', icon: <ImageIcon size={10} /> },
-                                        { deg: 90, label: '90°', hint: '顺时针', icon: <RotateCw size={10} /> },
-                                        { deg: 180, label: '180°', hint: '翻转', icon: <FlipVertical size={10}/> },
-                                        { deg: -90, label: '-90°', hint: '逆时针', icon: <RotateCcw size={10} /> }
+                                        { deg: 0, label: '0°', hint: 'Default', icon: <ImageIcon size={14} /> },
+                                        { deg: 90, label: '90°', hint: 'CW', icon: <RotateCw size={14} /> },
+                                        { deg: 180, label: '180°', hint: 'Flip', icon: <FlipVertical size={14}/> },
+                                        { deg: -90, label: '-90°', hint: 'CCW', icon: <RotateCcw size={14} /> }
                                     ].map(item => (
                                         <button 
                                             key={item.deg}
                                             onClick={() => setConfig({...config, rotation: item.deg as any})}
-                                            className={`flex-1 py-1.5 flex flex-col items-center justify-center border rounded transition-all ${config.rotation === item.deg ? 'bg-[#ff4d00] text-white border-[#ff4d00] shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                                            className={`py-2 px-3 flex items-center justify-between border-2 transition-all btn-press ${config.rotation === item.deg ? 'bg-black text-white border-black hard-shadow-sm' : 'bg-white text-gray-900 border-black hover:bg-gray-50'}`}
                                         >
-                                            <div className="flex items-center gap-1 font-bold text-xs">
+                                            <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-tighter">
                                                 {item.icon} {item.label}
                                             </div>
-                                            <div className={`text-[9px] ${config.rotation === item.deg ? 'text-white/80' : 'text-gray-400'}`}>
+                                            <div className={`text-[9px] font-bold uppercase tracking-widest ${config.rotation === item.deg ? 'text-[#ff4d00]' : 'text-gray-400'}`}>
                                                 {item.hint}
                                             </div>
                                         </button>
@@ -521,45 +526,46 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             <button 
                                 onClick={handleProcess}
                                 disabled={isProcessing}
-                                className="w-full py-3 bg-[#00a3cc] text-white font-bold rounded shadow hover:bg-[#008fb3] transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-4 bg-[#ff4d00] text-white font-black uppercase tracking-widest border-2 border-black hard-shadow-sm hover:bg-black transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50"
                             >
-                                {isProcessing ? "处理中..." : "生成点云数据"}
-                                {!isProcessing && <RotateCw size={16}/>}
+                                {isProcessing ? "Processing..." : "生成点云数据 / GENERATE"}
+                                {!isProcessing && <RotateCw size={18}/>}
                             </button>
                         </div>
 
                         {/* Preview Area (Fixed Height 250px) */}
-                        <div className="h-[280px] bg-gray-100 border-t border-gray-200 relative flex flex-col shrink-0">
-                            <div className="p-2 border-b bg-gray-200 text-xs font-bold flex justify-between items-center">
-                                <span>预览</span>
+                        <div className="h-[260px] bg-black border-t-2 border-black relative flex flex-col shrink-0">
+                            <div className="p-2 border-b-2 border-black bg-black text-white text-[10px] font-black flex justify-between items-center tracking-widest uppercase">
+                                <span>Preview / 数据预览</span>
                                 {previewData && (
-                                    <div className="flex items-center gap-2">
-                                        <button 
-                                            onClick={() => setPreviewMode('gray')} 
-                                            className={`p-1 rounded ${previewMode==='gray'?'bg-white shadow':''}`} title="Grayscale"
-                                        >
-                                            <Grid3X3 size={12}/>
-                                        </button>
-                                        <button 
-                                            onClick={() => setPreviewMode('heatmap')} 
-                                            className={`p-1 rounded ${previewMode==='heatmap'?'bg-white shadow':''}`} title="Heatmap"
-                                        >
-                                            <Palette size={12}/>
-                                        </button>
-                                        <div className="w-px h-3 bg-gray-400 mx-1"></div>
-                                        <span>Z范围: {previewData.minZ.toFixed(2)}~{previewData.maxZ.toFixed(2)}</span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex border border-white/20 rounded-sm overflow-hidden">
+                                            <button 
+                                                onClick={() => setPreviewMode('gray')} 
+                                                className={`p-1 px-2 transition-colors ${previewMode==='gray'?'bg-[#ff4d00] text-white':'hover:bg-white/10 text-gray-400'}`}
+                                            >
+                                                GRAY
+                                            </button>
+                                            <button 
+                                                onClick={() => setPreviewMode('heatmap')} 
+                                                className={`p-1 px-2 transition-colors ${previewMode==='heatmap'?'bg-[#ff4d00] text-white':'hover:bg-white/10 text-gray-400'}`}
+                                            >
+                                                HEAT
+                                            </button>
+                                        </div>
+                                        <span className="text-[#ff4d00] mono">Z: {previewData.minZ.toFixed(2)}~{previewData.maxZ.toFixed(2)}</span>
                                     </div>
                                 )}
                             </div>
-                            <div className="flex-1 relative flex items-center justify-center overflow-hidden group bg-gray-900">
+                            <div className="flex-1 relative flex items-center justify-center overflow-hidden group bg-[#111]">
                                 {!previewData ? (
-                                    <div className="text-gray-500 text-xs font-bold">暂无数据</div>
+                                    <div className="text-gray-600 text-[10px] font-black uppercase tracking-widest animate-pulse">Waiting for generation...</div>
                                 ) : (
                                     <>
                                         <PreviewCanvas data={previewData} mode={previewMode} />
                                         <button 
                                             onClick={() => setShowLargePreview(true)}
-                                            className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
+                                            className="absolute top-4 right-4 p-2 bg-black text-white border border-white/20 hard-shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-[#ff4d00]"
                                             title="放大预览"
                                         >
                                             <Maximize2 size={16}/>
@@ -570,14 +576,14 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         </div>
 
                         {/* Footer Action */}
-                        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 shrink-0">
-                             <button onClick={onClose} className="px-4 py-2 text-gray-600 font-bold text-xs hover:bg-gray-200 rounded">取消</button>
+                        <div className="p-5 border-t-2 border-black bg-white flex justify-end gap-3 shrink-0">
+                             <button onClick={onClose} className="px-6 py-2 text-gray-400 font-black text-[10px] hover:text-black uppercase tracking-widest transition-colors">Cancel</button>
                              <button 
                                 onClick={() => previewData && onConfirm(previewData)}
                                 disabled={!previewData}
-                                className={`px-6 py-2 text-white font-bold text-xs rounded shadow flex items-center gap-2 ${!previewData ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#ff4d00] hover:bg-[#e64600]'}`}
+                                className={`px-8 py-2 text-white font-black text-[10px] border-2 border-black transition-all btn-press hard-shadow-sm uppercase tracking-widest ${!previewData ? 'bg-gray-200 border-gray-300 cursor-not-allowed text-gray-400' : 'bg-black hover:bg-[#ff4d00]'}`}
                              >
-                                <Check size={16}/> 确认导入
+                                <Check size={18}/> 确认导入 / Confirm
                              </button>
                         </div>
                     </div>
@@ -586,19 +592,21 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
             {/* Large Preview Overlay */}
             {showLargePreview && previewData && (
-                <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-8 animate-in fade-in duration-200">
-                    <div className="relative w-full h-full max-w-5xl max-h-[80vh] flex flex-col">
-                        <button 
-                            onClick={() => setShowLargePreview(false)} 
-                            className="absolute -top-10 right-0 text-white hover:text-gray-300 flex items-center gap-2"
-                        >
-                            关闭 <X size={24}/>
-                        </button>
-                        <div className="flex-1 bg-black border border-gray-700 rounded overflow-hidden flex items-center justify-center">
-                            <PreviewCanvas data={previewData} mode={previewMode} />
+                <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-12 animate-fade-in">
+                    <div className="relative w-full h-full max-w-6xl max-h-[85vh] flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="text-white font-black text-xs mono tracking-widest uppercase">
+                                Full Preview | {previewMode.toUpperCase()} | {previewData.w}x{previewData.h}
+                            </div>
+                            <button 
+                                onClick={() => setShowLargePreview(false)} 
+                                className="text-white hover:text-[#ff4d00] transition-colors flex items-center gap-2 font-black text-xs uppercase tracking-widest"
+                            >
+                                Close <X size={24}/>
+                            </button>
                         </div>
-                        <div className="mt-4 text-center text-white font-mono text-xs">
-                             预览模式: {previewMode.toUpperCase()} | 数据尺寸: {previewData.w}x{previewData.h}
+                        <div className="flex-1 bg-black border-2 border-white/20 hard-shadow-md overflow-hidden flex items-center justify-center">
+                            <PreviewCanvas data={previewData} mode={previewMode} />
                         </div>
                     </div>
                 </div>

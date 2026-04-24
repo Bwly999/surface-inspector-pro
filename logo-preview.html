@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surface Inspector Pro - Wide Logo Exploration V3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&family=JetBrains+Mono:wght@400;700&display=swap');
+        body {
+            background-color: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: white;
+        }
+        .hard-shadow { box-shadow: 6px 6px 0px 0px rgba(255, 77, 0, 0.3); }
+        .logo-card { 
+            background: #1e293b; 
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .logo-card:hover { 
+            transform: translateY(-5px);
+            border-color: #ff4d00;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .svg-container {
+            background: #020617;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .svg-container::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 4px 4px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="p-12">
+
+    <header class="max-w-6xl mx-auto mb-16 text-center">
+        <h1 class="text-6xl font-black tracking-tighter mb-4 italic uppercase">Wide Logos <span class="text-[#ff4d00]">V3.0</span></h1>
+        <p class="text-slate-400 font-bold mono uppercase tracking-widest text-sm">横向宽屏方案：深色系、多色彩、工业仪表美学</p>
+    </header>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+        <!-- 方案 K: 极光断面扫描 (Aurora Section) -->
+        <div class="logo-card p-10 rounded-2xl flex flex-col items-center">
+            <div class="w-full h-32 mb-8 flex items-center justify-center svg-container rounded-xl">
+                <svg width="120" height="60" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gradK" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#00f2ff" stop-opacity="0.8" />
+                            <stop offset="100%" stop-color="#00f2ff" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M5 30H75" stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
+                    <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#00f2ff" stroke-width="2.5" stroke-linejoin="round">
+                        <animate attributeName="stroke-dasharray" from="0 150" to="150 0" dur="2s" fill="freeze" />
+                    </path>
+                    <rect x="39" y="5" width="2" height="25" fill="url(#gradK)">
+                        <animate attributeName="x" values="5;73;5" dur="4s" repeatCount="indefinite" />
+                    </rect>
+                    <circle cx="40" cy="20" r="4" stroke="#ff4d00" stroke-width="1.5">
+                        <animate attributeName="cx" values="5;73;5" dur="4s" repeatCount="indefinite" />
+                        <animate attributeName="cy" values="30;20;20" dur="4s" repeatCount="indefinite" />
+                        <animate attributeName="r" values="3;5;3" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                    <path d="M0 20H80" stroke="#ff4d00" stroke-width="0.5" opacity="0.2"/>
+                </svg>
+            </div>
+            <h3 class="font-black text-xl mb-3 uppercase tracking-tighter">方案 K: 极光断面扫描 / AURORA</h3>
+            <p class="text-xs font-medium text-slate-400 text-center leading-relaxed px-6 italic">引入极光青色模拟高能扫描束。横向波动线条拉长至原本的 3 倍，橙色动态准星在波动线上的实时追踪极具“分析感”。</p>
+        </div>
+
+        <!-- 方案 L: 深度差分矩阵 (Delta Matrix) -->
+        <div class="logo-card p-10 rounded-2xl flex flex-col items-center">
+            <div class="w-full h-32 mb-8 flex items-center justify-center svg-container rounded-xl">
+                <svg width="120" height="60" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g opacity="0.4">
+                        <rect x="10" y="10" width="4" height="20" fill="#334155" rx="1" />
+                        <rect x="20" y="15" width="4" height="15" fill="#334155" rx="1" />
+                        <rect x="30" y="5" width="4" height="25" fill="#334155" rx="1" />
+                        <rect x="40" y="18" width="4" height="12" fill="#334155" rx="1" />
+                        <rect x="50" y="12" width="4" height="18" fill="#334155" rx="1" />
+                        <rect x="60" y="8" width="4" height="22" fill="#334155" rx="1" />
+                    </g>
+                    <rect x="30" y="5" width="4" height="25" fill="#ff4d00" rx="1">
+                        <animate attributeName="x" values="10;60;10" dur="5s" repeatCount="indefinite" />
+                        <animate attributeName="height" values="20;15;25;12;18;22;20" dur="5s" repeatCount="indefinite" />
+                        <animate attributeName="y" values="10;15;5;18;12;8;10" dur="5s" repeatCount="indefinite" />
+                    </rect>
+                    <path d="M5 32H75" stroke="#ff4d00" stroke-width="2" />
+                    <text x="10" y="38" fill="#ff4d00" font-family="monospace" font-size="4" font-weight="bold">DIFF_ANALYSIS: ACTIVE</text>
+                </svg>
+            </div>
+            <h3 class="font-black text-xl mb-3 uppercase tracking-tighter">方案 L: 深度差分 / DELTA</h3>
+            <p class="text-xs font-medium text-slate-400 text-center leading-relaxed px-6 italic">模拟柱状特征提取图。橙色采样柱在深蓝色的“背景噪声”中快速平移并动态改变高度，强调对微观起伏的量化处理。</p>
+        </div>
+
+        <!-- 方案 M: 激光位移干涉 (Interference) -->
+        <div class="logo-card p-10 rounded-2xl flex flex-col items-center">
+            <div class="w-24 h-24 mb-8 flex items-center justify-center svg-container rounded-full border-4 border-[#334155]">
+                <svg width="80" height="80" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" stroke="#334155" stroke-width="1" />
+                    <circle cx="20" cy="20" r="14" stroke="#334155" stroke-width="1" opacity="0.3" />
+                    <path d="M5 20C10 10 30 10 35 20C30 30 10 30 5 20Z" fill="#ff4d00" opacity="0.1" />
+                    <path d="M5 20Q20 5 35 20" stroke="#00f2ff" stroke-width="1.5">
+                         <animate attributeName="d" values="M5 20Q20 5 35 20;M5 20Q20 35 35 20;M5 20Q20 5 35 20" dur="2s" repeatCount="indefinite" />
+                    </path>
+                    <path d="M20 5V35" stroke="#ff4d00" stroke-width="1" stroke-dasharray="1 1" />
+                    <circle cx="20" cy="20" r="2" fill="#ff4d00">
+                        <animate attributeName="r" values="1;3;1" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                </svg>
+            </div>
+            <h3 class="font-black text-xl mb-3 uppercase tracking-tighter">方案 M: 激光干涉 / INTERFERENCE</h3>
+            <p class="text-xs font-medium text-slate-400 text-center leading-relaxed px-6 italic">虽然是圆形，但内部强调了“上下波动”的干涉原理。极光青的动态曲线代表被测波形，橙色核心代表绝对原点。</p>
+        </div>
+
+        <!-- 方案 N: 多道光幕阵列 (Multi-Beam Array) -->
+        <div class="logo-card p-10 rounded-2xl flex flex-col items-center">
+            <div class="w-full h-32 mb-8 flex items-center justify-center svg-container rounded-xl">
+                <svg width="120" height="60" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 30C15 28 25 32 40 28C55 24 65 32 75 30" stroke="white" stroke-width="1" opacity="0.2" />
+                    <g>
+                        <line x1="15" y1="5" x2="15" y2="29" stroke="#ff4d00" stroke-width="1.5">
+                            <animate attributeName="y2" values="29;27;29" dur="0.8s" repeatCount="indefinite" />
+                        </line>
+                        <circle cx="15" cy="29" r="1.5" fill="#ff4d00">
+                            <animate attributeName="cy" values="29;27;29" dur="0.8s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    <g>
+                        <line x1="30" y1="5" x2="30" y2="31" stroke="#fbbf24" stroke-width="1.5">
+                            <animate attributeName="y2" values="31;28;31" dur="1s" repeatCount="indefinite" />
+                        </line>
+                        <circle cx="30" cy="31" r="1.5" fill="#fbbf24">
+                            <animate attributeName="cy" values="31;28;31" dur="1s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    <g>
+                        <line x1="45" y1="5" x2="45" y2="28" stroke="#00f2ff" stroke-width="1.5">
+                            <animate attributeName="y2" values="28;32;28" dur="1.2s" repeatCount="indefinite" />
+                        </line>
+                        <circle cx="45" cy="28" r="1.5" fill="#00f2ff">
+                            <animate attributeName="cy" values="28;32;28" dur="1.2s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    <g>
+                        <line x1="60" y1="5" x2="60" y2="30" stroke="#ff4d00" stroke-width="1.5">
+                            <animate attributeName="y2" values="30;25;30" dur="0.9s" repeatCount="indefinite" />
+                        </line>
+                        <circle cx="60" cy="30" r="1.5" fill="#ff4d00">
+                            <animate attributeName="cy" values="30;25;30" dur="0.9s" repeatCount="indefinite" />
+                        </circle>
+                    </g>
+                    <rect x="5" y="2" width="70" height="3" fill="#1e293b" rx="1" />
+                </svg>
+            </div>
+            <h3 class="font-black text-xl mb-3 uppercase tracking-tighter">方案 N: 光幕阵列 / ARRAY</h3>
+            <p class="text-xs font-medium text-slate-400 text-center leading-relaxed px-6 italic">彩色仪表风格。橙色、黄色、青色多色束代表不同的传感器通道。每个交点独立跳动，模拟多维度微观采样的繁杂与精准。</p>
+        </div>
+
+    </div>
+
+    <footer class="max-w-6xl mx-auto mt-20 pt-10 border-t border-slate-800 flex justify-between items-center">
+        <div class="mono text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Industrial Metrology Dashboard UI Component</div>
+        <div class="flex gap-4">
+            <div class="w-6 h-1 bg-[#ff4d00]"></div>
+            <div class="w-6 h-1 bg-[#00f2ff]"></div>
+            <div class="w-6 h-1 bg-[#fbbf24]"></div>
+        </div>
+    </footer>
+
+</body>
+</html>

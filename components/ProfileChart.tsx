@@ -842,18 +842,18 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 </div>
             )}
             {/* --- Chart Toolbar (Top Bar) --- */}
-            <div className="flex items-center gap-1 p-1 bg-gray-50/80 border-b border-gray-100 shrink-0 z-20">
-                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded transition-colors ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="点位检视 (Inspect Point)">
+            <div className="flex items-center gap-1 p-1 bg-white border-b-2 border-black shrink-0 z-20">
+                 <button onClick={() => onSetChartTool('inspect')} className={`p-1.5 rounded-sm transition-all btn-press ${chartTool === 'inspect' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="点位检视 (Inspect Point)">
                     <MousePointer2 size={14} />
                  </button>
                  <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="测量Z轴高度 (Measure Z Height)">
+                 <button onClick={() => onSetChartTool('measure_z')} className={`p-1.5 rounded-sm transition-all btn-press ${chartTool === 'measure_z' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="测量Z轴高度 (Measure Z Height)">
                     <MoveVertical size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="测量XY轴距离 (Measure XY Distance)">
+                 <button onClick={() => onSetChartTool('measure_xy')} className={`p-1.5 rounded-sm transition-all btn-press ${chartTool === 'measure_xy' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="测量XY轴距离 (Measure XY Distance)">
                     <MoveHorizontal size={14} />
                  </button>
-                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded transition-colors ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-200'}`} title="点到线测量 (Measure Point to Line)">
+                 <button onClick={() => onSetChartTool('measure_p2l')} className={`p-1.5 rounded-sm transition-all btn-press ${chartTool === 'measure_p2l' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`} title="点到线测量 (Measure Point to Line)">
                     <Slash size={14} />
                  </button>
                  
@@ -869,7 +869,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                 )
                             }));
                         }}
-                        className="ml-1 text-orange-500 hover:text-orange-700 hover:rotate-180 transition-transform duration-300" title="清空当前测量组 (Reset Current Group)"
+                        className="ml-1 text-orange-500 hover:text-orange-700 hover:rotate-180 transition-transform duration-300 btn-press" title="清空当前测量组 (Reset Current Group)"
                       >
                          <Eraser size={14} />
                       </button>
@@ -878,7 +878,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                  {(chartTool !== 'inspect' && (measState.step !== 'idle' || measState.p1 || measState.p2 || (chartTool === 'measure_p2l' && measState.p2lGroups.length > 0))) && (
                      <button 
                         onClick={() => onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null })}
-                        className="ml-1 text-gray-400 hover:text-red-500 hover:rotate-180 transition-transform duration-300" title="清空所有测量 (Reset ALL)"
+                        className="ml-1 text-gray-400 hover:text-red-500 hover:rotate-180 transition-transform duration-300 btn-press" title="清空所有测量 (Reset ALL)"
                      >
                         <RefreshCw size={14} />
                      </button>
@@ -887,7 +887,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                  {chartTool === 'measure_p2l' && (
                      <button 
                         onClick={() => setShowP2LPanel(!showP2LPanel)} 
-                        className={`p-1.5 rounded transition-colors ${showP2LPanel ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:bg-gray-200'}`}
+                        className={`p-1.5 rounded-sm transition-all btn-press ${showP2LPanel ? 'bg-black text-white' : 'text-gray-400 hover:bg-gray-100'}`}
                         title="测量面板 (Toggle Measurement Panel)"
                      >
                         <Layers size={14} />
@@ -899,7 +899,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                  <div className="relative">
                     <button 
                         onClick={handleOpenSaveDialog}
-                        className={`p-1.5 rounded transition-colors ${showSaveDialog ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                        className={`p-1.5 rounded-sm transition-all btn-press ${showSaveDialog ? 'bg-[#ff4d00] text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                         title="保存测量预设 (Save Preset)"
                     >
                         <Save size={14} />
@@ -907,21 +907,21 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 
                     {/* Custom Save Dialog (Attached to Button) */}
                     {showSaveDialog && (
-                        <div className="absolute left-0 top-full mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-2xl z-[60] animate-slide-down flex flex-col overflow-hidden">
-                            <div className="bg-black text-white px-2.5 py-1.5 flex items-center justify-between">
+                        <div className="absolute left-0 top-full mt-2 w-72 bg-white border-2 border-black rounded-sm hard-shadow-md z-[60] animate-scale-in origin-top-left flex flex-col overflow-hidden">
+                            <div className="bg-black text-white px-3 py-2 flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                    <Save size={12} className="text-orange-500" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">
+                                    <Save size={12} className="text-[#ff4d00]" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">
                                         {editingPresetId ? '编辑测量预设' : '保存测量预设'}
                                     </span>
                                 </div>
-                                <button onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-white">
+                                <button onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-white transition-colors">
                                     <X size={12} />
                                 </button>
                             </div>
-                            <div className="p-3 flex flex-col gap-2.5">
+                            <div className="p-4 flex flex-col gap-3">
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-[9px] text-gray-400 uppercase font-bold">预设名称</label>
+                                    <label className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">预设名称 / PRESET NAME</label>
                                     <input 
                                         autoFocus
                                         type="text" 
@@ -929,20 +929,20 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                         onChange={(e) => setPresetName(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
                                         placeholder="输入预设名称..."
-                                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200 transition-all"
+                                        className="w-full bg-gray-50 border-2 border-gray-200 p-2 text-xs font-bold focus:border-black focus:bg-white outline-none transition-all"
                                     />
                                 </div>
-                                <div className="flex items-center justify-end gap-2 pt-1.5 border-t border-gray-100">
+                                <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
                                     <button 
                                         onClick={() => setShowSaveDialog(false)}
-                                        className="px-2 py-1 text-[9px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-tighter"
+                                        className="text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-tighter"
                                     >
                                         取消
                                     </button>
                                     <button 
                                         onClick={handleSavePreset}
                                         disabled={!presetName.trim()}
-                                        className="px-3 py-1.5 bg-orange-500 text-white text-[9px] font-bold rounded shadow-md hover:bg-orange-600 disabled:opacity-50 disabled:grayscale uppercase tracking-wider active:scale-95 transition-all"
+                                        className="px-4 py-2 bg-black text-white text-[10px] font-black hard-shadow-sm hover:bg-[#ff4d00] disabled:opacity-30 transition-all btn-press"
                                     >
                                         {editingPresetId ? '确认更新' : '确认保存'}
                                     </button>
@@ -954,8 +954,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
 
                  <button 
                     onClick={() => setShowPresetPanel(!showPresetPanel)}
-
-                    className={`p-1.5 rounded transition-colors ${showPresetPanel ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-200'}`}
+                    className={`p-1.5 rounded-sm transition-all btn-press ${showPresetPanel ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                     title="预设历史记录 (Preset History)"
                  >
                     <History size={14} />
@@ -966,8 +965,8 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                  {/* Instruction Overlay & Help */}
                  {chartTool !== 'inspect' && (
                     <div className="flex items-center gap-2 animate-fade-in mr-2">
-                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded border shadow-sm ${
-                            measState.step === 'idle' ? 'text-blue-600 border-blue-200 bg-blue-50' : 'text-green-600 border-green-200 bg-green-50'
+                        <span className={`px-2 py-1 text-[10px] font-black border-2 hard-shadow-sm ${
+                            measState.step === 'idle' ? 'text-blue-600 border-black bg-white' : 'text-green-600 border-black bg-white'
                         }`}>
                             {measState.step === 'idle' 
                                 ? "点击选择起点" 
@@ -978,20 +977,6 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                     : "点击选择终点")
                             }
                         </span>
-                        <div className="relative">
-                            <button 
-                                onMouseEnter={() => setShowTip(true)} 
-                                onMouseLeave={() => setShowTip(false)}
-                                className="text-gray-400 hover:text-blue-500"
-                            >
-                                <Info size={14} />
-                            </button>
-                            {showTip && (
-                                <div className="absolute top-6 right-0 w-48 bg-black/80 text-white text-[10px] p-2 rounded shadow-lg z-50 pointer-events-none">
-                                    在2D图上移动鼠标并按 <strong>'T'</strong> 键可精确拾取测量点。
-                                </div>
-                            )}
-                        </div>
                     </div>
                  )}
             </div>
@@ -999,21 +984,14 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             <div className="flex-1 relative w-full overflow-hidden">
                 {/* Preset Panel overlay */}
                 {showPresetPanel && (
-                    <div className="absolute left-2 top-2 bottom-2 w-64 bg-white/90 backdrop-blur-md border border-white/50 rounded-lg shadow-2xl z-50 flex flex-col overflow-hidden animate-slide-in-left">
-                        <div className="p-3 border-b border-black/5 flex items-center justify-between bg-orange-50/50">
+                    <div className="absolute left-2 top-2 bottom-2 w-64 bg-white border-2 border-black hard-shadow-md z-50 flex flex-col overflow-hidden animate-slide-in-left">
+                        <div className="p-3 border-b-2 border-black flex items-center justify-between bg-black text-white">
                             <div className="flex items-center gap-2">
-                                <History size={16} className="text-orange-500" />
-                                <span className="text-xs font-bold text-gray-700">测量点位预设</span>
+                                <History size={16} className="text-[#ff4d00]" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">测量点位预设</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <label className="p-1 text-gray-400 hover:bg-white rounded cursor-pointer" title="导入预设 (JSON)">
-                                    <Download size={14} />
-                                    <input type="file" accept=".json" onChange={handleImportPresets} className="hidden" />
-                                </label>
-                                <button onClick={handleExportPresets} className="p-1 text-gray-400 hover:bg-white rounded" title="导出预设 (JSON)">
-                                    <Upload size={14} />
-                                </button>
-                                <button onClick={() => setShowPresetPanel(false)} className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded">
+                                <button onClick={() => setShowPresetPanel(false)} className="p-1 text-gray-400 hover:text-white transition-colors">
                                     <X size={14} />
                                 </button>
                             </div>
@@ -1022,8 +1000,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                             {presets.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-gray-400 text-center p-4">
                                     <History size={32} className="mb-2 opacity-10" />
-                                    <p className="text-[10px]">暂无保存的预设</p>
-                                    <p className="text-[9px] mt-1 opacity-60">点击工具栏图标保存当前测量点</p>
+                                    <p className="text-[10px] font-bold">暂无保存的预设</p>
                                 </div>
                             ) : (
                                 <div className="flex flex-col gap-2">
@@ -1031,18 +1008,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                         <div 
                                             key={p.id}
                                             onClick={() => handleLoadPreset(p)}
-                                            className="group flex flex-col p-2 bg-white/50 border border-gray-100 rounded hover:border-orange-300 hover:bg-white hover:shadow-md cursor-pointer transition-all"
+                                            className="group flex flex-col p-2 bg-white border-2 border-gray-200 hover:border-black hover:hard-shadow-sm cursor-pointer transition-all"
                                         >
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-bold text-gray-700 truncate flex-1">{p.name}</span>
+                                                <span className="text-[11px] font-black text-gray-700 truncate flex-1">{p.name}</span>
                                                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button 
-                                                        onClick={(e) => handleOpenEditDialog(p, e)}
-                                                        className="p-1 text-gray-400 hover:text-blue-500"
-                                                        title="修改名称并更新状态"
-                                                    >
-                                                        <Edit2 size={12} />
-                                                    </button>
                                                     <button 
                                                         onClick={(e) => handleDeletePreset(p.id, e)}
                                                         className="p-1 text-gray-400 hover:text-red-500"
@@ -1052,7 +1022,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="mt-1 flex items-center gap-2 text-[9px] text-gray-400">
+                                            <div className="mt-1 flex items-center gap-2 text-[9px] font-bold text-gray-400">
                                                 <span>P2L组: {p.measState.p2lGroups.length}</span>
                                                 <span>•</span>
                                                 <span>2点测量: {p.measState.p1 && p.measState.p2 ? '已设置' : '未设置'}</span>
@@ -1072,9 +1042,9 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto animate-scale-in">
                         <button 
                             onClick={onConfirmTempMarker}
-                            className="flex items-center gap-2 bg-black text-white px-3 py-2 rounded-full shadow-xl hover:scale-105 transition-transform font-bold text-xs active:scale-95"
+                            className="flex items-center gap-2 bg-black text-white px-4 py-2 border-2 border-black hard-shadow-md hover:bg-[#ff4d00] transition-all font-black text-[10px] tracking-widest btn-press"
                         >
-                            <Plus size={16} className="text-[#ff4d00]" /> ADD TO MARKER LIST
+                            <Plus size={16} className="text-[#ff4d00]" /> 添加到标记列表
                         </button>
                     </div>
                 )}

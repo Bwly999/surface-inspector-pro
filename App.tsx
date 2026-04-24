@@ -320,34 +320,43 @@ export default function SurfaceInspector() {
   return (
     <div className="flex flex-col h-screen font-mono text-sm select-none relative" style={{ backgroundColor: THEME.bg, color: THEME.text }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;700;900&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        .mono { font-family: 'Space Mono', monospace; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: ${THEME.border}; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
         canvas { image-rendering: pixelated; }
+        
+        .dot-grid {
+          background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+
+        .hard-shadow { box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); }
+        .hard-shadow-sm { box-shadow: 1px 1px 0px 0px rgba(0,0,0,1); }
+        .hard-shadow-md { box-shadow: 4px 4px 0px 0px rgba(0,0,0,1); }
         
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideInRight { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.98); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .animate-slide-down { animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-slide-in-left { animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-slide-in-right { animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        .animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-slide-down { animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-in-left { animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        .logo-glow { text-shadow: 0 0 15px rgba(255, 77, 0, 0.2); }
         
-        .logo-glow { text-shadow: 0 0 20px rgba(255, 77, 0, 0.3); }
-        
-        button:active { transform: scale(0.95); }
+        .btn-press:active { transform: translate(1px, 1px); box-shadow: 0px 0px 0px 0px rgba(0,0,0,1); }
       `}</style>
       
       {/* Help Modal */}
@@ -375,27 +384,61 @@ export default function SurfaceInspector() {
       )}
 
       {/* Header - BRANDING OVERHAUL */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm z-20 animate-slide-down">
+      <header className="flex items-center justify-between px-6 py-4 bg-white border-b-2 border-black z-20 animate-slide-down">
         <div className="flex items-center gap-4 group cursor-default">
-            {/* Logo Icon */}
-            <div className="relative w-10 h-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg transform rotate-3 group-hover:rotate-6 transition-transform opacity-20 duration-300"></div>
-                <div className="absolute inset-0 bg-black rounded-lg flex items-center justify-center text-white transform -rotate-3 group-hover:-rotate-0 transition-transform duration-300 shadow-lg">
-                   <ScanLine size={24} className="text-[#ff4d00] group-hover:scale-110 transition-transform duration-300"/>
+            {/* Logo Icon - OPTION K: AURORA SECTION (WIDE) */}
+            <div className="relative w-24 h-11">
+                <div className="absolute inset-0 bg-black rounded transform rotate-1 transition-transform duration-300 hard-shadow-sm"></div>
+                <div className="absolute inset-0 bg-[#020617] border-2 border-black rounded flex items-center justify-center transform -rotate-1 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
+                   {/* Grid Background Effect */}
+                   <div className="absolute inset-0 opacity-10" style={{ 
+                       backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                       backgroundSize: '4px 4px'
+                   }} />
+                   
+                   <svg width="100%" height="100%" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform duration-300 p-1">
+                      <defs>
+                        <linearGradient id="gradK_App" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#00f2ff" stopOpacity="0.8" />
+                          <stop offset="100%" stopColor="#00f2ff" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Baseline */}
+                      <path d="M5 30H75" stroke="#334155" strokeWidth="1" strokeDasharray="2 2"/>
+                      
+                      {/* Aurora Waveform */}
+                      <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#00f2ff" strokeWidth="2.5" strokeLinejoin="round" />
+                      
+                      {/* Laser Scanning Beam */}
+                      <rect x="39" y="5" width="2" height="25" fill="url(#gradK_App)">
+                        <animate attributeName="x" values="5;73;5" dur="4s" repeatCount="indefinite" />
+                      </rect>
+                      
+                      {/* Analytical Target (Orange) */}
+                      <circle cx="40" cy="20" r="4" stroke="#ff4d00" strokeWidth="1.5">
+                        <animate attributeName="cx" values="5;73;5" dur="4s" repeatCount="indefinite" />
+                        <animate attributeName="cy" values="30;20;20" dur="4s" repeatCount="indefinite" />
+                        <animate attributeName="r" values="3.5;5;3.5" dur="1s" repeatCount="indefinite" />
+                      </circle>
+                      
+                      {/* Horizontal Origin Line */}
+                      <path d="M0 20H80" stroke="#ff4d00" strokeWidth="0.5" opacity="0.2"/>
+                   </svg>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
             </div>
             
             {/* Text Branding */}
             <div className="flex flex-col justify-center">
-                <h1 className="text-xl font-black tracking-tighter leading-none text-gray-900 logo-glow flex items-center gap-2">
+                <h1 className="text-xl font-extrabold tracking-tighter leading-none text-gray-900 logo-glow flex items-center gap-2">
                   点云 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4d00] to-red-600">表面微观分析系统</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold text-white bg-black px-1.5 py-0.5 rounded mono shadow-sm">Pro v3.0</span>
-                    <span className="text-[10px] font-medium text-gray-400 tracking-wide uppercase">工业级视觉分析工具</span>
-                    <div className="w-px h-3 bg-gray-300"></div>
-                    <span className="text-[10px] font-bold text-gray-500 mono">2025-12-25</span>
+                    <div className="flex items-center bg-black rounded-sm overflow-hidden shadow-sm">
+                        <span className="text-[10px] font-black text-white px-1.5 py-0.5 mono">Pro v3.3</span>
+                        <span className="text-[9px] font-bold text-gray-400 bg-gray-900 px-1.5 py-0.5 mono">2026.04.24</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-400 tracking-wide uppercase">工业级视觉分析工具</span>
                 </div>
             </div>
         </div>
@@ -403,7 +446,7 @@ export default function SurfaceInspector() {
         <div className="flex items-center gap-3">
            <button 
              onClick={() => setShowHelp(true)}
-             className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-md transition-all duration-200 mr-2 active:scale-95"
+             className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-gray-500 hover:text-black hover:bg-gray-100 rounded transition-all duration-200 mr-2 btn-press"
            >
              <HelpCircle size={16} /> 帮助
            </button>
@@ -412,17 +455,17 @@ export default function SurfaceInspector() {
 
            <button 
              onClick={() => setShowMarkerList(!showMarkerList)}
-             className={`flex items-center gap-2 px-4 py-2 text-xs font-bold border rounded-md transition-all duration-200 shadow-sm active:scale-95 ${showMarkerList ? 'bg-gray-800 text-white border-gray-800 shadow-md transform scale-105' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+             className={`flex items-center gap-2 px-4 py-2 text-xs font-bold border-2 rounded transition-all duration-200 btn-press ${showMarkerList ? 'bg-black text-white border-black hard-shadow-sm' : 'bg-white text-gray-700 border-black hover:bg-gray-50'}`}
            >
              <MapPin size={14} /> 标记列表 ({markers.length})
            </button>
 
-          <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md cursor-pointer bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm group active:scale-95">
+          <label className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded cursor-pointer bg-white hover:bg-gray-50 transition-all duration-200 hard-shadow-sm btn-press group">
             <Upload size={14} className="group-hover:-translate-y-0.5 transition-transform duration-200 text-[#ff4d00]"/>
             <span className="font-bold text-xs text-gray-700">导入 CSV</span>
             <input type="file" ref={fileInputRef} accept=".csv" className="hidden" onChange={handleCSVImport} />
           </label>
-          <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md cursor-pointer bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm group active:scale-95">
+          <label className="flex items-center gap-2 px-4 py-2 border-2 border-black rounded cursor-pointer bg-white hover:bg-gray-50 transition-all duration-200 hard-shadow-sm btn-press group">
             <ImageIcon size={14} className="group-hover:-translate-y-0.5 transition-transform duration-200 text-[#00a3cc]"/>
             <span className="font-bold text-xs text-gray-700">导入图片</span>
             <input type="file" ref={imgInputRef} accept="image/png,image/jpeg" className="hidden" onChange={handleImageImport} />
@@ -431,18 +474,18 @@ export default function SurfaceInspector() {
       </header>
 
       {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden mono">
+      <div className="flex flex-1 overflow-hidden mono dot-grid">
         {/* Left Panel: 2D View */}
-        <div className="w-1/2 flex flex-col border-r-2 animate-slide-in-left" style={{ borderColor: THEME.border }}>
+        <div className="w-1/2 flex flex-col border-r-2 border-black animate-slide-in-left bg-white/50 backdrop-blur-sm">
           {/* Toolbar */}
-          <div className="flex flex-wrap gap-4 p-3 border-b-2 bg-white" style={{ borderColor: THEME.border }}>
-            <div className="flex border-2 rounded-sm overflow-hidden" style={{ borderColor: THEME.border }}>
+          <div className="flex flex-wrap gap-4 p-3 border-b-2 border-black bg-white">
+            <div className="flex border-2 border-black rounded-sm overflow-hidden hard-shadow-sm">
               {[{ id: 'box', icon: Box, label: '区域选择' }, { id: 'line', icon: Ruler, label: '划线测量' }, { id: 'pan', icon: Move, label: '视图平移' }]
                 .map((t) => (
                   <button 
                     key={t.id} 
                     onClick={() => setTool(t.id as ToolType)} 
-                    className={`flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all duration-200 ${tool === t.id ? 'text-white' : 'hover:bg-gray-100'}`} 
+                    className={`flex items-center gap-2 px-3 py-2 text-xs font-bold transition-all duration-200 btn-press ${tool === t.id ? 'text-white' : 'hover:bg-gray-100'}`} 
                     style={{ background: tool === t.id ? THEME.primary : 'transparent' }}
                   >
                     <t.icon size={14} className={tool === t.id ? 'scale-110' : ''}/> {t.label}
@@ -453,8 +496,7 @@ export default function SurfaceInspector() {
             <div className="flex items-center gap-1 relative">
                 <button
                     onClick={() => setShowColorConfig(!showColorConfig)}
-                    className={`flex items-center gap-2 px-3 py-1.5 border-2 transition-all duration-200 active:scale-95 group ${showColorConfig ? 'bg-gray-200 shadow-inner' : 'bg-white hover:bg-gray-50'}`}
-                    style={{ borderColor: THEME.border }}
+                    className={`flex items-center gap-2 px-3 py-1.5 border-2 border-black transition-all duration-200 btn-press group ${showColorConfig ? 'bg-gray-200 hard-shadow-sm translate-x-[1px] translate-y-[1px]' : 'bg-white hover:bg-gray-50 hard-shadow-sm'}`}
                     title="Color Scale & Range Settings"
                 >
                     <div className="relative">
@@ -468,7 +510,7 @@ export default function SurfaceInspector() {
                         </span>
                     </div>
                     <div 
-                        className="w-10 h-3 border border-black/20 ml-1 rounded-[1px] shadow-sm overflow-hidden"
+                        className="w-10 h-3 border border-black ml-1 rounded-[1px] overflow-hidden"
                         style={{ background: getGradientCSS(activeMap) }}
                     />
                     <Settings size={12} className={`ml-1 text-gray-400 ${showColorConfig ? 'rotate-90 text-orange-600' : ''} transition-all duration-300`} />
@@ -478,7 +520,7 @@ export default function SurfaceInspector() {
                 {showColorConfig && (
                   <div className="absolute top-full left-0 mt-2 flex gap-0 animate-scale-in origin-top-left z-50">
                     {/* Main Settings Panel */}
-                    <div className="bg-white border-2 border-black p-4 shadow-xl w-72">
+                    <div className="bg-white border-2 border-black p-4 hard-shadow-md w-72">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-black">
                              <span className="font-black text-[11px] flex items-center gap-2 uppercase tracking-widest">
                                  <Palette size={14} className="text-orange-600"/> 色谱与范围设置
@@ -486,12 +528,12 @@ export default function SurfaceInspector() {
                              <div className="flex items-center gap-1">
                                 <button 
                                     onClick={() => setShowPresetPanel(!showPresetPanel)} 
-                                    className={`p-1 border-2 transition-colors ${showPresetPanel ? 'bg-orange-500 border-orange-600 text-white' : 'bg-white border-black hover:bg-gray-100'}`}
+                                    className={`p-1 border-2 transition-colors btn-press ${showPresetPanel ? 'bg-orange-500 border-black text-white' : 'bg-white border-black hover:bg-gray-100'}`}
                                     title="预设管理"
                                 >
                                     <History size={12}/>
                                 </button>
-                                <button onClick={() => setShowColorConfig(false)} className="bg-black text-white px-1 text-[10px] font-black hover:bg-orange-600 transition-colors">CLOSE</button>
+                                <button onClick={() => setShowColorConfig(false)} className="bg-black text-white px-2 py-0.5 text-[10px] font-black hover:bg-orange-600 transition-colors uppercase">Close</button>
                              </div>
                         </div>
 
@@ -678,21 +720,21 @@ export default function SurfaceInspector() {
                   </div>
                 )}
             </div>
-            <div className="w-px bg-gray-300 mx-2" />
-            <div className="flex border-2 rounded-sm overflow-hidden" style={{ borderColor: THEME.border }}>
-              <button onClick={() => setViewMode('height')} className={`px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'height' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'height' ? THEME.secondary : 'transparent' }}>高度图</button>
-              <button onClick={() => setViewMode('gradient')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'gradient' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'gradient' ? THEME.secondary : 'transparent' }}><Zap size={12} /> 梯度图</button>
-              <button onClick={() => setViewMode('curvature')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 ${viewMode === 'curvature' ? 'text-white' : 'hover:bg-gray-100'}`} style={{ background: viewMode === 'curvature' ? THEME.secondary : 'transparent' }}><Activity size={12} /> 曲率图</button>
+            <div className="w-px bg-gray-200 mx-2" />
+            <div className="flex border-2 border-black rounded-sm overflow-hidden hard-shadow-sm">
+              <button onClick={() => setViewMode('height')} className={`px-3 py-2 text-xs font-bold transition-all duration-200 btn-press ${viewMode === 'height' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}>高度图</button>
+              <button onClick={() => setViewMode('gradient')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 btn-press ${viewMode === 'gradient' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><Zap size={12} /> 梯度图</button>
+              <button onClick={() => setViewMode('curvature')} className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all duration-200 btn-press ${viewMode === 'curvature' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><Activity size={12} /> 曲率图</button>
             </div>
             {(viewMode === 'gradient' || viewMode === 'curvature') && (
-              <div className="flex border-2 rounded-sm overflow-hidden animate-scale-in" style={{ borderColor: THEME.border }}>
+              <div className="flex border-2 border-black rounded-sm overflow-hidden animate-scale-in hard-shadow-sm">
                 <button 
                   onClick={() => setMapDirection('x')} 
-                  className={`px-3 py-2 text-[10px] font-black transition-all ${mapDirection === 'x' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                  className={`px-3 py-2 text-[10px] font-black transition-all btn-press ${mapDirection === 'x' ? 'bg-[#ff4d00] text-white' : 'bg-white hover:bg-gray-100'}`}
                 >X 方向</button>
                 <button 
                   onClick={() => setMapDirection('y')} 
-                  className={`px-3 py-2 text-[10px] font-black transition-all ${mapDirection === 'y' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                  className={`px-3 py-2 text-[10px] font-black transition-all btn-press ${mapDirection === 'y' ? 'bg-[#ff4d00] text-white' : 'bg-white hover:bg-gray-100'}`}
                 >Y 方向</button>
               </div>
             )}
@@ -742,11 +784,11 @@ export default function SurfaceInspector() {
         </div>
 
         {/* Right Panel: 3D View & Charts - SPLIT 50/50 */}
-        <div className="w-1/2 flex flex-col bg-white animate-slide-in-right">
+        <div className="w-1/2 flex flex-col bg-white animate-slide-in-right border-l border-black">
           
           {/* Top Half: 3D View (50%) */}
-          <div className="h-1/2 relative border-b-2" style={{ borderColor: THEME.border }}>
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 px-2 py-1 bg-white/90 backdrop-blur border-2 text-xs font-bold shadow-sm rounded-full animate-fade-in" style={{ borderColor: THEME.border, color: THEME.primary }}>等轴拓扑视图</div>
+          <div className="h-1/2 relative border-b-2 border-black bg-white">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 bg-black text-white text-[10px] font-black tracking-widest hard-shadow-sm animate-fade-in uppercase">等轴拓扑视图</div>
             <ThreeDViewer 
                 grid={grid}
                 activeLayer={activeLayer}
@@ -766,20 +808,23 @@ export default function SurfaceInspector() {
           </div>
           
           {/* Bottom Half: Chart (50%) */}
-          <div className="h-1/2 p-4 flex flex-col gap-4 bg-gray-50">
+          <div className="h-1/2 p-6 flex flex-col gap-4 bg-gray-50/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold flex items-center gap-2"><Activity size={16} className="text-blue-500 animate-pulse"/> 信号剖面分析</h3>
+              <div className="flex flex-col">
+                <h3 className="text-xs font-black flex items-center gap-2 uppercase tracking-tighter text-gray-400">Signal Analysis</h3>
+                <div className="text-lg font-black flex items-center gap-2"><Activity size={18} className="text-[#ff4d00]"/> 信号剖面分析</div>
+              </div>
               <div className="flex items-center gap-3">
                 {tool === 'box' && (
-                  <div className="flex gap-1 animate-fade-in">
-                    <button onClick={() => setChartAxis('horizontal')} title="Horizontal Profile" className={`p-1 border transition-all duration-200 ${chartAxis === 'horizontal' ? 'bg-black text-white scale-105' : 'bg-white hover:bg-gray-100'}`} style={{ borderColor: THEME.border }}><ArrowRightLeft size={14} /></button>
-                    <button onClick={() => setChartAxis('vertical')} title="Vertical Profile" className={`p-1 border transition-all duration-200 ${chartAxis === 'vertical' ? 'bg-black text-white scale-105' : 'bg-white hover:bg-gray-100'}`} style={{ borderColor: THEME.border }}><ArrowUpDown size={14} /></button>
+                  <div className="flex border-2 border-black rounded-sm overflow-hidden hard-shadow-sm animate-fade-in">
+                    <button onClick={() => setChartAxis('horizontal')} title="Horizontal Profile" className={`p-2 transition-all duration-200 btn-press ${chartAxis === 'horizontal' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><ArrowRightLeft size={16} /></button>
+                    <button onClick={() => setChartAxis('vertical')} title="Vertical Profile" className={`p-2 transition-all duration-200 btn-press ${chartAxis === 'vertical' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><ArrowUpDown size={16} /></button>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="flex-1 bg-white border-2 shadow-sm relative overflow-hidden transition-shadow duration-300 hover:shadow-md" style={{ borderColor: THEME.border }}>
+            <div className="flex-1 bg-white border-2 border-black hard-shadow-sm relative overflow-hidden transition-all duration-300" style={{ borderColor: THEME.border }}>
               <ProfileChart
                 grid={grid}
                 activeLayer={activeLayer}
