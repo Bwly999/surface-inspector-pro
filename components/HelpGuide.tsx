@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   X, MousePointer2, Move, Box, Ruler, Zap, Activity, 
   Keyboard, Layers, Mouse, Upload, Maximize2, Crosshair,
-  Settings, MoveVertical, MoveHorizontal
+  Settings, MoveVertical, MoveHorizontal, History
 } from 'lucide-react';
 import { THEME } from '../constants';
 
@@ -72,7 +72,7 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
             <TabButton id="analysis" label="数据分析工具" icon={Activity} />
           </div>
           <div className="p-4 bg-gray-50 border-t border-gray-100 text-[10px] font-bold text-gray-400 text-center mono uppercase tracking-widest">
-            PRO EDITION v3.0.4
+            PRO EDITION v3.3
           </div>
         </div>
 
@@ -139,9 +139,9 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                         desc="滚动滚轮以光标为中心进行缩放。按住鼠标右键拖动（或使用平移工具）来移动画布。"
                     />
                     <KeyControl 
-                        icon={<Crosshair size={24}/>} 
-                        title="添加标记点" 
-                        desc={<span>在 2D 地图任意位置按住 <strong className="text-white bg-black px-1.5 py-0.5 rounded-sm mono text-[10px]">CTRL + LEFT CLICK</strong>，即可添加一个永久的测量/注释标记。可在标记列表中重命名。</span>}
+                        icon={<Layers size={24}/>} 
+                        title="动态视图映射" 
+                        desc="支持高度图、方向性梯度图及曲率图切换。新增 1% - 99% 百分比相对色标，自动过滤噪点干扰。"
                     />
                     <KeyControl 
                         icon={<Maximize2 size={24}/>} 
@@ -149,9 +149,9 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                         desc="点击左下角状态栏的缩放比例数字，可以手动输入精确的放大倍数（例如 500%）。"
                     />
                     <KeyControl 
-                        icon={<Layers size={24}/>} 
-                        title="视图模式切换" 
-                        desc="使用工具栏在“高度图”（原始 Z 值颜色）和“梯度图”（表面斜率变化率）之间切换。"
+                        icon={<Crosshair size={24}/>} 
+                        title="添加标记点" 
+                        desc={<span>在 2D 地图任意位置按住 <strong className="text-white bg-black px-1.5 py-0.5 rounded-sm mono text-[10px]">CTRL + LEFT CLICK</strong>，即可添加一个永久的测量/注释标记。可在标记列表中重命名。</span>}
                     />
                 </div>
                 
@@ -202,11 +202,13 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="bg-white border-2 border-black p-6 hard-shadow-sm">
-                    <h4 className="font-black text-sm mb-4 flex items-center gap-2 uppercase tracking-tighter">视觉增强设置 / Enhancement</h4>
-                    <p className="text-xs font-bold text-gray-500 mb-4">点击 3D 视图左上角的 <Settings size={14} className="inline text-black"/> 图标。</p>
+                    <h4 className="font-black text-sm mb-4 flex items-center gap-2 uppercase tracking-tighter">视觉增强与配色 / Enhancement & Colors</h4>
+                    <p className="text-xs font-bold text-gray-500 mb-4">点击 3D 视图左上角的 <Settings size={14} className="inline text-black"/> 图标进行详细配置。</p>
                     <ul className="grid grid-cols-2 gap-4 text-[11px] font-bold text-gray-700">
                         <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>对比度 (Intensity):</strong> 夸大 Z 轴高度显示比例</li>
-                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>增强颜色:</strong> 同步增强颜色映射对比</li>
+                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>预设色谱:</strong> 提供多种专业伪彩方案，支持持久化保存</li>
+                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>增强模式:</strong> 深度优化实时渲染的光影对比效果</li>
+                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>解耦设置:</strong> 颜色范围设置现在与 2D 视图独立同步</li>
                     </ul>
                 </div>
               </div>
@@ -237,8 +239,18 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                         />
                         <AnalysisRow 
                             icon={<Activity size={18}/>} 
-                            name="点到线偏差 (平面度)" 
-                            desc="定义参考基准线，计算点到线的垂直距离。" 
+                            name="多组点到线测量 (P2L)" 
+                            desc="支持创建多个测量组，每个组可定义独立的基准线，计算点到线的垂直偏差。" 
+                        />
+                        <AnalysisRow 
+                            icon={<History size={18}/>} 
+                            name="测量预设与快照" 
+                            desc="保存当前所有测量点和 P2L 配置为预设，支持一键切换和快速复用，提升批量分析效率。" 
+                        />
+                        <AnalysisRow 
+                            icon={<Layers size={18}/>} 
+                            name="玻璃拟态分析面板" 
+                            desc="全新的磨砂玻璃 UI 设计，支持展开/折叠各个测量分组，提供更清晰的数据层级。" 
                         />
                     </div>
                  </div>
