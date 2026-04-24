@@ -72,6 +72,13 @@ export interface ColorSettings {
   max: number;
 }
 
+export interface ColorPreset {
+  id: string;
+  name: string;
+  map: string;
+  settings: ColorSettings;
+}
+
 export interface P2LGroup {
   id: string;
   name: string;

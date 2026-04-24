@@ -1006,11 +1006,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                             </div>
                             <div className="flex items-center gap-1">
                                 <label className="p-1 text-gray-400 hover:bg-white rounded cursor-pointer" title="导入预设 (JSON)">
-                                    <Upload size={14} />
+                                    <Download size={14} />
                                     <input type="file" accept=".json" onChange={handleImportPresets} className="hidden" />
                                 </label>
                                 <button onClick={handleExportPresets} className="p-1 text-gray-400 hover:bg-white rounded" title="导出预设 (JSON)">
-                                    <Download size={14} />
+                                    <Upload size={14} />
                                 </button>
                                 <button onClick={() => setShowPresetPanel(false)} className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded">
                                     <X size={14} />

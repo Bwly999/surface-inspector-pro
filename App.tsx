@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers, Palette } from 'lucide-react';
+import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers, Palette, Trash2, Save, History, Plus } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ChartToolType, MeasurementState, ActiveLayer } from './types';
+import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ColorPreset, ChartToolType, MeasurementState, ActiveLayer } from './types';
 import { THEME, MAP_OPTIONS } from './constants';
 import { generateData, parseCSV, computeGradientMap, computeCurvatureMap } from './utils/dataUtils';
 import { getGradientCSS } from './utils/colorUtils';
@@ -39,13 +39,18 @@ export default function SurfaceInspector() {
   
   const [transform, setTransform] = useState<TransformState>({ k: 1, x: 0, y: 0 });
   
-  // Advanced Settings (Persistent)
-  const [colorSettings, setColorSettings] = useLocalStorage<ColorSettings>("surface_color_settings", { 
+  // Workspace Color Settings (Tab-local, decoupled from localStorage to prevent cross-window interference)
+  const [colorSettings, setColorSettings] = useState<ColorSettings>({ 
       mode: 'absolute', 
       min: -0.4, 
       max: 0.2 
   });
   
+  // Persistent Presets (Shared across windows)
+  const [colorPresets, setColorPresets] = useLocalStorage<ColorPreset[]>("surface_color_presets", []);
+  const [newPresetName, setNewPresetName] = useState("");
+  const [showPresetPanel, setShowPresetPanel] = useState(false);
+
   const [showColorConfig, setShowColorConfig] = useState(false);
   const [minStr, setMinStr] = useState(colorSettings.min.toString());
   const [maxStr, setMaxStr] = useState(colorSettings.max.toString());
@@ -196,6 +201,28 @@ export default function SurfaceInspector() {
       setHoverMarker(null);
       setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
       setShowConverter(false);
+  };
+
+  // --- Color Preset Handlers ---
+  const handleSavePreset = () => {
+      if (!newPresetName.trim()) return;
+      const newPreset: ColorPreset = {
+          id: Date.now().toString(),
+          name: newPresetName.trim(),
+          map: activeMap,
+          settings: { ...colorSettings }
+      };
+      setColorPresets([...colorPresets, newPreset]);
+      setNewPresetName("");
+  };
+
+  const handleApplyPreset = (preset: ColorPreset) => {
+      setActiveMap(preset.map);
+      setColorSettings(preset.settings);
+  };
+
+  const handleDeletePreset = (id: string) => {
+      setColorPresets(colorPresets.filter(p => p.id !== id));
   };
 
   const handleAddMarker = useCallback((point: Omit<Marker, 'id' | 'label'> & { id?: string, label?: string }) => {
@@ -431,12 +458,23 @@ export default function SurfaceInspector() {
 
                 {/* Color Configuration Popover */}
                 {showColorConfig && (
-                    <div className="absolute top-full left-0 mt-2 bg-white border-2 border-black p-4 shadow-xl z-50 w-72 animate-scale-in origin-top-left">
+                  <div className="absolute top-full left-0 mt-2 flex gap-0 animate-scale-in origin-top-left z-50">
+                    {/* Main Settings Panel */}
+                    <div className="bg-white border-2 border-black p-4 shadow-xl w-72">
                         <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-black">
                              <span className="font-black text-[11px] flex items-center gap-2 uppercase tracking-widest">
                                  <Palette size={14} className="text-orange-600"/> 色谱与范围设置
                              </span>
-                             <button onClick={() => setShowColorConfig(false)} className="bg-black text-white px-1 text-[10px] font-black hover:bg-orange-600 transition-colors">CLOSE</button>
+                             <div className="flex items-center gap-1">
+                                <button 
+                                    onClick={() => setShowPresetPanel(!showPresetPanel)} 
+                                    className={`p-1 border-2 transition-colors ${showPresetPanel ? 'bg-orange-500 border-orange-600 text-white' : 'bg-white border-black hover:bg-gray-100'}`}
+                                    title="预设管理"
+                                >
+                                    <History size={12}/>
+                                </button>
+                                <button onClick={() => setShowColorConfig(false)} className="bg-black text-white px-1 text-[10px] font-black hover:bg-orange-600 transition-colors">CLOSE</button>
+                             </div>
                         </div>
 
                         <div className="space-y-4">
@@ -546,8 +584,80 @@ export default function SurfaceInspector() {
                                   ? "颜色范围将根据当前数据自动调整。" 
                                   : "颜色范围固定在用户定义的 Z 轴阈值。"}
                              </div>
+
+                             <div className="h-px bg-gray-200" />
+                             
+                             <div className="flex gap-1">
+                                 <input 
+                                     type="text"
+                                     placeholder="保存当前为预设..."
+                                     value={newPresetName}
+                                     onChange={e => setNewPresetName(e.target.value)}
+                                     className="flex-1 border-2 border-gray-200 p-1.5 text-[10px] font-bold focus:border-black outline-none transition-all placeholder:text-gray-300"
+                                 />
+                                 <button 
+                                     onClick={handleSavePreset}
+                                     disabled={!newPresetName.trim()}
+                                     className="bg-black text-white px-2 py-1.5 rounded-sm hover:bg-orange-600 disabled:bg-gray-300 transition-colors flex items-center gap-1"
+                                 >
+                                     <Save size={12}/>
+                                     <span className="text-[9px] font-black">SAVE</span>
+                                 </button>
+                             </div>
                         </div>
                     </div>
+
+                    {/* Preset List Panel (Sidecar) */}
+                    {showPresetPanel && (
+                        <div className="bg-white border-2 border-black border-l-0 p-4 shadow-xl w-64 animate-slide-in-left">
+                             <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-black">
+                                 <span className="font-black text-[11px] flex items-center gap-2 uppercase tracking-widest">
+                                     <History size={14} className="text-blue-600"/> 预设列表
+                                 </span>
+                                 <button onClick={() => setShowPresetPanel(false)} className="text-gray-400 hover:text-black transition-colors"><Plus size={14} className="rotate-45"/></button>
+                             </div>
+
+                             <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                                 {colorPresets.length === 0 && (
+                                     <div className="text-[9px] text-gray-400 italic text-center py-8 border border-dashed border-gray-200 bg-gray-50/50">
+                                         暂无保存的预设
+                                     </div>
+                                 )}
+                                 {colorPresets.map(preset => (
+                                     <div key={preset.id} className="group relative bg-white border-2 border-gray-200 hover:border-black p-2 transition-all">
+                                         <div className="flex items-center justify-between mb-2">
+                                             <span className="text-[10px] font-black truncate max-w-[120px]">{preset.name}</span>
+                                             <button 
+                                                 onClick={() => handleDeletePreset(preset.id)}
+                                                 className="text-gray-300 hover:text-red-500 transition-colors"
+                                             >
+                                                 <Trash2 size={12}/>
+                                             </button>
+                                         </div>
+                                         <div 
+                                            className="w-full h-2 border border-black/10 rounded-[1px] mb-2"
+                                            style={{ background: getGradientCSS(preset.map) }}
+                                         />
+                                         <div className="flex items-center justify-between text-[9px] font-bold text-gray-500 mb-2">
+                                             <span className={`px-1 rounded-sm ${preset.settings.mode === 'relative' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                                                 {preset.settings.mode === 'relative' ? '相对' : '绝对'}
+                                             </span>
+                                             <span className="mono bg-gray-100 px-1 rounded-sm">
+                                                 {preset.settings.min} / {preset.settings.max}
+                                             </span>
+                                         </div>
+                                         <button 
+                                             onClick={() => handleApplyPreset(preset)}
+                                             className="w-full py-1 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black transition-all"
+                                         >
+                                             应用配置
+                                         </button>
+                                     </div>
+                                 ))}
+                             </div>
+                        </div>
+                    )}
+                  </div>
                 )}
             </div>
             <div className="w-px bg-gray-300 mx-2" />
