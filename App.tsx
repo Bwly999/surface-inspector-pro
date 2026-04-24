@@ -141,6 +141,20 @@ export default function SurfaceInspector() {
     });
   }, [grid.data, grid.minZ, grid.maxZ]);
 
+  // External Event Listener for CSV Upload
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'UPLOAD_CSV') {
+        const file = event.data.payload;
+        if (file instanceof File) {
+          processCSVFile(file);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [processCSVFile]);
+
   // --- Derived State: Active Layer ---
   const activeLayer = useMemo<ActiveLayer>(() => {
       if (viewMode === 'gradient' && gradientMaps) {
@@ -173,9 +187,7 @@ export default function SurfaceInspector() {
   }, [viewMode, mapDirection, grid.data, gradientMaps, curvatureMaps, colorSettings.mode, colorSettings.min, colorSettings.max, relativeRange]);
 
   // --- Handlers ---
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processCSVFile = useCallback((file: File) => {
     setLoading(true);
     setTimeout(() => {
       const reader = new FileReader();
@@ -195,6 +207,12 @@ export default function SurfaceInspector() {
       };
       reader.readAsText(file);
     }, 100);
+  }, []);
+
+  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processCSVFile(file);
   };
 
   const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
