@@ -141,20 +141,6 @@ export default function SurfaceInspector() {
     });
   }, [grid.data, grid.minZ, grid.maxZ]);
 
-  // External Event Listener for CSV Upload
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'UPLOAD_CSV') {
-        const file = event.data.payload;
-        if (file instanceof File) {
-          processCSVFile(file);
-        }
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [processCSVFile]);
-
   // --- Derived State: Active Layer ---
   const activeLayer = useMemo<ActiveLayer>(() => {
       if (viewMode === 'gradient' && gradientMaps) {
@@ -208,6 +194,20 @@ export default function SurfaceInspector() {
       reader.readAsText(file);
     }, 100);
   }, []);
+
+  // External Event Listener for CSV Upload
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'UPLOAD_CSV') {
+        const file = event.data.payload;
+        if (file instanceof File) {
+          processCSVFile(file);
+        }
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [processCSVFile]);
 
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -336,29 +336,30 @@ export default function SurfaceInspector() {
 
 
   return (
-    <div className="flex flex-col h-screen font-mono text-sm select-none relative" style={{ backgroundColor: THEME.bg, color: THEME.text }}>
+    <div className="flex flex-col h-screen font-sans text-sm select-none relative" style={{ backgroundColor: THEME.bg, color: THEME.text }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-        
+
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-        
+
         canvas { image-rendering: pixelated; }
-        
+
         .dot-grid {
-          background-image: radial-gradient(#d1d5db 1px, transparent 1px);
-          background-size: 20px 20px;
+          background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+          background-size: 16px 16px;
         }
 
         .hard-shadow { box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); }
         .hard-shadow-sm { box-shadow: 1px 1px 0px 0px rgba(0,0,0,1); }
         .hard-shadow-md { box-shadow: 4px 4px 0px 0px rgba(0,0,0,1); }
-        
+        .hard-shadow-lg { box-shadow: 6px 6px 0px 0px rgba(0,0,0,1); }
+
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -371,17 +372,17 @@ export default function SurfaceInspector() {
         .animate-slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        
+
         .logo-glow { text-shadow: 0 0 15px rgba(255, 77, 0, 0.2); }
-        
+
         .btn-press:active { transform: translate(1px, 1px); box-shadow: 0px 0px 0px 0px rgba(0,0,0,1); }
       `}</style>
-      
+
       {/* Help Modal */}
       <HelpGuide isOpen={showHelp} onClose={() => setShowHelp(false)} />
 
       {/* Converter Modal */}
-      <PointCloudConverter 
+      <PointCloudConverter
         isOpen={showConverter}
         onClose={() => setShowConverter(false)}
         imageSrc={converterImgSrc}
@@ -391,7 +392,7 @@ export default function SurfaceInspector() {
       {/* Loading Overlay */}
       {loading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white p-6 border-2 border-black flex flex-col items-center gap-4 shadow-2xl animate-scale-in">
+          <div className="bg-white p-6 border-2 border-black flex flex-col items-center gap-4 hard-shadow-lg animate-scale-in">
             <Loader2 className="w-10 h-10 animate-spin text-[#ff4d00]" />
             <div className="text-lg font-bold tracking-widest uppercase mono">正在处理数据...</div>
             <div className="w-48 h-2 bg-gray-200 overflow-hidden relative">
@@ -402,8 +403,7 @@ export default function SurfaceInspector() {
       )}
 
       {/* Header - BRANDING OVERHAUL */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white border-b-2 border-black z-20 animate-slide-down">
-        <div className="flex items-center gap-4 group cursor-default">
+      <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b-2 border-black z-20 animate-slide-down">        <div className="flex items-center gap-4 group cursor-default">
             {/* Logo Icon - OPTION K: AURORA SECTION (WIDE) */}
             <div className="relative w-24 h-11">
                 <div className="absolute inset-0 bg-black rounded transform rotate-1 transition-transform duration-300 hard-shadow-sm"></div>
@@ -452,7 +452,7 @@ export default function SurfaceInspector() {
                   点云 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4d00] to-red-600">表面微观分析系统</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center bg-black rounded-sm overflow-hidden shadow-sm">
+                    <div className="flex items-center bg-black rounded-sm overflow-hidden hard-shadow-sm">
                         <span className="text-[10px] font-black text-white px-1.5 py-0.5 mono">Pro v3.3</span>
                         <span className="text-[9px] font-bold text-gray-400 bg-gray-900 px-1.5 py-0.5 mono">2026.04.24</span>
                     </div>
@@ -586,13 +586,13 @@ export default function SurfaceInspector() {
                              <div className="flex border-2 border-black rounded-sm overflow-hidden p-0.5 bg-gray-100">
                                      <button 
                                         onClick={() => setColorSettings(s => ({...s, mode: 'relative'}))}
-                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'relative' ? 'bg-black text-white shadow-lg' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
+                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'relative' ? 'bg-black text-white hard-shadow-sm' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
                                      >
                                         相对模式
                                      </button>
                                      <button 
                                         onClick={() => setColorSettings(s => ({...s, mode: 'absolute'}))}
-                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'absolute' ? 'bg-black text-white shadow-lg' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
+                                        className={`flex-1 py-1.5 text-[10px] font-black transition-all ${colorSettings.mode === 'absolute' ? 'bg-black text-white hard-shadow-sm' : 'text-gray-500 hover:text-black hover:bg-white/50'}`}
                                      >
                                         绝对模式
                                      </button>
@@ -687,7 +687,7 @@ export default function SurfaceInspector() {
 
                     {/* Preset List Panel (Sidecar) */}
                     {showPresetPanel && (
-                        <div className="bg-white border-2 border-black border-l-0 p-4 shadow-xl w-64 animate-slide-in-left">
+                        <div className="bg-white border-2 border-black border-l-0 p-4 hard-shadow-md w-64 animate-slide-in-left">
                              <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-black">
                                  <span className="font-black text-[11px] flex items-center gap-2 uppercase tracking-widest">
                                      <History size={14} className="text-blue-600"/> 预设列表
@@ -806,7 +806,6 @@ export default function SurfaceInspector() {
           
           {/* Top Half: 3D View (50%) */}
           <div className="h-1/2 relative border-b-2 border-black bg-white">
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 bg-black text-white text-[10px] font-black tracking-widest hard-shadow-sm animate-fade-in uppercase">等轴拓扑视图</div>
             <ThreeDViewer 
                 grid={grid}
                 activeLayer={activeLayer}

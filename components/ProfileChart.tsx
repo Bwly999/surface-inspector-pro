@@ -633,11 +633,11 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
             if (measState.p1 && measState.p2) {
                 const p1 = measState.p1;
                 const p2 = measState.p2;
-                const dxy = Math.abs(p2.x - p1.x); // Physical Distance
+                const dxy = Math.hypot(p2.realX - p1.realX, p2.realY - p1.realY);
                 
                 // Draw Horizontal Dimension Line
                 markLineData.push([
-                    { coord: [p1.x, p1.y], lineStyle: { color: THEME.secondary, width: 2 }, label: { show: true, position: 'middle', formatter: `ΔXY: ${dxy.toFixed(2)}`, color: '#fff', backgroundColor: THEME.secondary, padding: [2,4], borderRadius: 3 } },
+                    { coord: [p1.x, p1.y], lineStyle: { color: THEME.secondary, width: 2 }, label: { show: true, position: 'middle', formatter: `ΔXY: ${dxy.toFixed(4)}`, color: '#fff', backgroundColor: THEME.secondary, padding: [2,4], borderRadius: 3 } },
                     { coord: [p2.x, p1.y] } // Flat line at P1 height
                 ]);
                 // Connector to P2

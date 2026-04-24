@@ -591,46 +591,57 @@ const Surface2DCanvas = ({
        />
        
        {/* Interactive Zoom & Position Overlay */}
-       <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-white/90 px-2 py-1 border border-gray-400 shadow-sm z-10 text-[10px] font-bold">
+       <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-white border-2 border-black hard-shadow-sm px-2 py-1.5 z-10 text-[10px] font-black uppercase tracking-tighter">
            <div className="flex items-center gap-1">
-              <span>ZOOM:</span>
+              <span className="text-gray-400">Zoom</span>
               <input 
-                 className="w-10 bg-transparent border-b border-gray-400 focus:outline-none focus:border-black text-center"
+                 className="w-10 bg-transparent border-b-2 border-black/10 focus:outline-none focus:border-black text-center font-black"
                  value={zoomInput}
                  onChange={e => setZoomInput(e.target.value)}
                  onFocus={() => setIsEditingZoom(true)}
                  onBlur={handleZoomCommit}
                  onKeyDown={e => e.key === 'Enter' && handleZoomCommit()}
               />
-              <span>%</span>
+              <span className="text-gray-400">%</span>
            </div>
            
-           <div className="w-px h-3 bg-gray-400 mx-1"></div>
+           <div className="w-px h-3 bg-black/10 mx-1"></div>
 
            <button
              onClick={onToggleCursor}
-             className={`p-0.5 rounded ${showHoverInfo ? 'bg-black text-white' : 'hover:bg-gray-200 text-gray-600'}`}
+             className={`p-1 transition-all ${showHoverInfo ? 'bg-black text-white' : 'hover:bg-gray-100 text-gray-400'}`}
              title="光标信息 (Toggle Cursor Info)"
            >
-
              <Info size={12}/>
            </button>
 
-           <div className="w-px h-3 bg-gray-400 mx-1"></div>
+           <div className="w-px h-3 bg-black/10 mx-1"></div>
            
-           <span>
-             POS: {Math.round(cursorInfo?.x || 0)}, {Math.round(cursorInfo?.y || 0)} 
-             <span className="text-gray-400 ml-1">({cursorInfo?.realX.toFixed(1) || 0}, {cursorInfo?.realY.toFixed(1) || 0})</span>
+           <span className="flex items-center gap-1">
+             <span className="text-gray-400">XY:</span> 
+             {Math.round(cursorInfo?.x || 0)}, {Math.round(cursorInfo?.y || 0)} 
+             <span className="text-[9px] text-gray-300 ml-1">[{cursorInfo?.realX.toFixed(1) || 0}, {cursorInfo?.realY.toFixed(1) || 0}]</span>
            </span>
        </div>
        
        {/* Hover Info Tooltip */}
        {showHoverInfo && cursorInfo && (
-           <div className="absolute pointer-events-none bg-black/80 text-white p-2 rounded text-xs z-20" style={{ left: cursorInfo.screenX + 15, top: cursorInfo.screenY + 15 }}>
-               <div className="font-bold border-b border-gray-600 mb-1 pb-1">COORDINATES</div>
-               <div>X: {cursorInfo.realX.toFixed(2)}</div>
-               <div>Y: {cursorInfo.realY.toFixed(2)}</div>
-               <div className="text-[#ff4d00]">Z: {cursorInfo.z.toFixed(4)}</div>
+           <div className="absolute pointer-events-none bg-black text-white p-3 border border-white/10 hard-shadow-md z-20 animate-scale-in" style={{ left: cursorInfo.screenX + 20, top: cursorInfo.screenY + 20 }}>
+               <div className="text-[9px] font-black border-b border-white/20 mb-2 pb-1 opacity-40 tracking-widest uppercase">Precision Metrics</div>
+               <div className="flex flex-col gap-1">
+                   <div className="flex justify-between gap-6">
+                       <span className="text-gray-500 font-bold">REAL X</span>
+                       <span className="mono font-bold">{cursorInfo.realX.toFixed(3)}</span>
+                   </div>
+                   <div className="flex justify-between gap-6">
+                       <span className="text-gray-500 font-bold">REAL Y</span>
+                       <span className="mono font-bold">{cursorInfo.realY.toFixed(3)}</span>
+                   </div>
+                   <div className="flex justify-between gap-6 pt-1 border-t border-white/10 mt-1">
+                       <span className="text-[#ff4d00] font-black uppercase">Z-Height</span>
+                       <span className="text-[#ff4d00] font-black mono text-sm">{cursorInfo.z.toFixed(5)}</span>
+                   </div>
+               </div>
            </div>
        )}
     </div>

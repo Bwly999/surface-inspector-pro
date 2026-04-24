@@ -383,93 +383,93 @@ const ThreeDViewer = React.memo(({
         <div className="absolute top-2 left-2 flex flex-col items-start gap-2 z-10 pointer-events-auto">
              <button 
                 onClick={() => setShowSettings(!showSettings)}
-                className={`p-1.5 border-2 rounded shadow-sm transition-all duration-200 active:scale-95 ${showSettings ? 'bg-black text-white border-black rotate-90' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'}`}
+                className={`p-1.5 border-2 transition-all duration-200 btn-press ${showSettings ? 'bg-black text-white border-black' : 'bg-white text-gray-700 border-black hover:bg-gray-100 hard-shadow-sm'}`}
                 title="3D Visual Settings"
              >
-                <Settings size={14} />
+                <Settings size={14} className={showSettings ? 'rotate-90' : ''} />
              </button>
              
              {showSettings && (
-                 <div className="bg-white/95 backdrop-blur border-2 border-gray-300 p-3 rounded shadow-lg flex flex-col gap-3 w-64 animate-scale-in origin-top-left">
-                     <div className="flex items-center gap-2 text-xs font-bold text-gray-600 border-b pb-2">
-                         <Sliders size={12} /> 对比度与地形控制
+                 <div className="bg-white border-2 border-black p-3 hard-shadow-md flex flex-col gap-3 w-64 animate-scale-in origin-top-left">
+                     <div className="flex items-center gap-2 text-[10px] font-black text-black border-b-2 border-black pb-2 uppercase tracking-widest">
+                         <Sliders size={12} className="text-[#ff4d00]"/> 3D 渲染配置
                      </div>
                      
                      {/* Slider Section */}
                      <div>
-                        <div className="flex justify-between text-[10px] text-gray-500 font-bold mb-1">
-                            <span>强度</span>
-                            <span>{contrast.toFixed(1)}x</span>
+                        <div className="flex justify-between text-[9px] text-gray-500 font-black mb-1 uppercase tracking-tighter">
+                            <span>Z 轴夸张强度</span>
+                            <span className="mono text-[#ff4d00]">{contrast.toFixed(1)}x</span>
                         </div>
                         <input 
                             type="range" min="0.1" max={maxContrastRange} step="0.1"
                             value={contrast}
                             onChange={e => onContrastChange(parseFloat(e.target.value))}
-                            className="w-full accent-[#ff4d00] cursor-pointer"
+                            className="w-full accent-black cursor-pointer h-1.5 bg-gray-200 rounded-none appearance-none"
                         />
                      </div>
 
                      {/* Precise Inputs */}
                      <div className="grid grid-cols-2 gap-3">
                          <div>
-                             <label className="text-[9px] font-bold text-gray-500 block mb-1">当前值</label>
-                             <div className="flex items-center border border-gray-300 rounded bg-white hover:border-gray-400 transition-colors">
+                             <label className="text-[9px] font-black text-gray-400 block mb-1 uppercase tracking-tighter">当前倍数</label>
+                             <div className="flex items-center border-2 border-gray-200 focus-within:border-black transition-colors bg-gray-50">
                                 <input 
                                     type="number" 
                                     step="0.1"
                                     min="0.1"
                                     value={contrast}
                                     onChange={e => onContrastChange(parseFloat(e.target.value))}
-                                    className="w-full p-1.5 text-xs font-mono outline-none bg-transparent"
+                                    className="w-full p-1.5 text-xs font-black mono outline-none bg-transparent"
                                 />
-                                <span className="text-[10px] text-gray-400 pr-1">x</span>
+                                <span className="text-[10px] font-black text-gray-300 pr-1">x</span>
                              </div>
                          </div>
                          <div>
-                             <label className="text-[9px] font-bold text-gray-500 block mb-1">最大限制</label>
-                             <div className="flex items-center border border-gray-300 rounded bg-white hover:border-gray-400 transition-colors">
+                             <label className="text-[9px] font-black text-gray-400 block mb-1 uppercase tracking-tighter">最大限制</label>
+                             <div className="flex items-center border-2 border-gray-200 focus-within:border-black transition-colors bg-gray-50">
                                 <input 
                                     type="number" 
                                     step="1.0"
                                     min="1.0"
                                     value={maxContrastRange}
                                     onChange={e => setMaxContrastRange(parseFloat(e.target.value))}
-                                    className="w-full p-1.5 text-xs font-mono outline-none bg-transparent"
+                                    className="w-full p-1.5 text-xs font-black mono outline-none bg-transparent"
                                 />
-                                <span className="text-[10px] text-gray-400 pr-1">x</span>
+                                <span className="text-[10px] font-black text-gray-300 pr-1">x</span>
                              </div>
                          </div>
                      </div>
 
-                     <div className="flex items-center justify-between border-t pt-2 mt-1">
-                        <label className="text-[9px] font-bold text-gray-500">增强颜色</label>
+                     <div className="flex items-center justify-between border-t border-gray-100 pt-2 mt-1">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">颜色强化增强</label>
                         <input 
                             type="checkbox" 
                             checked={enhanceColor} 
                             onChange={e => setEnhanceColor(e.target.checked)}
-                            className="accent-[#ff4d00]"
+                            className="accent-black w-3 h-3"
                         />
                      </div>
 
-                     <div className="text-[9px] text-gray-400 pt-1 leading-tight">
+                     <div className="text-[9px] text-gray-400 pt-1 leading-tight font-medium italic">
                         调整 Z 轴夸张程度和颜色分离。<br/>
-                        按住 <span className="font-bold text-black">ALT</span> + 拖动可绕 Z 轴旋转。
+                        按住 <span className="font-bold text-black uppercase">Alt</span> + 拖动可绕 Z 轴旋转。
                      </div>
                  </div>
              )}
         </div>
 
         {/* Top Right: Camera Controls */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1 bg-white/80 p-1 rounded border shadow-sm transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 pointer-events-auto">
-            <button onClick={() => setCameraView('iso')} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Isometric"><Box size={16}/></button>
-            <button onClick={() => setCameraView('top')} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Top View"><div className="w-4 h-4 border-2 border-black"></div></button>
-            <button onClick={() => setCameraView('front')} className="p-1 hover:bg-gray-200 rounded transition-colors" title="Front View"><Monitor size={16} /></button>
+        <div className="absolute top-2 right-2 flex flex-col gap-1 bg-white p-1 border-2 border-black hard-shadow-sm transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 pointer-events-auto">
+            <button onClick={() => setCameraView('iso')} className="p-1.5 hover:bg-black hover:text-white transition-all btn-press" title="Isometric View"><Box size={14}/></button>
+            <button onClick={() => setCameraView('top')} className="p-1.5 hover:bg-black hover:text-white transition-all btn-press flex items-center justify-center" title="Top View"><div className="w-3 h-3 border-2 border-current"></div></button>
+            <button onClick={() => setCameraView('front')} className="p-1.5 hover:bg-black hover:text-white transition-all btn-press" title="Front View"><Monitor size={14} /></button>
         </div>
 
         {isAltLocked && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 animate-scale-in">
-                <div className="bg-black/50 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur">
-                    Z 轴锁定
+                <div className="bg-black text-white px-4 py-2 border-2 border-black hard-shadow-md text-[10px] font-black tracking-[0.2em] uppercase">
+                    Z-Axis Locked
                 </div>
             </div>
         )}
