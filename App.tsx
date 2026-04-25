@@ -805,17 +805,20 @@ export default function SurfaceInspector() {
           </div>
           
           {/* Bottom Half: Chart (50%) */}
-          <div className="h-1/2 p-6 flex flex-col gap-4 bg-gray-50/50 backdrop-blur-sm">
+          <div className="h-1/2 p-3 flex flex-col gap-2 bg-gray-50/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <h3 className="text-xs font-black flex items-center gap-2 uppercase tracking-tighter text-gray-400">Signal Analysis</h3>
-                <div className="text-lg font-black flex items-center gap-2"><Activity size={18} className="text-[#ff4d00]"/> 信号剖面分析</div>
+              <div className="flex items-center gap-2">
+                <Activity size={18} className="text-[#ff4d00]"/>
+                <div className="flex flex-col -space-y-1">
+                  <div className="text-[13px] font-black uppercase tracking-tight">信号剖面分析</div>
+                  <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mono">Signal Analysis</div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {tool === 'box' && (
-                  <div className="flex border-2 border-black rounded-sm overflow-hidden hard-shadow-sm animate-fade-in">
-                    <button onClick={() => setChartAxis('horizontal')} title="Horizontal Profile" className={`p-2 transition-all duration-200 btn-press ${chartAxis === 'horizontal' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><ArrowRightLeft size={16} /></button>
-                    <button onClick={() => setChartAxis('vertical')} title="Vertical Profile" className={`p-2 transition-all duration-200 btn-press ${chartAxis === 'vertical' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}><ArrowUpDown size={16} /></button>
+                  <div className="flex border-2 border-black rounded-sm overflow-hidden hard-shadow-sm animate-fade-in bg-white">
+                    <button onClick={() => setChartAxis('horizontal')} title="Horizontal Profile" className={`px-2 py-1 transition-all duration-200 btn-press ${chartAxis === 'horizontal' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}><ArrowRightLeft size={14} /></button>
+                    <button onClick={() => setChartAxis('vertical')} title="Vertical Profile" className={`px-2 py-1 transition-all duration-200 btn-press ${chartAxis === 'vertical' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}><ArrowUpDown size={14} /></button>
                   </div>
                 )}
               </div>
