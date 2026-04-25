@@ -626,20 +626,20 @@ const Surface2DCanvas = ({
        
        {/* Hover Info Tooltip */}
        {showHoverInfo && cursorInfo && (
-           <div className="absolute pointer-events-none bg-black text-white p-3 border border-white/10 hard-shadow-md z-20 animate-scale-in" style={{ left: cursorInfo.screenX + 20, top: cursorInfo.screenY + 20 }}>
-               <div className="text-[9px] font-black border-b border-white/20 mb-2 pb-1 opacity-40 tracking-widest uppercase">Precision Metrics</div>
+           <div className="absolute pointer-events-none bg-white/70 backdrop-blur-md text-black p-3 border border-black/10 hard-shadow-md z-20 animate-scale-in" style={{ left: cursorInfo.screenX + 20, top: cursorInfo.screenY + 20 }}>
+               <div className="text-[9px] font-black border-b border-black/10 mb-2 pb-1 opacity-50 tracking-widest uppercase">Precision Metrics</div>
                <div className="flex flex-col gap-1">
                    <div className="flex justify-between gap-6">
                        <span className="text-gray-500 font-bold">REAL X</span>
-                       <span className="mono font-bold">{cursorInfo.realX.toFixed(3)}</span>
+                       <span className="mono font-bold text-gray-900">{cursorInfo.realX.toFixed(3)}</span>
                    </div>
                    <div className="flex justify-between gap-6">
                        <span className="text-gray-500 font-bold">REAL Y</span>
-                       <span className="mono font-bold">{cursorInfo.realY.toFixed(3)}</span>
+                       <span className="mono font-bold text-gray-900">{cursorInfo.realY.toFixed(3)}</span>
                    </div>
-                   <div className="flex justify-between gap-6 pt-1 border-t border-white/10 mt-1">
+                   <div className="flex justify-between gap-6 pt-1 border-t border-black/10 mt-1">
                        <span className="text-[#ff4d00] font-black uppercase">Z-Height</span>
-                       <span className="text-[#ff4d00] font-black mono text-sm">{cursorInfo.z.toFixed(5)}</span>
+                       <span className="text-[#e64500] font-black mono text-sm">{cursorInfo.z.toFixed(5)}</span>
                    </div>
                </div>
            </div>
