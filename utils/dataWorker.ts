@@ -2,6 +2,7 @@
 
 import { DataWorkerRequest, DataWorkerResponse, DerivedLayerKind, DirectionalMaps, DisplayRange, GridData } from '../types';
 import { computeCurvatureMaps, computeGradientMaps, getGridSpacing, parseCSV } from './dataUtils';
+import { getPreviewDisplayRange, processImageToGrid } from './processUtils';
 import { estimatePercentileRange, toSignedDisplayRange } from './rangeUtils';
 
 type DatasetCacheEntry = {
@@ -69,6 +70,20 @@ workerScope.onmessage = (event: MessageEvent<DataWorkerRequest>) => {
         requestId: request.requestId,
         payload: {
           datasetId: request.datasetId,
+        },
+      });
+      return;
+    }
+
+    if (request.type === 'process-image') {
+      const grid = processImageToGrid(request.buffer, request.config);
+
+      respond({
+        type: 'process-image-success',
+        requestId: request.requestId,
+        payload: {
+          grid,
+          range: getPreviewDisplayRange(grid.data, { min: grid.minZ, max: grid.maxZ }),
         },
       });
       return;

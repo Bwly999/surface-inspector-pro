@@ -80,6 +80,11 @@ export interface RegisterGridWorkerSuccessPayload {
   datasetId: string;
 }
 
+export interface ProcessImageWorkerSuccessPayload {
+  grid: GridData;
+  range: DisplayRange;
+}
+
 export interface WorkerErrorPayload {
   message: string;
 }
@@ -102,6 +107,12 @@ export type DataWorkerRequest =
       requestId: string;
       datasetId: string;
       kind: DerivedLayerKind;
+    }
+  | {
+      type: 'process-image';
+      requestId: string;
+      buffer: ArrayBuffer;
+      config: ConverterConfig;
     };
 
 export type DataWorkerResponse =
@@ -124,6 +135,11 @@ export type DataWorkerResponse =
       type: 'error';
       requestId: string;
       payload: WorkerErrorPayload;
+    }
+  | {
+      type: 'process-image-success';
+      requestId: string;
+      payload: ProcessImageWorkerSuccessPayload;
     };
 
 export type ViewMode = 'height' | 'gradient' | 'curvature';

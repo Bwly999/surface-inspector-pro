@@ -1,7 +1,19 @@
 
 import * as UPNG from 'upng-js';
-import { ConverterConfig, GridData } from '../types';
-import { fitPlane } from './mathUtils';
+import { ConverterConfig, DisplayRange, GridData } from '../types.js';
+import { fitPlane } from './mathUtils.js';
+import { estimatePercentileRange } from './rangeUtils.js';
+
+export const getPreviewDisplayRange = (
+    data: Float32Array,
+    fallback: DisplayRange
+): DisplayRange => {
+    if (data.length === 0) {
+        return fallback;
+    }
+
+    return estimatePercentileRange(data, 0.02, 0.98, 4096);
+};
 
 export const processImageToGrid = (
     buffer: ArrayBuffer,
@@ -19,9 +31,8 @@ export const processImageToGrid = (
     
     if (depth === 16) {
         // img.data is often a Uint8Array containing the raw bytes, DataView needs an ArrayBuffer
-        const buffer = img.data instanceof ArrayBuffer ? img.data : img.data.buffer;
-        const byteOffset = img.data instanceof ArrayBuffer ? 0 : img.data.byteOffset;
-        const view = new DataView(buffer, byteOffset, img.data.byteLength);
+        const rawBytes = img.data instanceof Uint8Array ? img.data : new Uint8Array(img.data);
+        const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
         
         rawPixels = new Uint16Array(pixelCount);
         // Correctly handle byte order for 16-bit PNG (Big Endian)

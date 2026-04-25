@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Check, Save, RotateCw, RotateCcw, Image as ImageIcon, Plus, Trash2, Maximize2, Palette, Grid3X3, FlipVertical, HelpCircle } from 'lucide-react';
-import { ConverterConfig, ConversionPreset, GridData } from '../types';
-import { processImageToGrid } from '../utils/processUtils';
+import { ConverterConfig, ConversionPreset, DataWorkerRequest, DataWorkerResponse, DisplayRange, GridData } from '../types';
 import { THEME } from '../constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { getColor } from '../utils/colorUtils';
@@ -45,9 +44,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     const [presetName, setPresetName] = useState("");
 
     const [previewData, setPreviewData] = useState<GridData | null>(null);
+    const [previewRange, setPreviewRange] = useState<DisplayRange | null>(null);
     const [previewMode, setPreviewMode] = useState<'gray' | 'heatmap'>('gray');
     const [isProcessing, setIsProcessing] = useState(false);
     const [showLargePreview, setShowLargePreview] = useState(false);
+    const workerRef = useRef<Worker | null>(null);
+    const requestIdRef = useRef(0);
+    const pendingRequestsRef = useRef(new Map<string, { resolve: (value: any) => void; reject: (reason?: unknown) => void }>());
 
     // Canvas Interaction
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -104,8 +107,53 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
     // --- Cleanup & Reset on Close ---
     useEffect(() => {
+        const worker = new Worker(new URL('../utils/dataWorker.ts', import.meta.url), { type: 'module' });
+        workerRef.current = worker;
+
+        worker.onmessage = (event: MessageEvent<DataWorkerResponse>) => {
+            const pending = pendingRequestsRef.current.get(event.data.requestId);
+            if (!pending) return;
+
+            pendingRequestsRef.current.delete(event.data.requestId);
+
+            if (event.data.type === 'error') {
+                pending.reject(new Error(event.data.payload.message));
+                return;
+            }
+
+            pending.resolve(event.data.payload);
+        };
+
+        worker.onerror = (event) => {
+            const error = new Error(event.message || '图片处理失败');
+            pendingRequestsRef.current.forEach(({ reject }) => reject(error));
+            pendingRequestsRef.current.clear();
+        };
+
+        return () => {
+            worker.terminate();
+            workerRef.current = null;
+            pendingRequestsRef.current.clear();
+        };
+    }, []);
+
+    const callWorker = useCallback(<T,>(request: Omit<DataWorkerRequest, 'requestId'>) => {
+        if (!workerRef.current) {
+            return Promise.reject(new Error('图片处理线程尚未初始化'));
+        }
+
+        const requestId = `converter-worker-${++requestIdRef.current}`;
+
+        return new Promise<T>((resolve, reject) => {
+            pendingRequestsRef.current.set(requestId, { resolve, reject });
+            workerRef.current?.postMessage({ ...request, requestId });
+        });
+    }, []);
+
+    useEffect(() => {
         if (!isOpen) {
             setPreviewData(null);
+            setPreviewRange(null);
             setTransform({ k: 1, x: 0, y: 0 });
             setNewRoi(null);
             setDragStart(null);
@@ -297,21 +345,24 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     };
 
     // --- Processing ---
-    const handleProcess = () => {
+    const handleProcess = async () => {
         if (!imageBuffer) return;
         setIsProcessing(true);
-        
-        setTimeout(() => {
-            try {
-                const result = processImageToGrid(imageBuffer, config);
-                setPreviewData(result);
-            } catch (err) {
-                console.error("Processing failed:", err);
-                alert("图像解析失败，请检查文件格式。");
-            } finally {
-                setIsProcessing(false);
-            }
-        }, 100);
+
+        try {
+            const result = await callWorker<{ grid: GridData; range: DisplayRange }>({
+                type: 'process-image',
+                buffer: imageBuffer.slice(0),
+                config
+            });
+            setPreviewData(result.grid);
+            setPreviewRange(result.range);
+        } catch (err) {
+            console.error("Processing failed:", err);
+            alert("图像解析失败，请检查文件格式。");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     // --- Presets ---
@@ -653,7 +704,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                     <div className="text-gray-600 text-[10px] font-black uppercase tracking-widest animate-pulse">等待生成数据...</div>
                                 ) : (
                                     <>
-                                        <PreviewCanvas data={previewData} mode={previewMode} />
+                                        <PreviewCanvas data={previewData} mode={previewMode} displayRange={previewRange} />
                                         <button 
                                             onClick={() => setShowLargePreview(true)}
                                             className="absolute top-4 right-4 p-2 bg-black text-white border border-white/20 hard-shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-[#ff4d00]"
@@ -698,7 +749,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             </button>
                         </div>
                         <div className="flex-1 bg-black border-2 border-white/20 hard-shadow-md overflow-hidden flex items-center justify-center">
-                            <PreviewCanvas data={previewData} mode={previewMode} />
+                            <PreviewCanvas data={previewData} mode={previewMode} displayRange={previewRange} />
                         </div>
                     </div>
                 </div>
@@ -708,20 +759,8 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 };
 
 // Preview Canvas Component
-const PreviewCanvas = React.memo(({ data, mode }: { data: GridData, mode: 'gray' | 'heatmap' }) => {
+const PreviewCanvas = React.memo(({ data, mode, displayRange }: { data: GridData, mode: 'gray' | 'heatmap', displayRange: DisplayRange | null }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    
-    // Calculate 2th/98th range for heatmap (consistent with App.tsx relative mode)
-    const displayRange = useMemo(() => {
-        if (!data.data || data.data.length === 0) return { min: 0, max: 1 };
-        const sorted = new Float32Array(data.data).sort();
-        const minIdx = Math.floor(sorted.length * 0.02);
-        const maxIdx = Math.floor(sorted.length * 0.98);
-        return {
-            min: sorted[minIdx] ?? data.minZ,
-            max: sorted[maxIdx] ?? data.maxZ
-        };
-    }, [data.data, data.minZ, data.maxZ]);
 
     useEffect(() => {
         const cvs = canvasRef.current;
@@ -737,8 +776,8 @@ const PreviewCanvas = React.memo(({ data, mode }: { data: GridData, mode: 'gray'
         // Gray range always uses full min/max for visibility
         const grayRange = data.maxZ - data.minZ || 1;
         // Heatmap range uses 2th/98th
-        const heatMin = displayRange.min;
-        const heatMax = displayRange.max;
+        const heatMin = displayRange?.min ?? data.minZ;
+        const heatMax = displayRange?.max ?? data.maxZ;
 
         for (let i = 0; i < data.data.length; i++) {
             const z = data.data[i];
@@ -777,7 +816,7 @@ const PreviewCanvas = React.memo(({ data, mode }: { data: GridData, mode: 'gray'
         
         ctx.drawImage(temp, dx, dy, width * scale, height * scale);
         
-    }, [data, mode]);
+    }, [data, displayRange, mode]);
 
     return <canvas ref={canvasRef} className="w-full h-full object-contain" />;
 });
