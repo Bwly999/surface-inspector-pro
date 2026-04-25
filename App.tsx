@@ -408,6 +408,13 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
         .logo-glow { text-shadow: 0 0 15px rgba(255, 77, 0, 0.2); }
 
         .btn-press:active { transform: translate(1px, 1px); box-shadow: 0px 0px 0px 0px rgba(0,0,0,1); }
+
+        /* Fix for blurry lucide icons on Windows non-integer scaling (125%, 150%) */
+        svg.lucide {
+          shape-rendering: geometricPrecision;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
       `}</style>
 
       {/* Help Modal */}
