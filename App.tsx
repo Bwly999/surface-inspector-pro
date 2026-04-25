@@ -879,6 +879,10 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
                 measState={measState} 
                 onSetMeasState={setMeasState} 
                 onSetChartTool={setChartTool}
+                onSetTool={setTool}
+                onSetBoxSel={setBoxSel}
+                onSetLineSel={setLineSel}
+                onSetChartAxis={setChartAxis}
                 onChartClick={handleChartPointClick}
                 onChartHover={handleChartHover}
                 tempMarker={tempMarker}

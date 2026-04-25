@@ -110,6 +110,10 @@ export interface MeasurementPreset {
   name: string;
   measState: MeasurementState;
   mode: ChartToolType;
+  globalTool?: ToolType;
+  chartAxis?: ChartAxis;
+  boxSel?: SelectionBox;
+  lineSel?: SelectionLine;
 }
 
 export interface ActiveLayer {

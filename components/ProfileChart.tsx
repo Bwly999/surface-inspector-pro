@@ -4,7 +4,7 @@ import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, Measurement
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
 import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser } from 'lucide-react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useMeasurementHistory } from '../hooks/useMeasurementHistory';
 
 const P2L_COLORS = [
     '#ff4d4f', // Red
@@ -88,6 +88,10 @@ interface ProfileChartProps {
     axis: ChartAxis;
     chartTool: ChartToolType;
     onSetChartTool: (t: ChartToolType) => void;
+    onSetTool: (t: ToolType) => void;
+    onSetBoxSel: (b: SelectionBox) => void;
+    onSetLineSel: (l: SelectionLine) => void;
+    onSetChartAxis: (a: ChartAxis) => void;
     onChartClick: (point: { gridX: number, gridY: number, z: number }) => void;
     onChartHover: (point: { gridX: number, gridY: number, z: number } | null) => void;
     tempMarker: { gridX: number, gridY: number, z: number } | null;
@@ -99,7 +103,9 @@ interface ProfileChartProps {
 }
 
 const ProfileChart: React.FC<ProfileChartProps> = ({ 
-    grid, activeLayer, boxSel, lineSel, tool, axis, chartTool, onSetChartTool, onChartClick, onChartHover, tempMarker, onConfirmTempMarker,
+    grid, activeLayer, boxSel, lineSel, tool, axis, chartTool, 
+    onSetChartTool, onSetTool, onSetBoxSel, onSetLineSel, onSetChartAxis,
+    onChartClick, onChartHover, tempMarker, onConfirmTempMarker,
     measState, onSetMeasState
 }) => {
     const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -109,104 +115,42 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     const [showP2LPanel, setShowP2LPanel] = useState(false);
     const [hoveredP2LId, setHoveredP2LId] = useState<string | null>(null);
 
-    // Preset State & Handlers
-    const [presets, setPresets] = useLocalStorage<MeasurementPreset[]>('profile-presets', []);
-    const [showPresetPanel, setShowPresetPanel] = useState(false);
-    const [showSaveDialog, setShowSaveDialog] = useState(false);
-    const [presetName, setPresetName] = useState('');
-    const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+    // Preset Store Integration
     const skipResetRef = useRef(false);
-
-    const handleOpenSaveDialog = () => {
-        setPresetName(`预设 ${new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')}`);
-        setEditingPresetId(null);
-        setShowSaveDialog(true);
-    };
-
-    const handleOpenEditDialog = (preset: MeasurementPreset, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setPresetName(preset.name);
-        setEditingPresetId(preset.id);
-        setShowSaveDialog(true);
-    };
-
-    const handleSavePreset = () => {
-        if (!presetName.trim()) return;
-
-        if (editingPresetId) {
-            // Update existing preset
-            setPresets(prev => prev.map(p => {
-                if (p.id === editingPresetId) {
-                    return {
-                        ...p,
-                        name: presetName.trim(),
-                        measState: JSON.parse(JSON.stringify(measState)),
-                        mode: chartTool
-                    };
-                }
-                return p;
-            }));
-        } else {
-            // Create new preset
-            const newPreset: MeasurementPreset = {
-                id: `preset-${Date.now()}`,
-                name: presetName.trim(),
-                measState: JSON.parse(JSON.stringify(measState)), // Deep copy
-                mode: chartTool
-            };
-            setPresets(prev => [...prev, newPreset]);
-        }
-
-        setShowSaveDialog(false);
-        setPresetName('');
-        setEditingPresetId(null);
-    };
-
-    const handleLoadPreset = (preset: MeasurementPreset) => {
+    const {
+        presets, showPresetPanel, setShowPresetPanel, showSaveDialog, setShowSaveDialog,
+        presetName, setPresetName, editingPresetId,
+        handleOpenSaveDialog, handleOpenEditDialog,
+        handleSavePreset: baseSavePreset,
+        handleLoadPreset, handleDeletePreset,
+        handleExportPresets, handleImportPresets
+    } = useMeasurementHistory((preset) => {
+        // Adapt state
         const adaptedState = adaptStateToCurrentData(preset.measState, rawData);
         
-        // Use skipResetRef to prevent the useEffect from clearing the loaded state
+        // Prevent useEffect from clearing
         skipResetRef.current = true;
         
-        // 1. Switch tool mode
-        onSetChartTool(preset.mode);
+        // 1. Sync 2D View
+        if (preset.globalTool) onSetTool(preset.globalTool);
+        if (preset.chartAxis) onSetChartAxis(preset.chartAxis);
+        if (preset.boxSel) onSetBoxSel(preset.boxSel);
+        if (preset.lineSel) onSetLineSel(preset.lineSel);
         
-        // 2. Load the adapted state
+        // 2. Sync Chart Tool & State
+        onSetChartTool(preset.mode);
         onSetMeasState(adaptedState);
-        setShowPresetPanel(false);
-    };
+    });
 
-    const handleDeletePreset = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setPresets(prev => prev.filter(p => p.id !== id));
-    };
-
-    const handleExportPresets = () => {
-        if (presets.length === 0) return alert('没有可导出的预设');
-        const blob = new Blob([JSON.stringify(presets, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `surface-presets-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
-    const handleImportPresets = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            try {
-                const imported = JSON.parse(evt.target?.result as string);
-                if (Array.isArray(imported)) {
-                    setPresets(prev => [...prev, ...imported]);
-                }
-            } catch (err) {
-                alert('导入失败：文件格式不正确');
-            }
-        };
-        reader.readAsText(file);
+    const handleSavePreset = () => {
+        baseSavePreset({
+            measState,
+            mode: chartTool,
+            globalTool: tool,
+            chartAxis: axis,
+            boxSel,
+            lineSel
+        });
     };
 
     // Reset measurement when data/selection/tool changes
