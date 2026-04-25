@@ -13,17 +13,19 @@ interface PointCloudConverterProps {
     onConfirm: (data: GridData) => void;
 }
 
+const DEFAULT_CONFIG: ConverterConfig = {
+    widthMM: 100,
+    heightMM: 100,
+    zScale: 10,
+    stepX: 1,
+    stepY: 1,
+    rotation: 0,
+    references: []
+};
+
 const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClose, imageSrc, onConfirm }) => {
     // --- State ---
-    const [config, setConfig] = useState<ConverterConfig>({
-        widthMM: 100,
-        heightMM: 100,
-        zScale: 10,
-        stepX: 1,
-        stepY: 1,
-        rotation: 0,
-        references: []
-    });
+    const [config, setConfig] = useState<ConverterConfig>(DEFAULT_CONFIG);
 
     const [presets, setPresets] = useLocalStorage<ConversionPreset[]>("converter_presets", []);
     const [selectedPresetId, setSelectedPresetId] = useState<string>("");
@@ -304,19 +306,36 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
     // --- Presets ---
     const handleSavePreset = () => {
-        if (!presetName) return;
+        const name = presetName.trim();
+        if (!name) return;
+        
         setPresets(prev => {
-            const idx = prev.findIndex(p => p.name === presetName);
-            if (idx >= 0) {
-                // Update existing
+            // 1. Try to find by ID if we have one selected
+            const byIdIdx = prev.findIndex(p => p.id === selectedPresetId);
+            
+            if (byIdIdx >= 0) {
+                // Update existing by ID (allows renaming)
                 const updated = [...prev];
-                updated[idx] = { ...updated[idx], config: { ...config } };
+                updated[byIdIdx] = { 
+                    ...updated[byIdIdx], 
+                    name: name, 
+                    config: { ...config } 
+                };
                 return updated;
             } else {
-                // Create new
+                // 2. Try to find by name (to prevent duplicate names)
+                const byNameIdx = prev.findIndex(p => p.name === name);
+                if (byNameIdx >= 0) {
+                    const updated = [...prev];
+                    updated[byNameIdx] = { ...updated[byNameIdx], config: { ...config } };
+                    setSelectedPresetId(updated[byNameIdx].id);
+                    return updated;
+                }
+
+                // 3. Create new
                 const newPreset: ConversionPreset = {
                     id: Date.now().toString(),
-                    name: presetName,
+                    name: name,
                     config: { ...config }
                 };
                 setSelectedPresetId(newPreset.id);
@@ -333,12 +352,28 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
     };
 
     const handleLoadPreset = (id: string) => {
+        if (!id) {
+            setSelectedPresetId("");
+            setPresetName("");
+            return;
+        }
         const p = presets.find(pre => pre.id === id);
         if (p) {
             setConfig(p.config);
             setSelectedPresetId(id);
             setPresetName(p.name);
         }
+    };
+
+    const handleNewPreset = () => {
+        setSelectedPresetId("");
+        setPresetName(`预设 ${new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')}`);
+    };
+
+    const handleResetConfig = () => {
+        setConfig(DEFAULT_CONFIG);
+        setSelectedPresetId("");
+        setPresetName("");
     };
 
     if (!isOpen) return null;
@@ -397,7 +432,14 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         
                         {/* Reference List */}
                         <div className="h-44 bg-white border-t-2 border-black p-4 overflow-y-auto dot-grid">
-                            <h3 className="text-xs font-black mb-3 flex items-center gap-2 uppercase tracking-tighter"><Plus size={14} className="text-[#ff4d00]"/> 基准平面设置 / Reference Planes</h3>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-xs font-black flex items-center gap-2 uppercase tracking-tighter"><Plus size={14} className="text-[#ff4d00]"/> 基准平面设置 / Reference Planes</h3>
+                                {config.references.length > 0 && (
+                                    <button onClick={() => setConfig(c => ({...c, references: []}))} className="text-[10px] font-black text-red-500 hover:bg-red-50 px-2 py-1 border border-red-500 transition-colors uppercase tracking-widest">
+                                        Clear All
+                                    </button>
+                                )}
+                            </div>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                                 {config.references.length === 0 && <div className="text-gray-400 text-xs font-bold italic col-span-full py-4 border-2 border-dashed border-gray-200 bg-gray-50/50 text-center">未定义基准面，数据默认平整。</div>}
                                 {config.references.map((ref, i) => (
@@ -442,6 +484,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                         {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                     </select>
                                     <button 
+                                        onClick={handleNewPreset}
+                                        className="p-2 border-2 border-black bg-white text-black hover:bg-gray-100 transition-all btn-press"
+                                        title="新建预设"
+                                    >
+                                        <Plus size={14}/>
+                                    </button>
+                                    <button 
                                         onClick={handleDeletePreset} 
                                         disabled={!selectedPresetId}
                                         className={`p-2 border-2 border-black transition-all btn-press ${!selectedPresetId ? 'bg-gray-100 text-gray-300' : 'bg-white text-red-500 hover:bg-red-50'}`}
@@ -459,7 +508,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                         className="flex-1 text-xs font-bold border-2 border-black p-2 outline-none focus:bg-orange-50 transition-colors"
                                     />
                                     <button onClick={handleSavePreset} className="bg-black text-white text-[10px] px-4 py-2 font-black flex items-center gap-2 transition-all btn-press hard-shadow-sm uppercase">
-                                        <Save size={12}/> Save
+                                        <Save size={12}/> {selectedPresetId ? "Update" : "Save"}
                                     </button>
                                 </div>
                             </div>
@@ -523,14 +572,22 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                 </div>
                             </div>
 
-                            <button 
-                                onClick={handleProcess}
-                                disabled={isProcessing}
-                                className="w-full py-4 bg-[#ff4d00] text-white font-black uppercase tracking-widest border-2 border-black hard-shadow-sm hover:bg-black transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50"
-                            >
-                                {isProcessing ? "Processing..." : "生成点云数据 / GENERATE"}
-                                {!isProcessing && <RotateCw size={18}/>}
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleResetConfig}
+                                    className="flex-1 py-3 border-2 border-black font-black text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all btn-press"
+                                >
+                                    Reset Defaults
+                                </button>
+                                <button 
+                                    onClick={handleProcess}
+                                    disabled={isProcessing}
+                                    className="flex-[2] py-4 bg-[#ff4d00] text-white font-black uppercase tracking-widest border-2 border-black hard-shadow-sm hover:bg-black transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50"
+                                >
+                                    {isProcessing ? "Processing..." : "Generate Data"}
+                                    {!isProcessing && <RotateCw size={18}/>}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Preview Area (Fixed Height 250px) */}

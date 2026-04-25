@@ -404,44 +404,24 @@ export default function SurfaceInspector() {
 
       {/* Header - BRANDING OVERHAUL */}
       <header className="flex items-center justify-between px-4 py-2.5 bg-white border-b-2 border-black z-20 animate-slide-down">        <div className="flex items-center gap-4 group cursor-default">
-            {/* Logo Icon - OPTION K: AURORA SECTION (WIDE) */}
+            {/* Logo Icon - Scheme 3: High-Contrast Scan */}
             <div className="relative w-24 h-11">
-                <div className="absolute inset-0 bg-black rounded transform rotate-1 transition-transform duration-300 hard-shadow-sm"></div>
-                <div className="absolute inset-0 bg-[#020617] border-2 border-black rounded flex items-center justify-center transform -rotate-1 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
-                   {/* Grid Background Effect */}
-                   <div className="absolute inset-0 opacity-10" style={{ 
-                       backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                       backgroundSize: '4px 4px'
-                   }} />
-                   
+                <div className="absolute inset-0 bg-[#ff4d00] rounded transform rotate-1 transition-transform duration-300 hard-shadow-sm"></div>
+                <div className="absolute inset-0 bg-white border-2 border-black rounded flex items-center justify-center transform -rotate-1 group-hover:rotate-0 transition-transform duration-300 overflow-hidden">
                    <svg width="100%" height="100%" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-105 transition-transform duration-300 p-1">
-                      <defs>
-                        <linearGradient id="gradK_App" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#00f2ff" stopOpacity="0.8" />
-                          <stop offset="100%" stopColor="#00f2ff" stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
+                      {/* Grid Background Effect */}
+                      <path d="M0 20H80" stroke="#ff4d00" strokeWidth="0.5" opacity="0.1"/>
                       
-                      {/* Baseline */}
-                      <path d="M5 30H75" stroke="#334155" strokeWidth="1" strokeDasharray="2 2"/>
+                      {/* Background Waveform (Black Dashed) */}
+                      <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="black" strokeWidth="2" strokeDasharray="4 2" />
                       
-                      {/* Aurora Waveform */}
-                      <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#00f2ff" strokeWidth="2.5" strokeLinejoin="round" />
-                      
-                      {/* Laser Scanning Beam */}
-                      <rect x="39" y="5" width="2" height="25" fill="url(#gradK_App)">
-                        <animate attributeName="x" values="5;73;5" dur="4s" repeatCount="indefinite" />
+                      {/* Wide Scanning Beam */}
+                      <rect x="39" y="0" width="10" height="40" fill="#ff4d00" opacity="0.2">
+                        <animate attributeName="x" values="-10;80;-10" dur="3s" repeatCount="indefinite" />
                       </rect>
                       
-                      {/* Analytical Target (Orange) */}
-                      <circle cx="40" cy="20" r="4" stroke="#ff4d00" strokeWidth="1.5">
-                        <animate attributeName="cx" values="5;73;5" dur="4s" repeatCount="indefinite" />
-                        <animate attributeName="cy" values="30;20;20" dur="4s" repeatCount="indefinite" />
-                        <animate attributeName="r" values="3.5;5;3.5" dur="1s" repeatCount="indefinite" />
-                      </circle>
-                      
-                      {/* Horizontal Origin Line */}
-                      <path d="M0 20H80" stroke="#ff4d00" strokeWidth="0.5" opacity="0.2"/>
+                      {/* Active Waveform (Orange) */}
+                      <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#ff4d00" strokeWidth="2.5" />
                    </svg>
                 </div>
             </div>
