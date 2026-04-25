@@ -14,6 +14,8 @@ export const useMeasurementHistory = (
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [presetName, setPresetName] = useState('');
     const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+    const [activePresetId, setActivePresetId] = useState<string | null>(null);
+    const [defaultPresetId, setDefaultPresetId] = useLocalStorage<string | null>('profile-default-preset-id', null);
 
     const handleOpenSaveDialog = useCallback(() => {
         setPresetName(`预设 ${new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')}`);
@@ -46,14 +48,17 @@ export const useMeasurementHistory = (
                 }
                 return p;
             }));
+            setActivePresetId(editingPresetId);
         } else {
             // Create new preset
+            const newId = `preset-${Date.now()}`;
             const newPreset: MeasurementPreset = {
-                id: `preset-${Date.now()}`,
+                id: newId,
                 name: presetName.trim(),
                 ...dataToSave
             };
             setPresets(prev => [...prev, newPreset]);
+            setActivePresetId(newId);
         }
 
         setShowSaveDialog(false);
@@ -61,15 +66,38 @@ export const useMeasurementHistory = (
         setEditingPresetId(null);
     }, [editingPresetId, presetName, setPresets]);
 
+    const handleUpdatePresetContent = useCallback((id: string, currentData: Omit<MeasurementPreset, 'id' | 'name'>) => {
+        const dataToSave = JSON.parse(JSON.stringify(currentData));
+        setPresets(prev => prev.map(p => {
+            if (p.id === id) {
+                return { ...p, ...dataToSave };
+            }
+            return p;
+        }));
+        setActivePresetId(id);
+    }, [setPresets]);
+
+    const handleRenamePreset = useCallback((id: string, newName: string) => {
+        if (!newName.trim()) return;
+        setPresets(prev => prev.map(p => p.id === id ? { ...p, name: newName.trim() } : p));
+    }, [setPresets]);
+
+    const handleToggleDefaultPreset = useCallback((id: string) => {
+        setDefaultPresetId(prev => prev === id ? null : id);
+    }, [setDefaultPresetId]);
+
     const handleLoadPreset = useCallback((preset: MeasurementPreset) => {
         onLoad(preset);
+        setActivePresetId(preset.id);
         setShowPresetPanel(false);
     }, [onLoad]);
 
     const handleDeletePreset = useCallback((id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         setPresets(prev => prev.filter(p => p.id !== id));
-    }, [setPresets]);
+        if (activePresetId === id) setActivePresetId(null);
+        if (defaultPresetId === id) setDefaultPresetId(null);
+    }, [activePresetId, defaultPresetId, setDefaultPresetId, setPresets]);
 
     const handleExportPresets = useCallback(() => {
         if (presets.length === 0) return alert('没有可导出的预设');
@@ -97,6 +125,7 @@ export const useMeasurementHistory = (
             }
         };
         reader.readAsText(file);
+        e.target.value = '';
     }, [setPresets]);
 
     return {
@@ -108,9 +137,14 @@ export const useMeasurementHistory = (
         presetName,
         setPresetName,
         editingPresetId,
+        activePresetId,
+        defaultPresetId,
         handleOpenSaveDialog,
         handleOpenEditDialog,
         handleSavePreset,
+        handleUpdatePresetContent,
+        handleRenamePreset,
+        handleToggleDefaultPreset,
         handleLoadPreset,
         handleDeletePreset,
         handleExportPresets,

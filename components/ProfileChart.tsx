@@ -3,7 +3,7 @@ import * as echarts from 'echarts';
 import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer, MeasurementPreset } from '../types';
 import { THEME } from '../constants';
 import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
-import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser } from 'lucide-react';
+import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser, Star } from 'lucide-react';
 import { useMeasurementHistory } from '../hooks/useMeasurementHistory';
 
 const P2L_COLORS = [
@@ -32,7 +32,8 @@ const adaptStateToCurrentData = (savedState: MeasurementState, currentData: any[
                 bestMatch = dataPt;
             }
         }
-        if (bestMatch && minD <= 5) {
+        // If we found a match, update the point's coordinates to the current profile's space
+        if (bestMatch) {
             return { 
                 ...pt, 
                 x: bestMatch.x, 
@@ -79,6 +80,88 @@ const adaptStateToCurrentData = (savedState: MeasurementState, currentData: any[
     };
 };
 
+/**
+ * Extracts profile points based on current selection tool and coordinates.
+ */
+const calculateProfileData = (
+    grid: GridData, 
+    activeLayer: ActiveLayer, 
+    tool: ToolType, 
+    boxSel: SelectionBox, 
+    lineSel: SelectionLine, 
+    axis: ChartAxis
+) => {
+    const pts: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }[] = []; 
+    const source = activeLayer.data;
+    if (!source) return [];
+
+    const getReal = (gx: number, gy: number) => {
+        const rx = grid.xs && grid.xs[gx] !== undefined ? grid.xs[gx] : gx;
+        const ry = grid.ys && grid.ys[gy] !== undefined ? grid.ys[gy] : gy;
+        return { rx, ry };
+    };
+
+    if (tool === 'line') {
+        const p1 = lineSel.s;
+        const p2 = lineSel.e;
+        const distTotal = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+        
+        // Get Start Point Physical Coords for distance reference
+        const startIx = Math.max(0, Math.min(grid.w - 1, Math.round(p1.x)));
+        const startIy = Math.max(0, Math.min(grid.h - 1, Math.round(p1.y)));
+        const startReal = getReal(startIx, startIy);
+
+        if (distTotal === 0) {
+             pts.push({ x: 0, y: source[startIy * grid.w + startIx], gridX: startIx, gridY: startIy, realX: startReal.rx, realY: startReal.ry });
+        } else {
+            const steps = Math.ceil(distTotal); 
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const ix = Math.floor(p1.x + (p2.x - p1.x) * t);
+                const iy = Math.floor(p1.y + (p2.y - p1.y) * t);
+                
+                if (ix >= 0 && ix < grid.w && iy >= 0 && iy < grid.h) {
+                    const { rx, ry } = getReal(ix, iy);
+                    // Physical distance from start
+                    const d = Math.sqrt((rx - startReal.rx) ** 2 + (ry - startReal.ry) ** 2);
+                    pts.push({ x: d, y: source[iy * grid.w + ix], gridX: ix, gridY: iy, realX: rx, realY: ry });
+                }
+            }
+        }
+    } else {
+        // Box Tool
+        const cx = Math.floor(boxSel.x + boxSel.w / 2);
+        const cy = Math.floor(boxSel.y + boxSel.h / 2);
+        
+        if (axis === 'vertical') { // Fixed X, Vary Y
+            const sy = Math.floor(boxSel.y);
+            const ey = Math.floor(boxSel.y + boxSel.h);
+            const validSy = Math.max(0, sy);
+            const validEy = Math.min(grid.h, ey);
+            
+            if (cx >= 0 && cx < grid.w) {
+                for (let y = validSy; y < validEy; y++) {
+                     const { rx, ry } = getReal(cx, y);
+                     pts.push({ x: ry, y: source[y * grid.w + cx], gridX: cx, gridY: y, realX: rx, realY: ry });
+                }
+            }
+        } else { // Fixed Y, Vary X
+            const sx = Math.floor(boxSel.x);
+            const ex = Math.floor(boxSel.x + boxSel.w);
+            const validSx = Math.max(0, sx);
+            const validEx = Math.min(grid.w, ex);
+            
+            if (cy >= 0 && cy < grid.h) {
+                for (let x = validSx; x < validEx; x++) {
+                    const { rx, ry } = getReal(x, cy);
+                    pts.push({ x: rx, y: source[cy * grid.w + x], gridX: x, gridY: cy, realX: rx, realY: ry });
+                }
+            }
+        }
+    }
+    return pts;
+};
+
 interface ProfileChartProps {
     grid: GridData;
     activeLayer: ActiveLayer;
@@ -116,31 +199,50 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
     const [hoveredP2LId, setHoveredP2LId] = useState<string | null>(null);
 
     // Preset Store Integration
-    const skipResetRef = useRef(false);
+    const pendingPresetRef = useRef<MeasurementState | null>(null);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState('');
+
     const {
         presets, showPresetPanel, setShowPresetPanel, showSaveDialog, setShowSaveDialog,
-        presetName, setPresetName, editingPresetId,
+        presetName, setPresetName, editingPresetId, activePresetId, defaultPresetId,
         handleOpenSaveDialog, handleOpenEditDialog,
         handleSavePreset: baseSavePreset,
+        handleUpdatePresetContent,
+        handleRenamePreset,
+        handleToggleDefaultPreset,
         handleLoadPreset, handleDeletePreset,
         handleExportPresets, handleImportPresets
     } = useMeasurementHistory((preset) => {
-        // Adapt state
-        const adaptedState = adaptStateToCurrentData(preset.measState, rawData);
+        // Store the state we want to load
+        pendingPresetRef.current = JSON.parse(JSON.stringify(preset.measState));
         
-        // Prevent useEffect from clearing
-        skipResetRef.current = true;
-        
-        // 1. Sync 2D View
+        // 1. Sync 2D View (These trigger re-renders and rawData recalculation)
         if (preset.globalTool) onSetTool(preset.globalTool);
         if (preset.chartAxis) onSetChartAxis(preset.chartAxis);
         if (preset.boxSel) onSetBoxSel(preset.boxSel);
         if (preset.lineSel) onSetLineSel(preset.lineSel);
         
-        // 2. Sync Chart Tool & State
+        // 2. Sync Chart Tool
         onSetChartTool(preset.mode);
-        onSetMeasState(adaptedState);
+        
+        // Note: We DON'T call onSetMeasState here to avoid race conditions. 
+        // The reset useEffect will pick up pendingPresetRef when rawData is ready.
     });
+
+    const getModeIcon = (mode: ChartToolType) => {
+        switch (mode) {
+            case 'measure_z': return <MoveVertical size={12} className="text-blue-500" />;
+            case 'measure_xy': return <MoveHorizontal size={12} className="text-green-500" />;
+            case 'measure_p2l': return <Slash size={12} className="text-orange-500" />;
+            default: return <MousePointer2 size={12} className="text-gray-400" />;
+        }
+    };
+
+    // 1. Extract Data Profile (Including Grid Coordinates)
+    const rawData = useMemo(() => {
+        return calculateProfileData(grid, activeLayer, tool, boxSel, lineSel, axis);
+    }, [grid, boxSel, lineSel, tool, axis, activeLayer]);
 
     const handleSavePreset = () => {
         baseSavePreset({
@@ -153,88 +255,54 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         });
     };
 
+    // Auto-load default preset on data change
+    const initialLoadDone = useRef(false);
+    useEffect(() => {
+        // Run if grid has changed OR if it's the first mount
+        const isNewGrid = grid !== prevGridRef.current;
+        
+        if (isNewGrid || !initialLoadDone.current) {
+            if (isNewGrid) prevGridRef.current = grid;
+            initialLoadDone.current = true;
+            
+            if (defaultPresetId) {
+                const defaultPreset = presets.find(p => p.id === defaultPresetId);
+                if (defaultPreset) {
+                    handleLoadPreset(defaultPreset);
+                }
+            }
+        }
+    }, [grid, defaultPresetId, presets, handleLoadPreset]);
+
+    // Track grid for next update
+    const prevGridRef = useRef(grid);
+
+    // Track selection to detect manual changes vs preset loads
+    const lastSelectionHashRef = useRef('');
+    
     // Reset measurement when data/selection/tool changes
     useEffect(() => {
-        if (skipResetRef.current) {
-            skipResetRef.current = false;
+        const currentHash = JSON.stringify({ grid: grid.w + grid.h, boxSel, lineSel, tool, axis, chartTool });
+        const isSelectionChanged = currentHash !== lastSelectionHashRef.current;
+        
+        // Handle Pending Preset (High Priority)
+        if (pendingPresetRef.current) {
+            if (rawData.length > 0) {
+                const adapted = adaptStateToCurrentData(pendingPresetRef.current, rawData);
+                onSetMeasState(adapted);
+                pendingPresetRef.current = null;
+                lastSelectionHashRef.current = currentHash; // Synchronize hash
+            }
             return;
         }
-        onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
-        onChartHover(null); // Clear hover on tool change
-    }, [grid, boxSel, lineSel, tool, axis, chartTool, onChartHover, onSetMeasState]);
 
-    // 1. Extract Data Profile (Including Grid Coordinates)
-    const rawData = useMemo(() => {
-        const pts: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }[] = []; 
-        const source = activeLayer.data;
-        if (!source) return [];
-
-        const getReal = (gx: number, gy: number) => {
-            const rx = grid.xs && grid.xs[gx] !== undefined ? grid.xs[gx] : gx;
-            const ry = grid.ys && grid.ys[gy] !== undefined ? grid.ys[gy] : gy;
-            return { rx, ry };
-        };
-
-        if (tool === 'line') {
-            const p1 = lineSel.s;
-            const p2 = lineSel.e;
-            const distTotal = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-            
-            // Get Start Point Physical Coords for distance reference
-            const startIx = Math.max(0, Math.min(grid.w - 1, Math.round(p1.x)));
-            const startIy = Math.max(0, Math.min(grid.h - 1, Math.round(p1.y)));
-            const startReal = getReal(startIx, startIy);
-
-            if (distTotal === 0) {
-                 pts.push({ x: 0, y: source[startIy * grid.w + startIx], gridX: startIx, gridY: startIy, realX: startReal.rx, realY: startReal.ry });
-            } else {
-                const steps = Math.ceil(distTotal); 
-                for (let i = 0; i <= steps; i++) {
-                    const t = i / steps;
-                    const ix = Math.floor(p1.x + (p2.x - p1.x) * t);
-                    const iy = Math.floor(p1.y + (p2.y - p1.y) * t);
-                    
-                    if (ix >= 0 && ix < grid.w && iy >= 0 && iy < grid.h) {
-                        const { rx, ry } = getReal(ix, iy);
-                        // Physical distance from start
-                        const d = Math.sqrt((rx - startReal.rx) ** 2 + (ry - startReal.ry) ** 2);
-                        pts.push({ x: d, y: source[iy * grid.w + ix], gridX: ix, gridY: iy, realX: rx, realY: ry });
-                    }
-                }
-            }
-        } else {
-            // Box Tool
-            const cx = Math.floor(boxSel.x + boxSel.w / 2);
-            const cy = Math.floor(boxSel.y + boxSel.h / 2);
-            
-            if (axis === 'vertical') { // Fixed X, Vary Y
-                const sy = Math.floor(boxSel.y);
-                const ey = Math.floor(boxSel.y + boxSel.h);
-                const validSy = Math.max(0, sy);
-                const validEy = Math.min(grid.h, ey);
-                
-                if (cx >= 0 && cx < grid.w) {
-                    for (let y = validSy; y < validEy; y++) {
-                         const { rx, ry } = getReal(cx, y);
-                         pts.push({ x: ry, y: source[y * grid.w + cx], gridX: cx, gridY: y, realX: rx, realY: ry });
-                    }
-                }
-            } else { // Horizontal: Fixed Y, Vary X
-                const sx = Math.floor(boxSel.x);
-                const ex = Math.floor(boxSel.x + boxSel.w);
-                const validSx = Math.max(0, sx);
-                const validEx = Math.min(grid.w, ex);
-                
-                if (cy >= 0 && cy < grid.h) {
-                    for (let x = validSx; x < validEx; x++) {
-                        const { rx, ry } = getReal(x, cy);
-                        pts.push({ x: rx, y: source[cy * grid.w + x], gridX: x, gridY: cy, realX: rx, realY: ry });
-                    }
-                }
-            }
+        if (isSelectionChanged) {
+            lastSelectionHashRef.current = currentHash;
+            // Manual change -> Reset
+            onSetMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
+            onChartHover(null);
         }
-        return pts;
-    }, [grid, boxSel, lineSel, tool, activeLayer, axis]);
+    }, [grid, boxSel, lineSel, tool, axis, chartTool, rawData, onChartHover, onSetMeasState]);
 
     // Use Refs to avoid stale closures in ECharts event listeners
     const measStateRef = useRef(measState);
@@ -856,40 +924,59 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                 <div className="flex items-center gap-1.5">
                                     <Save size={12} className="text-[#ff4d00]" />
                                     <span className="text-[10px] font-black uppercase tracking-widest">
-                                        {editingPresetId ? '编辑测量预设' : '保存测量预设'}
+                                        测量预设选项
                                     </span>
                                 </div>
                                 <button onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-white transition-colors">
                                     <X size={12} />
                                 </button>
                             </div>
-                            <div className="p-4 flex flex-col gap-3">
+                            <div className="p-4 flex flex-col gap-4">
+                                {activePresetId && presets.find(p => p.id === activePresetId) && (
+                                    <div className="flex flex-col gap-2 p-2 bg-gray-50 border-2 border-dashed border-gray-200">
+                                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">当前激活 / ACTIVE</div>
+                                        <div className="text-[11px] font-bold truncate">
+                                            {presets.find(p => p.id === activePresetId)?.name}
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                handleUpdatePresetContent(activePresetId, {
+                                                    measState,
+                                                    mode: chartTool,
+                                                    globalTool: tool,
+                                                    chartAxis: axis,
+                                                    boxSel,
+                                                    lineSel
+                                                });
+                                                setShowSaveDialog(false);
+                                            }}
+                                            className="w-full py-2 bg-blue-600 text-white text-[10px] font-black hard-shadow-sm hover:bg-blue-700 transition-all btn-press flex items-center justify-center gap-2"
+                                        >
+                                            <RefreshCw size={12} /> 更新当前预设内容
+                                        </button>
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col gap-1">
-                                    <label className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">预设名称 / PRESET NAME</label>
-                                    <input 
-                                        autoFocus
-                                        type="text" 
-                                        value={presetName}
-                                        onChange={(e) => setPresetName(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
-                                        placeholder="输入预设名称..."
-                                        className="w-full bg-gray-50 border-2 border-gray-200 p-2 text-xs font-bold focus:border-black focus:bg-white outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
-                                    <button 
-                                        onClick={() => setShowSaveDialog(false)}
-                                        className="text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-tighter"
-                                    >
-                                        取消
-                                    </button>
-                                    <button 
-                                        onClick={handleSavePreset}
-                                        disabled={!presetName.trim()}
-                                        className="px-4 py-2 bg-black text-white text-[10px] font-black hard-shadow-sm hover:bg-[#ff4d00] disabled:opacity-30 transition-all btn-press"
-                                    >
-                                        {editingPresetId ? '确认更新' : '确认保存'}
-                                    </button>
+                                    <label className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">另存为新预设 / SAVE AS NEW</label>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            autoFocus
+                                            type="text" 
+                                            value={presetName}
+                                            onChange={(e) => setPresetName(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                                            placeholder="输入预设名称..."
+                                            className="flex-1 bg-gray-50 border-2 border-gray-200 p-2 text-xs font-bold focus:border-black focus:bg-white outline-none transition-all"
+                                        />
+                                        <button 
+                                            onClick={handleSavePreset}
+                                            disabled={!presetName.trim()}
+                                            className="px-3 bg-black text-white text-[10px] font-black hard-shadow-sm hover:bg-[#ff4d00] disabled:opacity-30 transition-all btn-press"
+                                        >
+                                            保存
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -952,13 +1039,82 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                         <div 
                                             key={p.id}
                                             onClick={() => handleLoadPreset(p)}
-                                            className="group flex flex-col p-2 bg-white border-2 border-gray-200 hover:border-black hover:hard-shadow-sm cursor-pointer transition-all"
+                                            className={`group flex flex-col p-2 border-2 transition-all cursor-pointer ${
+                                                activePresetId === p.id 
+                                                    ? 'bg-orange-50/50 border-orange-500 hard-shadow-sm' 
+                                                    : 'bg-white border-gray-200 hover:border-black hover:hard-shadow-sm'
+                                            }`}
                                         >
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[11px] font-black text-gray-700 truncate flex-1">{p.name}</span>
-                                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                                    {getModeIcon(p.mode)}
+                                                    {renamingId === p.id ? (
+                                                        <input
+                                                            autoFocus
+                                                            className="flex-1 bg-white border-b border-black outline-none text-[11px] font-black px-0.5"
+                                                            value={renameValue}
+                                                            onChange={(e) => setRenameValue(e.target.value)}
+                                                            onBlur={() => {
+                                                                handleRenamePreset(p.id, renameValue);
+                                                                setRenamingId(null);
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    handleRenamePreset(p.id, renameValue);
+                                                                    setRenamingId(null);
+                                                                }
+                                                                if (e.key === 'Escape') setRenamingId(null);
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        />
+                                                    ) : (
+                                                        <span className="text-[11px] font-black text-gray-700 truncate">{p.name}</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
                                                     <button 
-                                                        onClick={(e) => handleDeletePreset(p.id, e)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleToggleDefaultPreset(p.id);
+                                                        }}
+                                                        className={`p-1 transition-colors ${defaultPresetId === p.id ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-300 hover:text-yellow-500'}`}
+                                                        title={defaultPresetId === p.id ? "取消默认启用" : "设为默认启用"}
+                                                    >
+                                                        <Star size={12} fill={defaultPresetId === p.id ? "currentColor" : "none"} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setRenamingId(p.id);
+                                                            setRenameValue(p.name);
+                                                        }}
+                                                        className="p-1 text-gray-400 hover:text-blue-500"
+                                                        title="重命名"
+                                                    >
+                                                        <Edit2 size={11} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleUpdatePresetContent(p.id, {
+                                                                measState,
+                                                                mode: chartTool,
+                                                                globalTool: tool,
+                                                                chartAxis: axis,
+                                                                boxSel,
+                                                                lineSel
+                                                            });
+                                                        }}
+                                                        className="p-1 text-gray-400 hover:text-blue-600"
+                                                        title="更新当前点位到此预设"
+                                                    >
+                                                        <Save size={12} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeletePreset(p.id, e)
+                                                        }}
                                                         className="p-1 text-gray-400 hover:text-red-500"
                                                         title="删除"
                                                     >
@@ -967,9 +1123,14 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                                 </div>
                                             </div>
                                             <div className="mt-1 flex items-center gap-2 text-[9px] font-bold text-gray-400">
-                                                <span>P2L组: {p.measState.p2lGroups.length}</span>
-                                                <span>•</span>
-                                                <span>2点测量: {p.measState.p1 && p.measState.p2 ? '已设置' : '未设置'}</span>
+                                                {p.measState.p2lGroups.length > 0 && <span>P2L组: {p.measState.p2lGroups.length}</span>}
+                                                {p.measState.p1 && p.measState.p2 && (
+                                                    <>
+                                                        {p.measState.p2lGroups.length > 0 && <span>•</span>}
+                                                        <span>2点测量: 已设置</span>
+                                                    </>
+                                                )}
+                                                {!p.measState.p1 && p.measState.p2lGroups.length === 0 && <span>无测量点</span>}
                                             </div>
                                         </div>
                                     ))}

@@ -214,6 +214,7 @@ export default function SurfaceInspector() {
     const file = e.target.files?.[0];
     if (!file) return;
     processCSVFile(file);
+    e.target.value = '';
   };
 const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
