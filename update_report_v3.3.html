@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surface Inspector Pro v3.3 Update Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #080808;
+            color: #d1d1d1;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #ff4d00 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 77, 0, 0.3);
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .badge {
+            background: linear-gradient(90deg, #ff4d00, #ff8c00);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .section-icon {
+            width: 32px;
+            height: 32px;
+            background: #ff4d00;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 77, 0, 0.3);
+        }
+
+        .visual-map {
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+            background: #111;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .screenshot-box {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-top: 16px;
+        }
+
+        .step-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-weight: bold;
+            position: relative;
+            z-index: 10;
+        }
+
+        .step-line {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #222;
+            z-index: 1;
+        }
+
+        @media print {
+            body { background-color: white; color: #1a1a1a; }
+            .no-print { display: none; }
+            .card {
+                background: white;
+                border: 1px solid #eee;
+                box-shadow: none;
+                break-inside: avoid;
+                margin-bottom: 24px;
+                transform: none !important;
+                padding: 20px;
+            }
+            .gradient-text { -webkit-text-fill-color: #ff4d00; color: #ff4d00; }
+            .badge { border: 1px solid #ff4d00; color: #ff4d00; background: transparent; }
+            .section-icon { background: #ff4d00 !important; -webkit-print-color-adjust: exact; }
+            .screenshot-box { border-color: #ddd; box-shadow: none; }
+        }
+    </style>
+</head>
+<body class="p-8 md:p-20 max-w-5xl mx-auto">
+    <!-- Header -->
+    <header class="mb-16 border-b border-white/5 pb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+        <div>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="badge">Major Upgrade v3.3</span>
+                <span class="text-gray-500 font-mono text-xs uppercase tracking-widest">RELEASED: 2026-04-25</span>
+            </div>
+            <h1 class="text-6xl font-black mb-4 tracking-tighter text-white">
+                Surface Inspector <span class="gradient-text">Pro v3.3</span>
+            </h1>
+            <p class="text-gray-500 text-xl font-medium tracking-tight">精密视觉分析工具 · 更新报告</p>
+        </div>
+        <div class="no-print">
+            <button onclick="window.print()" class="bg-white text-black px-6 py-3 rounded-xl font-bold hover:bg-orange-500 hover:text-white transition-all duration-300 flex items-center gap-3 shadow-xl shadow-white/5 hover:shadow-orange-500/20 active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>
+                </svg>
+                导出 PDF 报告
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="space-y-16">
+        
+        <!-- Section: Automation & Presets -->
+        <section>
+            <div class="section-title">
+                <div class="section-icon">R</div>
+                <h2 class="text-3xl font-black text-white tracking-tight uppercase">测量自动化 / Automation</h2>
+            </div>
+            
+            <div class="space-y-8">
+                <!-- Preset Workflow Card -->
+                <div class="card border-l-4 border-l-orange-500">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white mb-2">测量预设系统 (Measurement Presets)</h3>
+                            <p class="text-gray-400 text-sm max-w-2xl leading-relaxed">支持将 2D 选区、测量模式及物理基准保存为“快照”。面对不同产品检测需求时，一键即可恢复完整分析环境。</p>
+                        </div>
+                    </div>
+
+                    <div class="relative flex justify-between gap-4 mt-8 pb-4">
+                        <div class="step-node">
+                            <div class="step-line"></div>
+                            <div class="step-circle"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9m3 3-3-3 3-3"/><path d="M4 17h9m-3-3 3 3-3 3"/></svg></div>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">1. 捕捉配置</span>
+                        </div>
+                        <div class="step-node">
+                            <div class="step-line"></div>
+                            <div class="step-circle"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></div>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">2. 保存预设</span>
+                        </div>
+                        <div class="step-node">
+                            <div class="step-line" style="width: 0;"></div>
+                            <div class="step-circle"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-2">3. 自动应用</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- P2L with Screenshot -->
+                <div class="card md:col-span-2 border-t-2 border-t-orange-500/20">
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="md:w-1/3">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="p-3 bg-white/5 rounded-xl text-orange-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9l3 3-3 3"/></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-white">多基准线 P2L 管理</h3>
+                            </div>
+                            <p class="text-gray-500 text-sm leading-relaxed mb-4">
+                                系统现支持在同一剖面图中建立多组独立的测量逻辑。每组拥有自定义基准线、专属颜色及计算结果，实现复杂台阶的高精度并行对比。
+                            </p>
+                            <ul class="space-y-2 text-xs text-orange-400 font-bold uppercase tracking-tighter">
+                                <li class="flex items-center gap-2">● 独立颜色方案</li>
+                                <li class="flex items-center gap-2">● 实时垂直间距计算</li>
+                                <li class="flex items-center gap-2">● 自动基准线吸附</li>
+                            </ul>
+                        </div>
+                        <div class="md:w-2/3">
+                            <div class="screenshot-box">
+                                <img src="./p2l_demo.png" alt="Multi-Baseline P2L Screenshot" class="w-full h-auto opacity-90 hover:opacity-100 transition-opacity duration-300">
+                            </div>
+                            <p class="text-[10px] text-gray-600 mt-2 text-center uppercase tracking-widest font-bold">图：多基准线 P2L 测量实测界面 (v3.3)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card md:col-span-2 border-t-2 border-t-orange-500/20">
+                    <div class="flex flex-col md:flex-row-reverse gap-8">
+                        <div class="md:w-1/3">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="p-3 bg-white/5 rounded-xl text-orange-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-white">2%/98% 色谱精算</h3>
+                            </div>
+                            <p class="text-gray-500 text-sm leading-relaxed mb-4">
+                                采用百分位剔除算法自动过滤 2% 的背景极值干扰。新增色谱方案预设，支持针对不同材质（如金属、陶瓷）一键切换最佳对比度配色方案。
+                            </p>
+                            <div class="bg-orange-500/5 p-3 rounded-lg border border-orange-500/10">
+                                <span class="text-[10px] font-black text-orange-500 uppercase tracking-tighter block mb-1">当前优化算法</span>
+                                <p class="text-[10px] text-gray-500 leading-tight">基于分位数映射，确保 96% 的核心数据获得完整的动态范围，避免极值导致全图发灰。</p>
+                            </div>
+                        </div>
+                        <div class="md:w-2/3">
+                            <div class="screenshot-box max-w-sm mx-auto">
+                                <img src="./color_demo.png" alt="Color Settings Screenshot" class="w-full h-auto opacity-90">
+                            </div>
+                            <p class="text-[10px] text-gray-600 mt-2 text-center uppercase tracking-widest font-bold">图：2%/98% 相对模式与色谱预设界面 (v3.3)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Algorithms -->
+        <section>
+            <div class="section-title">
+                <div class="section-icon">A</div>
+                <h2 class="text-3xl font-black text-white tracking-tight uppercase">衍生形貌模式 / Vision Maps</h2>
+            </div>
+            
+            <div class="card border-l-4 border-l-blue-500">
+                <h3 class="text-2xl font-bold mb-6 text-white text-center md:text-left">高级形貌分析引擎 (Gradient & Curvature)</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="space-y-4">
+                        <div class="visual-map">
+                            <svg viewBox="0 0 200 180" class="w-full h-full">
+                                <defs><linearGradient id="g-height" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#0000ff;stop-opacity:0.5" /><stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.8" /><stop offset="100%" style="stop-color:#ff0000;stop-opacity:0.5" /></linearGradient></defs>
+                                <circle cx="100" cy="90" r="60" fill="url(#g-height)" filter="blur(8px)" />
+                            </svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-center text-blue-400">高度图 (Height)</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="visual-map">
+                            <svg viewBox="0 0 200 180" class="w-full h-full">
+                                <rect width="100%" height="100%" fill="#111" />
+                                <circle cx="100" cy="90" r="60" fill="none" stroke="#ff8c00" stroke-width="4" filter="blur(1px)" opacity="0.8" />
+                            </svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-center text-orange-400">梯度图 (Gradient)</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="visual-map">
+                            <svg viewBox="0 0 200 180" class="w-full h-full">
+                                <rect width="100%" height="100%" fill="#222" />
+                                <path d="M30 40 Q 100 10 170 40" stroke="#00ffff" stroke-width="2" fill="none" opacity="0.4" />
+                                <circle cx="100" cy="90" r="2" fill="#fff" />
+                            </svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-center text-purple-400">曲率图 (Curvature)</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Aesthetics -->
+        <section>
+            <div class="section-title">
+                <div class="section-icon">V</div>
+                <h2 class="text-3xl font-black text-white tracking-tight uppercase">视觉美学与交互 / UI Upgrade</h2>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="card flex flex-col md:flex-row gap-8 items-start">
+                    <div class="text-7xl font-black text-orange-500/10 italic select-none">3.3</div>
+                    <div class="flex-1">
+                        <h4 class="text-xl font-bold text-white mb-2">Designer-Grade 界面重构</h4>
+                        <p class="text-gray-400 leading-relaxed text-sm">引入磨砂玻璃材质与 Plus Jakarta Sans 字体。全局动画逻辑升级，包括流光加载、打字机提示等。</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6 border-t-2 border-t-blue-500/30">
+                        <h5 class="font-bold text-white mb-2">T 键极速拾取</h5>
+                        <p class="text-gray-500 text-xs">鼠标悬浮点击 'T' 键即可瞬间完成点位捕捉分析。</p>
+                    </div>
+                    <div class="card p-6 border-t-2 border-t-green-500/30">
+                        <h5 class="font-bold text-white mb-2">两点式点击划线</h5>
+                        <p class="text-gray-500 text-xs">优化划线交互，采用“点击-点击”逻辑，提供像素级精度。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-24 pt-12 border-t border-white/5 text-center">
+        <div class="mb-4"><span class="text-white font-black tracking-tighter text-xl">Surface Inspector <span class="text-orange-500">PRO</span></span></div>
+        <p class="text-gray-600 text-xs uppercase tracking-widest font-bold">© 2025-2026 Industrial Vision Tool.</p>
+    </footer>
+</body>
+</html>
