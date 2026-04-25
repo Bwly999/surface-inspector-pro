@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/upng-js": "^2.1.5",
+    "echarts": "latest",
+    "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "three": "^0.181.2",
-    "lucide-react": "^0.554.0",
-    "echarts": "latest"
+    "upng-js": "^2.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

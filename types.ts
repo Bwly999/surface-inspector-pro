@@ -131,10 +131,10 @@ export interface ReferencePlane {
 }
 
 export interface ConverterConfig {
-  widthMM: number;
-  heightMM: number;
-  zScale: number; // Height scale (mm)
-  stepX: number; // Sampling step
+  pixelSizeX: number; // mm/pixel
+  pixelSizeY: number; // mm/pixel
+  zScalePerGray: number; // mm per gray level (e.g. 0.01mm for gray=100)
+  stepX: number; // Sampling step (px)
   stepY: number;
   rotation: 0 | 90 | 180 | -90;
   references: ReferencePlane[];

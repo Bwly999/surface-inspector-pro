@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Check, Save, RotateCw, RotateCcw, Image as ImageIcon, Plus, Trash2, Maximize2, Palette, Grid3X3, FlipVertical } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { X, Check, Save, RotateCw, RotateCcw, Image as ImageIcon, Plus, Trash2, Maximize2, Palette, Grid3X3, FlipVertical, HelpCircle } from 'lucide-react';
 import { ConverterConfig, ConversionPreset, GridData } from '../types';
 import { processImageToGrid } from '../utils/processUtils';
 import { THEME } from '../constants';
@@ -10,20 +10,33 @@ interface PointCloudConverterProps {
     isOpen: boolean;
     onClose: () => void;
     imageSrc: string | null;
+    imageBuffer: ArrayBuffer | null;
     onConfirm: (data: GridData) => void;
 }
 
 const DEFAULT_CONFIG: ConverterConfig = {
-    widthMM: 100,
-    heightMM: 100,
-    zScale: 10,
+    pixelSizeX: 0.01,
+    pixelSizeY: 0.01,
+    zScalePerGray: 0.001,
     stepX: 1,
     stepY: 1,
     rotation: 0,
     references: []
 };
 
-const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClose, imageSrc, onConfirm }) => {
+// Tooltip Component
+const Tooltip = ({ title, content }: { title: string, content: string }) => (
+    <div className="group relative inline-block ml-1 align-middle">
+        <HelpCircle size={12} className="text-gray-400 cursor-help hover:text-[#ff4d00] transition-colors" />
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-black text-white text-[10px] rounded hard-shadow-sm z-[100] pointer-events-none">
+            <div className="font-black border-b border-white/20 pb-1 mb-1 uppercase tracking-tighter">{title}</div>
+            <div className="font-medium text-gray-300 leading-relaxed">{content}</div>
+            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black"></div>
+        </div>
+    </div>
+);
+
+const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClose, imageSrc, imageBuffer, onConfirm }) => {
     // --- State ---
     const [config, setConfig] = useState<ConverterConfig>(DEFAULT_CONFIG);
 
@@ -285,23 +298,20 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
     // --- Processing ---
     const handleProcess = () => {
-        if (!imgRef.current) return;
+        if (!imageBuffer) return;
         setIsProcessing(true);
         
-        const cvs = document.createElement('canvas');
-        cvs.width = imgRef.current.width;
-        cvs.height = imgRef.current.height;
-        const ctx = cvs.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(imgRef.current, 0, 0);
-            const data = ctx.getImageData(0, 0, cvs.width, cvs.height);
-            
-            setTimeout(() => {
-                const result = processImageToGrid(data, config);
+        setTimeout(() => {
+            try {
+                const result = processImageToGrid(imageBuffer, config);
                 setPreviewData(result);
+            } catch (err) {
+                console.error("Processing failed:", err);
+                alert("图像解析失败，请检查文件格式。");
+            } finally {
                 setIsProcessing(false);
-            }, 100);
-        }
+            }
+        }, 100);
     };
 
     // --- Presets ---
@@ -384,7 +394,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b-2 border-black bg-white dot-grid">
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-[#ff4d00] uppercase tracking-tighter">Data Importer</span>
+                        <span className="text-[10px] font-black text-[#ff4d00] uppercase tracking-tighter">数据导入器 / Data Importer</span>
                         <div className="flex items-center gap-2">
                             <ImageIcon size={20} className="text-[#ff4d00]" />
                             <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">图片转点云转换器 / Image to Cloud</h2>
@@ -433,10 +443,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                         {/* Reference List */}
                         <div className="h-44 bg-white border-t-2 border-black p-4 overflow-y-auto dot-grid">
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-xs font-black flex items-center gap-2 uppercase tracking-tighter"><Plus size={14} className="text-[#ff4d00]"/> 基准平面设置 / Reference Planes</h3>
+                                <h3 className="text-xs font-black flex items-center gap-2 uppercase tracking-tighter">
+                                    <Plus size={14} className="text-[#ff4d00]"/> 基准平面设置 / Reference Planes
+                                    <Tooltip title="基准平面" content="在图像上框选已知高度的平整区域。系统将根据这些区域拟合出一个零水平面，消除原始图像的倾斜或整体偏移。" />
+                                </h3>
                                 {config.references.length > 0 && (
                                     <button onClick={() => setConfig(c => ({...c, references: []}))} className="text-[10px] font-black text-red-500 hover:bg-red-50 px-2 py-1 border border-red-500 transition-colors uppercase tracking-widest">
-                                        Clear All
+                                        全部清除
                                     </button>
                                 )}
                             </div>
@@ -446,7 +459,10 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                     <div key={ref.id} className="flex items-center gap-3 text-xs border-2 border-black p-2 bg-white hard-shadow-sm animate-scale-in">
                                         <div className="font-black w-8 h-8 flex items-center justify-center bg-black text-white text-[10px]">#{i+1}</div>
                                         <div className="flex-1 flex flex-col">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Z-Offset</span>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">高度偏移 (mm)</span>
+                                                <Tooltip title="高度偏移 (Z-Offset)" content="该基准区域相对于理论零平面的物理高度。例如垫块厚度为1mm，则设为1。系统拟合时会减去此值。" />
+                                            </div>
                                             <input 
                                                 type="number" step="0.001" 
                                                 value={ref.offsetZ} 
@@ -473,7 +489,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             
                             {/* Preset Manager */}
                             <div className="p-4 bg-white border-2 border-black hard-shadow-sm">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-2">配置预设 / Presets</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-2">参数预设 / Presets</label>
                                 <div className="flex gap-2">
                                     <select 
                                         value={selectedPresetId}
@@ -508,7 +524,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                         className="flex-1 text-xs font-bold border-2 border-black p-2 outline-none focus:bg-orange-50 transition-colors"
                                     />
                                     <button onClick={handleSavePreset} className="bg-black text-white text-[10px] px-4 py-2 font-black flex items-center gap-2 transition-all btn-press hard-shadow-sm uppercase">
-                                        <Save size={12}/> {selectedPresetId ? "Update" : "Save"}
+                                        <Save size={12}/> {selectedPresetId ? "更新" : "保存"}
                                     </button>
                                 </div>
                             </div>
@@ -516,45 +532,63 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             {/* Dimensions */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Width (mm)</label>
-                                    <input type="number" value={config.widthMM} onChange={e => setConfig({...config, widthMM: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">
+                                        像素宽度 (mm/px)
+                                        <Tooltip title="像素宽度" content="图像单个像素在 X 方向对应的实际物理尺寸（毫米）。影响点云在 X 轴的物理跨度。" />
+                                    </label>
+                                    <input type="number" step="0.0001" value={config.pixelSizeX} onChange={e => setConfig({...config, pixelSizeX: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Height (mm)</label>
-                                    <input type="number" value={config.heightMM} onChange={e => setConfig({...config, heightMM: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">
+                                        像素高度 (mm/px)
+                                        <Tooltip title="像素高度" content="图像单个像素在 Y 方向对应的实际物理尺寸（毫米）。影响点云在 Y 轴的物理跨度。" />
+                                    </label>
+                                    <input type="number" step="0.0001" value={config.pixelSizeY} onChange={e => setConfig({...config, pixelSizeY: parseFloat(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                             </div>
 
                             {/* Z Scale */}
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Z Scale (mm/Max)</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">
+                                    Z轴比例 (mm/Gray)
+                                    <Tooltip title="Z轴比例" content="单个灰度单位对应的物理高度。例如设为 0.001，则灰度值为 1000 的点物理高度为 1mm。直接决定地形起伏幅度。" />
+                                </label>
                                 <div className="flex items-center gap-3">
-                                    <input type="number" step="0.1" value={config.zScale} onChange={e => setConfig({...config, zScale: parseFloat(e.target.value)})} className="flex-1 border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
-                                    <span className="text-[9px] text-gray-400 font-bold uppercase w-24 leading-tight italic">Max Brightness Height</span>
+                                    <input type="number" step="0.00001" value={config.zScalePerGray} onChange={e => setConfig({...config, zScalePerGray: parseFloat(e.target.value)})} className="flex-1 border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
+                                    <span className="text-[9px] text-gray-400 font-bold uppercase w-24 leading-tight italic">单灰度物理高度</span>
                                 </div>
                             </div>
 
                             {/* Sampling */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Step X (px)</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">
+                                        X采样步长 (px)
+                                        <Tooltip title="X采样步长" content="横向每隔多少像素取一个点。数值越大，生成的点云越稀疏，处理速度越快。" />
+                                    </label>
                                     <input type="number" min="1" step="1" value={config.stepX} onChange={e => setConfig({...config, stepX: parseInt(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">Step Y (px)</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1 block">
+                                        Y采样步长 (px)
+                                        <Tooltip title="Y采样步长" content="纵向每隔多少像素取一个点。数值越大，点云越稀疏。建议与X步长保持一致以避免拉伸。" />
+                                    </label>
                                     <input type="number" min="1" step="1" value={config.stepY} onChange={e => setConfig({...config, stepY: parseInt(e.target.value)})} className="w-full border-2 border-black p-2 font-black mono text-xs focus:bg-orange-50 outline-none"/>
                                 </div>
                             </div>
 
                             {/* Rotation */}
                             <div>
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-2 block">旋转 / Rotation</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-2 block">
+                                    图像旋转 / Orientation
+                                    <Tooltip title="图像旋转" content="对输入图像进行 90° 倍数的旋转处理，以匹配实际物体的物理方位。" />
+                                </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {[
-                                        { deg: 0, label: '0°', hint: 'Default', icon: <ImageIcon size={14} /> },
-                                        { deg: 90, label: '90°', hint: 'CW', icon: <RotateCw size={14} /> },
-                                        { deg: 180, label: '180°', hint: 'Flip', icon: <FlipVertical size={14}/> },
-                                        { deg: -90, label: '-90°', hint: 'CCW', icon: <RotateCcw size={14} /> }
+                                        { deg: 0, label: '0°', hint: '默认', icon: <ImageIcon size={14} /> },
+                                        { deg: 90, label: '90°', hint: '顺时针', icon: <RotateCw size={14} /> },
+                                        { deg: 180, label: '180°', hint: '翻转', icon: <FlipVertical size={14}/> },
+                                        { deg: -90, label: '-90°', hint: '逆时针', icon: <RotateCcw size={14} /> }
                                     ].map(item => (
                                         <button 
                                             key={item.deg}
@@ -577,14 +611,14 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                     onClick={handleResetConfig}
                                     className="flex-1 py-3 border-2 border-black font-black text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all btn-press"
                                 >
-                                    Reset Defaults
+                                    恢复默认
                                 </button>
                                 <button 
                                     onClick={handleProcess}
                                     disabled={isProcessing}
                                     className="flex-[2] py-4 bg-[#ff4d00] text-white font-black uppercase tracking-widest border-2 border-black hard-shadow-sm hover:bg-black transition-all btn-press flex items-center justify-center gap-3 disabled:opacity-50"
                                 >
-                                    {isProcessing ? "Processing..." : "Generate Data"}
+                                    {isProcessing ? "处理中..." : "生成预览数据"}
                                     {!isProcessing && <RotateCw size={18}/>}
                                 </button>
                             </div>
@@ -601,13 +635,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                                                 onClick={() => setPreviewMode('gray')} 
                                                 className={`p-1 px-2 transition-colors ${previewMode==='gray'?'bg-[#ff4d00] text-white':'hover:bg-white/10 text-gray-400'}`}
                                             >
-                                                GRAY
+                                                灰度
                                             </button>
                                             <button 
                                                 onClick={() => setPreviewMode('heatmap')} 
                                                 className={`p-1 px-2 transition-colors ${previewMode==='heatmap'?'bg-[#ff4d00] text-white':'hover:bg-white/10 text-gray-400'}`}
                                             >
-                                                HEAT
+                                                热力
                                             </button>
                                         </div>
                                         <span className="text-[#ff4d00] mono">Z: {previewData.minZ.toFixed(2)}~{previewData.maxZ.toFixed(2)}</span>
@@ -616,7 +650,7 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                             </div>
                             <div className="flex-1 relative flex items-center justify-center overflow-hidden group bg-[#111]">
                                 {!previewData ? (
-                                    <div className="text-gray-600 text-[10px] font-black uppercase tracking-widest animate-pulse">Waiting for generation...</div>
+                                    <div className="text-gray-600 text-[10px] font-black uppercase tracking-widest animate-pulse">等待生成数据...</div>
                                 ) : (
                                     <>
                                         <PreviewCanvas data={previewData} mode={previewMode} />
@@ -634,13 +668,14 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 
                         {/* Footer Action */}
                         <div className="p-5 border-t-2 border-black bg-white flex justify-end gap-3 shrink-0">
-                             <button onClick={onClose} className="px-6 py-2 text-gray-400 font-black text-[10px] hover:text-black uppercase tracking-widest transition-colors">Cancel</button>
+                             <button onClick={onClose} className="px-6 py-2 text-gray-400 font-black text-[10px] hover:text-black uppercase tracking-widest transition-colors">取消</button>
                              <button 
                                 onClick={() => previewData && onConfirm(previewData)}
                                 disabled={!previewData}
-                                className={`px-8 py-2 text-white font-black text-[10px] border-2 border-black transition-all btn-press hard-shadow-sm uppercase tracking-widest ${!previewData ? 'bg-gray-200 border-gray-300 cursor-not-allowed text-gray-400' : 'bg-black hover:bg-[#ff4d00]'}`}
+                                className={`flex items-center gap-3 px-8 py-3 text-white font-black text-xs border-2 border-black transition-all btn-press hard-shadow-sm uppercase tracking-widest ${!previewData ? 'bg-gray-200 border-gray-300 cursor-not-allowed text-gray-400' : 'bg-black hover:bg-[#ff4d00]'}`}
                              >
-                                <Check size={18}/> 确认导入 / Confirm
+                                <Check size={20}/>
+                                <span>确认导入数据</span>
                              </button>
                         </div>
                     </div>
@@ -653,13 +688,13 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
                     <div className="relative w-full h-full max-w-6xl max-h-[85vh] flex flex-col">
                         <div className="flex items-center justify-between mb-4">
                             <div className="text-white font-black text-xs mono tracking-widest uppercase">
-                                Full Preview | {previewMode.toUpperCase()} | {previewData.w}x{previewData.h}
+                                全屏预览 | {previewMode === 'gray' ? '灰度模式' : '热力模式'} | 分辨率: {previewData.w}x{previewData.h}
                             </div>
                             <button 
                                 onClick={() => setShowLargePreview(false)} 
                                 className="text-white hover:text-[#ff4d00] transition-colors flex items-center gap-2 font-black text-xs uppercase tracking-widest"
                             >
-                                Close <X size={24}/>
+                                关闭 <X size={24}/>
                             </button>
                         </div>
                         <div className="flex-1 bg-black border-2 border-white/20 hard-shadow-md overflow-hidden flex items-center justify-center">
@@ -675,28 +710,45 @@ const PointCloudConverter: React.FC<PointCloudConverterProps> = ({ isOpen, onClo
 // Preview Canvas Component
 const PreviewCanvas = React.memo(({ data, mode }: { data: GridData, mode: 'gray' | 'heatmap' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    
+    // Calculate 2th/98th range for heatmap (consistent with App.tsx relative mode)
+    const displayRange = useMemo(() => {
+        if (!data.data || data.data.length === 0) return { min: 0, max: 1 };
+        const sorted = new Float32Array(data.data).sort();
+        const minIdx = Math.floor(sorted.length * 0.02);
+        const maxIdx = Math.floor(sorted.length * 0.98);
+        return {
+            min: sorted[minIdx] ?? data.minZ,
+            max: sorted[maxIdx] ?? data.maxZ
+        };
+    }, [data.data, data.minZ, data.maxZ]);
+
     useEffect(() => {
         const cvs = canvasRef.current;
         if (!cvs) return;
         const ctx = cvs.getContext('2d');
         if (!ctx) return;
         
-        // Ensure canvas resolution matches grid size for 1:1 pixel mapping initially
-        // We render to an offscreen canvas first
         const width = data.w;
         const height = data.h;
         const imgData = ctx.createImageData(width, height);
         const buf = new Uint32Array(imgData.data.buffer);
-        const range = data.maxZ - data.minZ || 1;
         
+        // Gray range always uses full min/max for visibility
+        const grayRange = data.maxZ - data.minZ || 1;
+        // Heatmap range uses 2th/98th
+        const heatMin = displayRange.min;
+        const heatMax = displayRange.max;
+
         for (let i = 0; i < data.data.length; i++) {
-            const val = (data.data[i] - data.minZ) / range;
+            const z = data.data[i];
             let r, g, b;
 
             if (mode === 'heatmap') {
-                [r, g, b] = getColor(data.data[i], 'coolwarm', data.minZ, data.maxZ);
+                [r, g, b] = getColor(z, 'coolwarm', heatMin, heatMax);
             } else {
-                const c = Math.floor(val * 255);
+                const val = (z - data.minZ) / grayRange;
+                const c = Math.floor(Math.max(0, Math.min(1, val)) * 255);
                 r = g = b = c;
             }
             buf[i] = (255 << 24) | (b << 16) | (g << 8) | r;

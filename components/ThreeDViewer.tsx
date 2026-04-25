@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GridData, SelectionBox, SelectionLine, ToolType, ViewMode, Marker, CameraView, ColorSettings } from '../types';
+import { GridData, SelectionBox, SelectionLine, ToolType, ViewMode, Marker, CameraView, ColorSettings, ActiveLayer } from '../types';
 import { getColor as getColorFunc } from '../utils/colorUtils';
 import { THEME } from '../constants';
 import { Box, Settings, Sliders, Monitor } from 'lucide-react';

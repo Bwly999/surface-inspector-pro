@@ -94,6 +94,7 @@ export default function SurfaceInspector() {
   // Converter State
   const [showConverter, setShowConverter] = useState(false);
   const [converterImgSrc, setConverterImgSrc] = useState<string | null>(null);
+  const [converterImgBuffer, setConverterImgBuffer] = useState<ArrayBuffer | null>(null);
 
   // --- Effects ---
   useEffect(() => {
@@ -214,20 +215,30 @@ export default function SurfaceInspector() {
     if (!file) return;
     processCSVFile(file);
   };
+const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-          if (typeof evt.target?.result === 'string') {
-              setConverterImgSrc(evt.target.result);
-              setShowConverter(true);
-          }
-      };
-      reader.readAsDataURL(file);
-      // Reset input
-      e.target.value = '';
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        if (typeof evt.target?.result === 'string') {
+            setConverterImgSrc(evt.target.result);
+
+            // Also read as ArrayBuffer
+            const bufferReader = new FileReader();
+            bufferReader.onload = (bEvt) => {
+                if (bEvt.target?.result instanceof ArrayBuffer) {
+                    setConverterImgBuffer(bEvt.target.result);
+                    setShowConverter(true);
+                }
+            };
+            bufferReader.readAsArrayBuffer(file);
+        }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input
+    e.target.value = '';
   };
 
   const handleConverterConfirm = (newGrid: GridData) => {
@@ -237,6 +248,14 @@ export default function SurfaceInspector() {
       setHoverMarker(null);
       setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
       setShowConverter(false);
+      setConverterImgSrc(null);
+      setConverterImgBuffer(null);
+  };
+
+  const handleCloseConverter = () => {
+      setShowConverter(false);
+      setConverterImgSrc(null);
+      setConverterImgBuffer(null);
   };
 
   // --- Color Preset Handlers ---
@@ -384,8 +403,9 @@ export default function SurfaceInspector() {
       {/* Converter Modal */}
       <PointCloudConverter
         isOpen={showConverter}
-        onClose={() => setShowConverter(false)}
+        onClose={handleCloseConverter}
         imageSrc={converterImgSrc}
+        imageBuffer={converterImgBuffer}
         onConfirm={handleConverterConfirm}
       />
 
