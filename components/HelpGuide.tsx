@@ -4,7 +4,6 @@ import {
   Keyboard, Layers, Mouse, Upload, Maximize2, Crosshair,
   Settings, MoveVertical, MoveHorizontal, History
 } from 'lucide-react';
-import { THEME } from '../constants';
 
 interface HelpGuideProps {
   isOpen: boolean;
@@ -12,21 +11,21 @@ interface HelpGuideProps {
 }
 
 const KeyControl = ({ icon, title, desc }: any) => (
-    <div className="flex gap-4 p-6 border-2 border-black bg-white hard-shadow-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all">
-        <div className="text-gray-400 mt-1">{icon}</div>
+    <div className="flex gap-4 p-6 border border-[#eae4dc] bg-white rounded-xl transition-all duration-300 hover:bg-[#f3ece5]/30">
+        <div className="text-[#7a7571] mt-1">{icon}</div>
         <div>
-            <div className="font-black text-sm text-black uppercase tracking-tighter">{title}</div>
-            <div className="text-[11px] font-bold text-gray-500 leading-snug mt-2">{desc}</div>
+            <div className="font-bold text-sm text-[#2d2d2d] tracking-tight">{title}</div>
+            <div className="text-[12px] font-medium text-[#7a7571] leading-relaxed mt-2">{desc}</div>
         </div>
     </div>
 );
 
 const AnalysisRow = ({ icon, name, desc }: any) => (
-    <div className="flex items-center gap-6 p-6 bg-white hover:bg-gray-50 transition-colors">
-        <div className="p-3 bg-black text-white border-2 border-black">{icon}</div>
+    <div className="flex items-center gap-6 p-6 bg-white hover:bg-[#faf8f5] transition-colors duration-200">
+        <div className="p-3 bg-[#f3ece5] text-[#d97757] rounded-full">{icon}</div>
         <div className="flex-1">
-            <div className="font-black text-sm text-black uppercase tracking-tighter">{name}</div>
-            <div className="text-[11px] font-bold text-gray-500 mt-1">{desc}</div>
+            <div className="font-bold text-sm text-[#2d2d2d] tracking-tight">{name}</div>
+            <div className="text-[12px] font-medium text-[#7a7571] mt-1">{desc}</div>
         </div>
     </div>
 );
@@ -39,90 +38,93 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
   const TabButton = ({ id, label, icon: Icon }: any) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`flex items-center gap-3 px-4 py-4 text-xs font-black border-l-4 transition-all w-full text-left uppercase tracking-widest ${
+      className={`flex items-center gap-3 px-5 py-3 text-xs font-bold rounded-full transition-all duration-300 ${
         activeTab === id 
-          ? 'border-[#ff4d00] bg-black text-white' 
-          : 'border-transparent text-gray-400 hover:bg-gray-100'
+          ? 'bg-[#d97757] text-white shadow-lg shadow-[#d97757]/20' 
+          : 'text-[#7a7571] hover:bg-[#f3ece5] hover:text-[#2d2d2d]'
       }`}
     >
-      <Icon size={14} className={activeTab === id ? 'text-[#ff4d00]' : ''} />
+      <Icon size={14} />
       {label}
     </button>
   );
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white w-full max-w-5xl h-[85vh] border-2 border-black flex overflow-hidden hard-shadow-md">
+    <div className="fixed inset-0 z-[100] bg-[#2d2d2d]/10 backdrop-blur-[4px] flex items-center justify-center p-4 animate-in fade-in duration-500">
+      <div className="bg-[#faf8f5] w-full max-w-5xl h-[85vh] rounded-3xl flex overflow-hidden shadow-2xl shadow-[#2d2d2d]/5 border border-[#eae4dc]">
         
         {/* Sidebar */}
-        <div className="w-64 bg-white border-r-2 border-black flex flex-col">
-          <div className="p-8 border-b-2 border-black bg-white dot-grid">
-            <h2 className="text-xl font-black tracking-tighter text-gray-900 logo-glow">
-              使用 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4d00] to-red-600">说明书</span>
+        <div className="w-64 bg-[#f3ece5]/40 border-r border-[#eae4dc] flex flex-col">
+          <div className="p-10 border-b border-[#eae4dc] bg-[#faf8f5]/50">
+            <h2 className="text-2xl font-serif text-[#2d2d2d]">
+              使用 <span className="text-[#d97757]">说明书</span>
             </h2>
-            <div className="flex items-center gap-2 mt-2">
-                <span className="text-[10px] font-black text-white bg-black px-1.5 py-0.5 rounded-sm mono">DOCS</span>
-                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">System Documentation</span>
+            <div className="flex items-center gap-2 mt-3">
+                <span className="text-[10px] font-bold text-[#d97757] border border-[#d97757]/30 px-2 py-0.5 rounded-full mono">DOCS</span>
+                <span className="text-[9px] text-[#7a7571] font-bold uppercase tracking-widest">User Manual</span>
             </div>
           </div>
-          <div className="flex-1 py-4">
+          <div className="flex-1 p-6 flex flex-col gap-2">
             <TabButton id="basics" label="快速入门" icon={Zap} />
             <TabButton id="2d" label="2D 交互操作" icon={MousePointer2} />
             <TabButton id="3d" label="3D 可视化" icon={Box} />
             <TabButton id="analysis" label="数据分析工具" icon={Activity} />
           </div>
-          <div className="p-4 bg-gray-50 border-t border-gray-100 text-[10px] font-bold text-gray-400 text-center mono uppercase tracking-widest">
+          <div className="p-8 text-[10px] font-bold text-[#eae4dc] text-center mono uppercase tracking-widest">
             PRO EDITION v3.3
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col bg-white dot-grid">
-          <div className="flex justify-between items-center p-6 border-b-2 border-black bg-white/80 backdrop-blur-sm">
+        <div className="flex-1 flex flex-col bg-[#faf8f5]">
+          <div className="flex justify-between items-center p-10 border-b border-[#eae4dc]/50 bg-[#faf8f5]/80 backdrop-blur-md sticky top-0 z-10">
             <div className="flex flex-col">
-                <span className="text-[10px] font-black text-[#ff4d00] uppercase tracking-tighter">Technical Manual</span>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">
-                    {activeTab === 'basics' && '快速上手指南 / Getting Started'}
-                    {activeTab === '2d' && '2D 画布控制 / 2D Canvas Control'}
-                    {activeTab === '3d' && '3D 视图控制 / 3D Visualization'}
-                    {activeTab === 'analysis' && '高级分析功能 / Advanced Analysis'}
+                <span className="text-[10px] font-bold text-[#d97757] uppercase tracking-widest mb-1">Technical Manual</span>
+                <h3 className="text-3xl font-serif text-[#2d2d2d]">
+                    {activeTab === 'basics' && '快速上手指南'}
+                    {activeTab === '2d' && '2D 画布控制'}
+                    {activeTab === '3d' && '3D 视图控制'}
+                    {activeTab === 'analysis' && '高级分析功能'}
                 </h3>
             </div>
-            <button onClick={onClose} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-all btn-press">
-              <X size={20} />
+            <button 
+              onClick={onClose} 
+              className="p-3 rounded-full hover:bg-[#f3ece5] text-[#7a7571] transition-all duration-300"
+            >
+              <X size={24} />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-12 space-y-14 scroll-smooth">
             
             {/* --- BASICS TAB --- */}
             {activeTab === 'basics' && (
-              <div className="space-y-8 animate-scale-in">
-                <div className="bg-white border-2 border-black p-6 hard-shadow-sm flex gap-6 items-start">
-                  <div className="p-3 bg-black text-[#ff4d00] border-2 border-black"><Upload size={24}/></div>
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="bg-[#f3ece5]/30 rounded-2xl p-10 border border-[#eae4dc] flex gap-10 items-start">
+                  <div className="p-5 bg-white text-[#d97757] rounded-xl shadow-sm border border-[#eae4dc]"><Upload size={32}/></div>
                   <div>
-                    <h4 className="font-black text-lg text-black mb-1">1. 导入数据 / Import Data</h4>
-                    <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                      首先点击右上角的按钮导入数据。支持 <strong>CSV 文件</strong> (X, Y, Z 格式的点云数据) 或 <strong>图片</strong>。
+                    <h4 className="font-bold text-xl text-[#2d2d2d] mb-3">1. 导入数据 / Import Data</h4>
+                    <p className="text-base text-[#7a7571] leading-relaxed font-medium max-w-2xl">
+                      点击右上角的按钮导入数据。支持 <strong className="text-[#2d2d2d] font-bold underline decoration-[#d97757]/30 decoration-2 underline-offset-4">CSV 文件</strong> 或 <strong className="text-[#2d2d2d] font-bold underline decoration-[#d97757]/30 decoration-2 underline-offset-4">图片</strong>。
                       <br/>
-                      <span className="text-xs text-gray-400 font-bold">* 图片转换器允许您定义物理尺寸并设置参考平面进行自动调平。</span>
+                      <span className="text-sm text-[#7a7571]/70 font-medium mt-4 block italic leading-relaxed">* 图片转换器允许您定义物理尺寸并设置参考平面进行自动调平。</span>
                     </p>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="bg-white p-6 border-2 border-black hard-shadow-sm">
-                    <h4 className="font-black text-sm mb-4 flex items-center gap-2 uppercase tracking-tighter"><Box size={18} className="text-[#ff4d00]"/> 区域选择工具 / ROI Selection</h4>
-                    <p className="text-xs font-bold text-gray-500 mb-4 leading-relaxed">在 2D 地图上按住鼠标左键拖动，框选一个矩形感兴趣区域 (ROI)。</p>
-                    <div className="text-[11px] font-bold bg-gray-50 p-4 border-l-4 border-black text-gray-700 leading-relaxed">
-                      <strong>效果：</strong> 右上角的 3D 视图和右下角的剖面分析图将立即更新，仅显示您框选区域的数据。
+                <div className="grid grid-cols-2 gap-10">
+                  <div className="bg-white p-10 rounded-2xl border border-[#eae4dc] shadow-sm hover:bg-[#f3ece5]/20 transition-all duration-300">
+                    <h4 className="font-bold text-lg text-[#2d2d2d] mb-5 flex items-center gap-3"><Box size={22} className="text-[#d97757]"/> 区域选择工具</h4>
+                    <p className="text-sm font-medium text-[#7a7571] mb-8 leading-relaxed">在 2D 地图上按住鼠标左键拖动，框选一个矩形感兴趣区域 (ROI)。</p>
+                    <div className="text-[13px] font-medium bg-[#f3ece5]/40 p-6 rounded-xl border-l-4 border-[#d97757] text-[#2d2d2d] leading-relaxed">
+                      <strong>效果：</strong> 3D 视图和剖面分析图将立即更新，仅显示您框选区域的数据。
                     </div>
                   </div>
-                  <div className="bg-white p-6 border-2 border-black hard-shadow-sm">
-                    <h4 className="font-black text-sm mb-4 flex items-center gap-2 uppercase tracking-tighter"><Ruler size={18} className="text-[#00a3cc]"/> 划线测量工具 / Path Profile</h4>
-                    <p className="text-xs font-bold text-gray-500 mb-4 leading-relaxed">切换到“测量”模式。在 2D 地图上点击并拖动，绘制一条横截面线。</p>
-                    <div className="text-[11px] font-bold bg-gray-50 p-4 border-l-4 border-black text-gray-700 leading-relaxed">
-                      <strong>效果：</strong> 右下角的图表将显示沿该路径的地形剖面（高程变化图）。
+                  <div className="bg-white p-10 rounded-2xl border border-[#eae4dc] shadow-sm hover:bg-[#f3ece5]/20 transition-all duration-300">
+                    <h4 className="font-bold text-lg text-[#2d2d2d] mb-5 flex items-center gap-3"><Ruler size={22} className="text-[#d97757]"/> 划线测量工具</h4>
+                    <p className="text-sm font-medium text-[#7a7571] mb-8 leading-relaxed">切换到“测量”模式。在 2D 地图上点击并拖动，绘制一条横截面线。</p>
+                    <div className="text-[13px] font-medium bg-[#f3ece5]/40 p-6 rounded-xl border-l-4 border-[#d97757] text-[#2d2d2d] leading-relaxed">
+                      <strong>效果：</strong> 图表将显示沿该路径的地形剖面（高程变化图）。
                     </div>
                   </div>
                 </div>
@@ -131,8 +133,8 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
 
             {/* --- 2D INTERACTION TAB --- */}
             {activeTab === '2d' && (
-              <div className="space-y-8 animate-scale-in">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <KeyControl 
                         icon={<Mouse size={24}/>} 
                         title="缩放与平移" 
@@ -141,30 +143,30 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
                     <KeyControl 
                         icon={<Layers size={24}/>} 
                         title="动态视图映射" 
-                        desc="支持高度图、方向性梯度图及曲率图切换。新增 1% - 99% 百分比相对色标，自动过滤噪点干扰。"
+                        desc="支持高度图、方向性梯度图及曲率图切换。自动过滤噪点干扰。"
                     />
                     <KeyControl 
                         icon={<Maximize2 size={24}/>} 
                         title="精确缩放" 
-                        desc="点击左下角状态栏的缩放比例数字，可以手动输入精确的放大倍数（例如 500%）。"
+                        desc="点击左下角状态栏的缩放比例数字，可以手动输入精确的放大倍数。"
                     />
                     <KeyControl 
                         icon={<Crosshair size={24}/>} 
                         title="添加标记点" 
-                        desc={<span>在 2D 地图任意位置按住 <strong className="text-white bg-black px-1.5 py-0.5 rounded-sm mono text-[10px]">CTRL + LEFT CLICK</strong>，即可添加一个永久的测量/注释标记。可在标记列表中重命名。</span>}
+                        desc={<span>在 2D 地图上按住 <strong className="text-[#d97757] bg-[#d97757]/10 px-2 py-1 rounded-full text-[11px] font-bold">CTRL + 点击</strong>，即可添加测量标记。</span>}
                     />
                 </div>
                 
-                <div className="bg-black text-white p-6 border-2 border-black hard-shadow-sm">
-                    <h4 className="font-black text-xs mb-4 uppercase tracking-widest text-[#ff4d00]">底部状态栏图例 / Status Bar Legend</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                        <ul className="text-[10px] font-bold space-y-2 mono uppercase">
-                            <li><span className="text-gray-400">ZOOM:</span> 当前视图放大倍率</li>
-                            <li><span className="text-gray-400">POS:</span> 像素网格坐标 (X, Y)</li>
+                <div className="bg-white border border-[#eae4dc] p-10 rounded-2xl shadow-sm">
+                    <h4 className="font-bold text-xs mb-8 uppercase tracking-widest text-[#d97757]">底部状态栏图例 / Status Bar Legend</h4>
+                    <div className="grid grid-cols-2 gap-12">
+                        <ul className="text-[12px] font-medium space-y-4 mono text-[#2d2d2d]">
+                            <li className="flex justify-between border-b border-[#eae4dc] pb-3"><span className="text-[#7a7571]">ZOOM:</span> <span>视图放大倍率</span></li>
+                            <li className="flex justify-between border-b border-[#eae4dc] pb-3"><span className="text-[#7a7571]">POS:</span> <span>网格坐标 (X, Y)</span></li>
                         </ul>
-                        <ul className="text-[10px] font-bold space-y-2 mono uppercase">
-                            <li><span className="text-gray-400">(Real):</span> 物理实际坐标</li>
-                            <li><span className="text-gray-400">Z:</span> 光标位置实时高度</li>
+                        <ul className="text-[12px] font-medium space-y-4 mono text-[#2d2d2d]">
+                            <li className="flex justify-between border-b border-[#eae4dc] pb-3"><span className="text-[#7a7571]">(Real):</span> <span>物理实际坐标</span></li>
+                            <li className="flex justify-between border-b border-[#eae4dc] pb-3"><span className="text-[#7a7571]">Z:</span> <span>实时高度值</span></li>
                         </ul>
                     </div>
                 </div>
@@ -173,42 +175,42 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
 
             {/* --- 3D VIEW TAB --- */}
             {activeTab === '3d' && (
-              <div className="space-y-8 animate-scale-in">
-                <h4 className="font-black text-xl uppercase tracking-tighter border-b-2 border-black pb-2">3D 视角导航 / Navigation</h4>
-                <div className="grid grid-cols-3 gap-6">
-                    <div className="p-6 border-2 border-black bg-white hard-shadow-sm flex flex-col items-center">
-                        <div className="font-black text-sm text-[#ff4d00] mb-2 uppercase tracking-widest">Left Click</div>
-                        <div className="text-[10px] font-bold text-gray-500">旋转视角 / ROTATE</div>
+              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <h4 className="font-bold text-xl text-[#2d2d2d] tracking-tight border-b border-[#eae4dc] pb-5 font-serif">3D 视角导航 / Navigation</h4>
+                <div className="grid grid-cols-3 gap-8">
+                    <div className="p-10 rounded-2xl border border-[#eae4dc] bg-white shadow-sm flex flex-col items-center hover:bg-[#f3ece5]/10 transition-colors">
+                        <div className="font-bold text-sm text-[#d97757] mb-4 uppercase tracking-widest">左键</div>
+                        <div className="text-[11px] font-bold text-[#7a7571]">旋转视角</div>
                     </div>
-                    <div className="p-6 border-2 border-black bg-white hard-shadow-sm flex flex-col items-center">
-                        <div className="font-black text-sm text-[#ff4d00] mb-2 uppercase tracking-widest">Right Click</div>
-                        <div className="text-[10px] font-bold text-gray-500">平移视角 / PAN</div>
+                    <div className="p-10 rounded-2xl border border-[#eae4dc] bg-white shadow-sm flex flex-col items-center hover:bg-[#f3ece5]/10 transition-colors">
+                        <div className="font-bold text-sm text-[#d97757] mb-4 uppercase tracking-widest">右键</div>
+                        <div className="text-[11px] font-bold text-[#7a7571]">平移视角</div>
                     </div>
-                    <div className="p-6 border-2 border-black bg-white hard-shadow-sm flex flex-col items-center">
-                        <div className="font-black text-sm text-[#ff4d00] mb-2 uppercase tracking-widest">Scroll</div>
-                        <div className="text-[10px] font-bold text-gray-500">缩放视图 / ZOOM</div>
+                    <div className="p-10 rounded-2xl border border-[#eae4dc] bg-white shadow-sm flex flex-col items-center hover:bg-[#f3ece5]/10 transition-colors">
+                        <div className="font-bold text-sm text-[#d97757] mb-4 uppercase tracking-widest">滚轮</div>
+                        <div className="text-[11px] font-bold text-[#7a7571]">缩放视图</div>
                     </div>
                 </div>
 
-                <div className="bg-[#ff4d00] text-white p-6 border-2 border-black hard-shadow-sm flex gap-6">
-                    <div className="p-3 bg-black text-white border-2 border-black h-fit"><Keyboard size={24}/></div>
+                <div className="bg-[#f3ece5]/20 rounded-2xl p-10 border border-[#eae4dc] flex gap-10 items-start shadow-sm">
+                    <div className="p-5 bg-white text-[#d97757] rounded-xl shadow-sm border border-[#eae4dc]"><Keyboard size={32}/></div>
                     <div>
-                        <h4 className="font-black text-lg uppercase tracking-widest">Z 轴锁定旋转 / Z-Axis Lock</h4>
-                        <p className="text-sm font-bold mt-2 leading-relaxed">
-                            在旋转视图时按住键盘 <code className="bg-black px-1.5 py-0.5 rounded-sm mono text-xs">ALT</code> 键，可以锁定仰角。
-                            这会产生类似“转盘”的效果，非常适合水平检查侧面轮廓缺陷。
+                        <h4 className="font-bold text-xl text-[#2d2d2d] tracking-tight">Z 轴锁定旋转 / Z-Axis Lock</h4>
+                        <p className="text-base font-medium text-[#7a7571] mt-3 leading-relaxed max-w-2xl">
+                            旋转时按住 <code className="bg-white px-3 py-1 rounded-full border border-[#eae4dc] mono text-xs text-[#d97757] font-bold">ALT</code> 键，可以锁定仰角。
+                            产生类似“转盘”的效果，适合检查侧面轮廓缺陷。
                         </p>
                     </div>
                 </div>
 
-                <div className="bg-white border-2 border-black p-6 hard-shadow-sm">
-                    <h4 className="font-black text-sm mb-4 flex items-center gap-2 uppercase tracking-tighter">视觉增强与配色 / Enhancement & Colors</h4>
-                    <p className="text-xs font-bold text-gray-500 mb-4">点击 3D 视图左上角的 <Settings size={14} className="inline text-black"/> 图标进行详细配置。</p>
-                    <ul className="grid grid-cols-2 gap-4 text-[11px] font-bold text-gray-700">
-                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>对比度 (Intensity):</strong> 夸大 Z 轴高度显示比例</li>
-                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>预设色谱:</strong> 提供多种专业伪彩方案，支持持久化保存</li>
-                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>增强模式:</strong> 深度优化实时渲染的光影对比效果</li>
-                        <li className="flex gap-2 items-start"><span className="text-[#ff4d00] mt-1">●</span> <strong>解耦设置:</strong> 颜色范围设置现在与 2D 视图独立同步</li>
+                <div className="bg-white border border-[#eae4dc] p-10 rounded-2xl shadow-sm">
+                    <h4 className="font-bold text-base text-[#2d2d2d] mb-8 flex items-center gap-3">视觉增强与配色</h4>
+                    <p className="text-sm font-medium text-[#7a7571] mb-8">点击视图左上角的 <Settings size={18} className="inline text-[#eae4dc] mx-1"/> 图标进行配置。</p>
+                    <ul className="grid grid-cols-2 gap-x-14 gap-y-5 text-[14px] font-medium text-[#7a7571]">
+                        <li className="flex gap-4 items-start"><span className="text-[#d97757] mt-2 w-2 h-2 rounded-full bg-[#d97757] flex-shrink-0"></span> <span><strong>对比度:</strong> 夸大 Z 轴高度显示比例</span></li>
+                        <li className="flex gap-4 items-start"><span className="text-[#d97757] mt-2 w-2 h-2 rounded-full bg-[#d97757] flex-shrink-0"></span> <span><strong>预设色谱:</strong> 提供多种专业伪彩方案</span></li>
+                        <li className="flex gap-4 items-start"><span className="text-[#d97757] mt-2 w-2 h-2 rounded-full bg-[#d97757] flex-shrink-0"></span> <span><strong>增强模式:</strong> 优化实时渲染的光影效果</span></li>
+                        <li className="flex gap-4 items-start"><span className="text-[#d97757] mt-2 w-2 h-2 rounded-full bg-[#d97757] flex-shrink-0"></span> <span><strong>解耦设置:</strong> 颜色范围与 2D 视图独立</span></li>
                     </ul>
                 </div>
               </div>
@@ -216,41 +218,36 @@ const HelpGuide: React.FC<HelpGuideProps> = ({ isOpen, onClose }) => {
 
             {/* --- ANALYSIS TAB --- */}
             {activeTab === 'analysis' && (
-              <div className="space-y-8 animate-scale-in">
-                 <div className="border-2 border-black hard-shadow-sm overflow-hidden bg-white">
-                    <div className="bg-black text-white p-4 font-black text-xs uppercase tracking-widest border-b-2 border-black flex items-center gap-3">
-                        <Activity size={18} className="text-[#ff4d00]" /> 剖面图表分析工具 / Signal Analysis
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                 <div className="border border-[#eae4dc] rounded-2xl overflow-hidden bg-white shadow-2xl shadow-[#2d2d2d]/5">
+                    <div className="bg-[#f3ece5]/30 p-8 font-bold text-sm text-[#2d2d2d] uppercase tracking-widest border-b border-[#eae4dc] flex items-center gap-5">
+                        <Activity size={24} className="text-[#d97757]" /> 剖面图表分析工具
                     </div>
-                    <div className="divide-y-2 divide-gray-100">
+                    <div className="divide-y divide-[#eae4dc]/50">
                         <AnalysisRow 
-                            icon={<MousePointer2 size={18}/>} 
+                            icon={<MousePointer2 size={20}/>} 
                             name="检查模式 (Inspect)" 
-                            desc="悬停在图表曲线上，2D 和 3D 视图会同步显示。点击图表可冻结一个临时标记点。" 
+                            desc="悬停在图表曲线上，视图同步。点击可冻结临时标记点。" 
                         />
                         <AnalysisRow 
-                            icon={<MoveVertical size={18}/>} 
+                            icon={<MoveVertical size={20}/>} 
                             name="Z 高度测量" 
-                            desc="测量垂直高度差 (ΔZ)。支持在 2D 地图上按 'T' 键选取。" 
+                            desc="测量垂直高度差 (ΔZ)。" 
                         />
                         <AnalysisRow 
-                            icon={<MoveHorizontal size={18}/>} 
+                            icon={<MoveHorizontal size={20}/>} 
                             name="XY 距离测量" 
-                            desc="测量水平距离 (ΔXY)。支持在 2D 地图上按 'T' 键选取。" 
+                            desc="测量水平距离 (ΔXY)。" 
                         />
                         <AnalysisRow 
-                            icon={<Activity size={18}/>} 
+                            icon={<Activity size={20}/>} 
                             name="多组点到线测量 (P2L)" 
-                            desc="支持创建多个测量组，每个组可定义独立的基准线，计算点到线的垂直偏差。" 
+                            desc="支持创建多个测量组，计算点到线的垂直偏差。" 
                         />
                         <AnalysisRow 
-                            icon={<History size={18}/>} 
+                            icon={<History size={20}/>} 
                             name="测量预设与快照" 
-                            desc="保存当前所有测量点和 P2L 配置为预设，支持一键切换和快速复用，提升批量分析效率。" 
-                        />
-                        <AnalysisRow 
-                            icon={<Layers size={18}/>} 
-                            name="玻璃拟态分析面板" 
-                            desc="全新的磨砂玻璃 UI 设计，支持展开/折叠各个测量分组，提供更清晰的数据层级。" 
+                            desc="保存当前测量配置为预设，支持一键切换。" 
                         />
                     </div>
                  </div>
