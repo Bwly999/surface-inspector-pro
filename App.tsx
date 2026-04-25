@@ -374,10 +374,10 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
           background-size: 16px 16px;
         }
 
-        .hard-shadow { box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); }
-        .hard-shadow-sm { box-shadow: 1px 1px 0px 0px rgba(0,0,0,1); }
-        .hard-shadow-md { box-shadow: 4px 4px 0px 0px rgba(0,0,0,1); }
-        .hard-shadow-lg { box-shadow: 6px 6px 0px 0px rgba(0,0,0,1); }
+        .hard-shadow { box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.15); }
+        .hard-shadow-sm { box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.1); }
+        .hard-shadow-md { box-shadow: 4px 4px 0px 0px rgba(0,0,0,0.12); }
+        .hard-shadow-lg { box-shadow: 6px 6px 0px 0px rgba(0,0,0,0.1); }
 
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -385,12 +385,24 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
         @keyframes slideInRight { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { transform: scale(0.98); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink { from, to { border-color: transparent } 50% { border-color: #ff4d00; } }
 
         .animate-slide-down { animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-in-left { animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-slide-in-right { animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .animate-scale-in { animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        .typewriter-text { 
+            overflow: hidden; 
+            white-space: nowrap; 
+            border-right: 2px solid #ff4d00; 
+            width: 0;
+        }
+        .group:hover .typewriter-text { 
+            animation: typing 1s steps(30, end) forwards, blink .75s step-end infinite; 
+        }
 
         .logo-glow { text-shadow: 0 0 15px rgba(255, 77, 0, 0.2); }
 
@@ -452,10 +464,21 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
                   点云 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4d00] to-red-600">表面微观分析系统</span>
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                    <div className="flex items-center bg-black rounded-sm overflow-hidden hard-shadow-sm">
+                    <div className="flex items-center bg-black rounded-sm overflow-hidden hard-shadow-sm shrink-0">
                         <span className="text-[10px] font-black text-white px-1.5 py-0.5 mono">Pro v3.3</span>
                         <span className="text-[9px] font-bold text-gray-400 bg-gray-900 px-1.5 py-0.5 mono">2026.04.24</span>
                     </div>
+
+                    {/* Designer Signature - Option 3: Terminal Style */}
+                    <div className="ml-1 h-[20px] flex items-center">
+                        <div className="hidden group-hover:flex items-center mono text-[10px] text-[#ff4d00] font-bold bg-gray-900 px-2 py-0.5 rounded-sm hard-shadow-sm border border-gray-800">
+                            <span className="mr-1.5 text-green-500">~%</span>
+                            <div className="typewriter-text font-bold">
+                                whoami | 王忠禹(w00842380)
+                            </div>
+                        </div>
+                    </div>
+
                     <span className="text-[10px] font-bold text-gray-400 tracking-wide uppercase">工业级视觉分析工具</span>
                 </div>
             </div>
