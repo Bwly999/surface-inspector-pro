@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Activity, Box, Ruler, Upload, Move, Zap, Cpu, ArrowRightLeft, ArrowUpDown, Loader2, Info, Calculator, MapPin, Sliders, Settings, MousePointer2, Image as ImageIcon, HelpCircle, ScanLine, Layers, Palette, Trash2, Save, History, Plus } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { GridData, SelectionBox, SelectionLine, TransformState, Marker, ToolType, ViewMode, ChartAxis, ColorSettings, ColorPreset, ChartToolType, MeasurementState, ActiveLayer, DirectionalMaps } from './types';
+import { ActiveLayer, ChartAxis, ChartToolType, ColorPreset, ColorSettings, DataWorkerRequest, DataWorkerResponse, DerivedLayerCacheEntry, DerivedLayerKind, DerivedLayerKey, DisplayRange, GridData, Marker, MeasurementState, SelectionBox, SelectionLine, TransformState, ToolType, ViewMode } from './types';
 import { THEME, MAP_OPTIONS } from './constants';
-import { generateData, parseCSV, computeGradientMaps, computeCurvatureMaps } from './utils/dataUtils';
+import { buildDerivedLayerKey, generateData } from './utils/dataUtils';
 import { getGradientCSS } from './utils/colorUtils';
+import { estimatePercentileRange } from './utils/rangeUtils';
 import ThreeDViewer from './components/ThreeDViewer';
 import ProfileChart from './components/ProfileChart';
 import Surface2DCanvas from './components/Surface2DCanvas';
@@ -14,6 +15,8 @@ import HelpGuide from './components/HelpGuide';
 
 export default function SurfaceInspector() {
   const defaultData = useMemo(() => generateData(), []);
+  const defaultDatasetId = 'generated-default';
+  const defaultHeightRange = useMemo(() => estimatePercentileRange(defaultData.data), [defaultData.data]);
 
   // --- State ---
   const [grid, setGrid] = useState<GridData>({
@@ -26,10 +29,12 @@ export default function SurfaceInspector() {
     ys: defaultData.ys
   });
 
-  const [gradientMaps, setGradientMaps] = useState<DirectionalMaps | null>(null);
-  const [curvatureMaps, setCurvatureMaps] = useState<DirectionalMaps | null>(null);
   const [mapDirection, setMapDirection] = useState<'x' | 'y'>('x');
-  const [loading, setLoading] = useState(false);
+  const [datasetId, setDatasetId] = useState(defaultDatasetId);
+  const [heightRange, setHeightRange] = useState<DisplayRange>(defaultHeightRange);
+  const [derivedLayerCache, setDerivedLayerCache] = useState<Partial<Record<DerivedLayerKey, DerivedLayerCacheEntry>>>({});
+  const [loadingPhase, setLoadingPhase] = useState<'idle' | 'reading' | 'parsing'>('idle');
+  const [pendingLayerKind, setPendingLayerKind] = useState<DerivedLayerKind | null>(null);
 
   // Configuration State
   const [activeMap, setActiveMap] = useState('coolwarm');
@@ -85,11 +90,15 @@ export default function SurfaceInspector() {
 
   const [boxSel, setBoxSel] = useState<SelectionBox>({ x: 50, y: 50, w: 100, h: 100 });
   const [lineSel, setLineSel] = useState<SelectionLine>({ s: { x: 0, y: 0 }, e: { x: 100, y: 100 } });
-  const [relativeRange, setRelativeRange] = useState<{min: number, max: number}>({ min: 0, max: 1 });
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const requestIdRef = useRef(0);
+  const datasetIdRef = useRef(datasetId);
+  const gridRef = useRef(grid);
+  const pendingRequestsRef = useRef(new Map<string, { resolve: (value: any) => void; reject: (reason?: unknown) => void }>());
+  const registeredDatasetIdsRef = useRef(new Set<string>());
 
   // Converter State
   const [showConverter, setShowConverter] = useState(false);
@@ -98,17 +107,128 @@ export default function SurfaceInspector() {
 
   // --- Effects ---
   useEffect(() => {
-    if (!grid.data) return;
-    const timer = setTimeout(() => {
-      const dx = (grid.xs && grid.xs.length > 1) ? (grid.xs[1] - grid.xs[0]) : 1.0;
-      const dy = (grid.ys && grid.ys.length > 1) ? (grid.ys[1] - grid.ys[0]) : 1.0;
-      const grads = computeGradientMaps(grid.data, grid.w, grid.h, dx, dy);
-      const curvs = computeCurvatureMaps(grid.data, grid.w, grid.h, dx, dy);
-      setGradientMaps(grads);
-      setCurvatureMaps(curvs);
-    }, 10);
-    return () => clearTimeout(timer);
+    datasetIdRef.current = datasetId;
+  }, [datasetId]);
+
+  useEffect(() => {
+    gridRef.current = grid;
   }, [grid]);
+
+  useEffect(() => {
+    const worker = new Worker(new URL('./utils/dataWorker.ts', import.meta.url), { type: 'module' });
+    workerRef.current = worker;
+
+    worker.onmessage = (event: MessageEvent<DataWorkerResponse>) => {
+      const pending = pendingRequestsRef.current.get(event.data.requestId);
+      if (!pending) return;
+
+      pendingRequestsRef.current.delete(event.data.requestId);
+
+      if (event.data.type === 'error') {
+        pending.reject(new Error(event.data.payload.message));
+        return;
+      }
+
+      pending.resolve(event.data.payload);
+    };
+
+    worker.onerror = (event) => {
+      const error = new Error(event.message || '后台数据处理失败');
+      pendingRequestsRef.current.forEach(({ reject }) => reject(error));
+      pendingRequestsRef.current.clear();
+    };
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+      pendingRequestsRef.current.clear();
+    };
+  }, []);
+
+  const callWorker = useCallback(<T,>(request: Omit<DataWorkerRequest, 'requestId'>) => {
+    if (!workerRef.current) {
+      return Promise.reject(new Error('数据处理线程尚未初始化'));
+    }
+
+    const requestId = `worker-${++requestIdRef.current}`;
+
+    return new Promise<T>((resolve, reject) => {
+      pendingRequestsRef.current.set(requestId, { resolve, reject });
+      workerRef.current?.postMessage({ ...request, requestId });
+    });
+  }, []);
+
+  const applyGridState = useCallback((nextGrid: GridData, nextDatasetId: string, nextHeightRange: DisplayRange) => {
+    setDatasetId(nextDatasetId);
+    setGrid(nextGrid);
+    setHeightRange(nextHeightRange);
+    setDerivedLayerCache({});
+    setPendingLayerKind(null);
+    setTransform({ k: Math.min(500 / nextGrid.w, 500 / nextGrid.h), x: 0, y: 0 });
+    setTempMarker(null);
+    setHoverMarker(null);
+    setSelectedMarkerId(null);
+    setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
+  }, []);
+
+  const ensureDatasetRegistered = useCallback(async (targetDatasetId: string, targetGrid: GridData) => {
+    if (registeredDatasetIdsRef.current.has(targetDatasetId)) {
+      return;
+    }
+
+    await callWorker<{ datasetId: string }>({
+      type: 'register-grid',
+      datasetId: targetDatasetId,
+      grid: targetGrid,
+    });
+
+    registeredDatasetIdsRef.current.add(targetDatasetId);
+  }, [callWorker]);
+
+  useEffect(() => {
+    void ensureDatasetRegistered(defaultDatasetId, defaultData);
+  }, [defaultData, defaultDatasetId, ensureDatasetRegistered]);
+
+  const requestDerivedLayer = useCallback(async (kind: DerivedLayerKind, targetDatasetId = datasetIdRef.current, targetGrid = gridRef.current) => {
+    if (pendingLayerKind === kind) {
+      return;
+    }
+
+    const key = buildDerivedLayerKey(kind, mapDirection);
+    if (derivedLayerCache[key]) {
+      return;
+    }
+
+    setPendingLayerKind(kind);
+
+    try {
+      await ensureDatasetRegistered(targetDatasetId, targetGrid);
+
+      const payload = await callWorker<{
+        kind: DerivedLayerKind;
+        maps: { x: Float32Array; y: Float32Array };
+        ranges: Record<'x' | 'y', DisplayRange>;
+      }>({
+        type: 'compute-layer',
+        datasetId: targetDatasetId,
+        kind,
+      });
+
+      if (datasetIdRef.current !== targetDatasetId) {
+        return;
+      }
+
+      setDerivedLayerCache(prev => ({
+        ...prev,
+        [buildDerivedLayerKey(kind, 'x')]: { data: payload.maps.x, range: payload.ranges.x },
+        [buildDerivedLayerKey(kind, 'y')]: { data: payload.maps.y, range: payload.ranges.y },
+      }));
+    } finally {
+      if (datasetIdRef.current === targetDatasetId) {
+        setPendingLayerKind(current => (current === kind ? null : current));
+      }
+    }
+  }, [callWorker, derivedLayerCache, ensureDatasetRegistered, mapDirection, pendingLayerKind]);
 
   // Sync Markers Z with Grid Data
   useEffect(() => {
@@ -126,75 +246,61 @@ export default function SurfaceInspector() {
       }));
   }, [grid]); // grid dependency covers data change
 
-  // Calculate Percentile Range (2% - 98%) for better visualization
   useEffect(() => {
-    if (!grid.data || grid.data.length === 0) return;
-    
-    // Sort to find percentiles (using a small sample if performance is an issue, 
-    // but for 300x300 it's fine)
-    const sorted = new Float32Array(grid.data).sort();
-    const minIdx = Math.floor(sorted.length * 0.02);
-    const maxIdx = Math.floor(sorted.length * 0.98);
-    
-    setRelativeRange({
-        min: sorted[minIdx] ?? grid.minZ,
-        max: sorted[maxIdx] ?? grid.maxZ
-    });
-  }, [grid.data, grid.minZ, grid.maxZ]);
+    if (viewMode === 'gradient' || viewMode === 'curvature') {
+      void requestDerivedLayer(viewMode);
+    }
+  }, [viewMode, datasetId, requestDerivedLayer]);
 
   // --- Derived State: Active Layer ---
+  const activeDerivedKey = viewMode === 'height' ? null : buildDerivedLayerKey(viewMode, mapDirection);
+  const activeDerivedEntry = activeDerivedKey ? derivedLayerCache[activeDerivedKey] : null;
+  const displayRange = activeDerivedEntry?.range ?? heightRange;
+
   const activeLayer = useMemo<ActiveLayer>(() => {
-      if (viewMode === 'gradient' && gradientMaps) {
-          const data = gradientMaps[mapDirection];
-          if (!data) return { data: grid.data, min: colorSettings.min, max: colorSettings.max, type: 'height' };
-          const sorted = new Float32Array(data).sort();
-          // Use absolute max of 2%/98% to center at zero
-          const pMin = sorted[Math.floor(sorted.length * 0.02)] || 0;
-          const pMax = sorted[Math.floor(sorted.length * 0.98)] || 0;
-          const absMax = Math.max(Math.abs(pMin), Math.abs(pMax));
-          const limit = absMax || 0.1;
-          return { data, min: -limit, max: limit, type: 'gradient' };
+      if (activeDerivedEntry) {
+          return {
+            data: activeDerivedEntry.data,
+            min: activeDerivedEntry.range.min,
+            max: activeDerivedEntry.range.max,
+            type: viewMode,
+          };
       }
-      if (viewMode === 'curvature' && curvatureMaps) {
-          const data = curvatureMaps[mapDirection];
-          if (!data) return { data: grid.data, min: colorSettings.min, max: colorSettings.max, type: 'height' };
-          const sorted = new Float32Array(data).sort();
-          const pMin = sorted[Math.floor(sorted.length * 0.02)] || 0;
-          const pMax = sorted[Math.floor(sorted.length * 0.98)] || 0;
-          const absMax = Math.max(Math.abs(pMin), Math.abs(pMax));
-          const limit = absMax || 0.01;
-          return { data, min: -limit, max: limit, type: 'curvature' };
-      }
-      
-      // Calculate active display range
-      const min = colorSettings.mode === 'relative' ? relativeRange.min : colorSettings.min;
-      const max = colorSettings.mode === 'relative' ? relativeRange.max : colorSettings.max;
-      
+
+      const min = colorSettings.mode === 'relative' ? heightRange.min : colorSettings.min;
+      const max = colorSettings.mode === 'relative' ? heightRange.max : colorSettings.max;
+
       return { data: grid.data, min, max, type: 'height' };
-  }, [viewMode, mapDirection, grid.data, gradientMaps, curvatureMaps, colorSettings.mode, colorSettings.min, colorSettings.max, relativeRange]);
+  }, [activeDerivedEntry, colorSettings.max, colorSettings.min, colorSettings.mode, grid.data, heightRange.max, heightRange.min, viewMode]);
 
   // --- Handlers ---
-  const processCSVFile = useCallback((file: File) => {
-    setLoading(true);
-    setTimeout(() => {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const text = evt.target?.result;
-        if (typeof text === 'string') {
-          const res = parseCSV(text);
-          if (res) {
-            setGrid(res);
-            setTransform({ k: Math.min(500 / res.w, 500 / res.h), x: 0, y: 0 });
-            setTempMarker(null);
-            setHoverMarker(null);
-            setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
-          }
-        }
-        setLoading(false);
-      };
-      reader.readAsText(file);
-    }, 100);
-  }, []);
+  const processCSVFile = useCallback(async (file: File) => {
+    const nextDatasetId = `csv-${Date.now()}`;
+
+    try {
+      setLoadingPhase('reading');
+      const text = await file.text();
+
+      setLoadingPhase('parsing');
+
+      const payload = await callWorker<{ datasetId: string; grid: GridData; range: DisplayRange }>({
+        type: 'parse-csv',
+        datasetId: nextDatasetId,
+        text,
+      });
+
+      registeredDatasetIdsRef.current.add(payload.datasetId);
+      applyGridState(payload.grid, payload.datasetId, payload.range);
+      setLoadingPhase('idle');
+
+      if (viewMode === 'gradient' || viewMode === 'curvature') {
+        void requestDerivedLayer(viewMode, payload.datasetId, payload.grid);
+      }
+    } catch (error) {
+      setLoadingPhase('idle');
+      window.alert(error instanceof Error ? error.message : 'CSV 导入失败');
+    }
+  }, [applyGridState, callWorker, requestDerivedLayer, viewMode]);
 
   // External Event Listener for CSV Upload
   useEffect(() => {
@@ -243,11 +349,13 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   const handleConverterConfirm = (newGrid: GridData) => {
-      setGrid(newGrid);
-      setTransform({ k: Math.min(500 / newGrid.w, 500 / newGrid.h), x: 0, y: 0 });
-      setTempMarker(null);
-      setHoverMarker(null);
-      setMeasState({ step: 'idle', p1: null, p2: null, p2lGroups: [], activeGroupId: null });
+      const nextDatasetId = `image-${Date.now()}`;
+      applyGridState(newGrid, nextDatasetId, estimatePercentileRange(newGrid.data));
+      void ensureDatasetRegistered(nextDatasetId, newGrid).then(() => {
+          if (viewMode === 'gradient' || viewMode === 'curvature') {
+              void requestDerivedLayer(viewMode, nextDatasetId, newGrid);
+          }
+      });
       setShowConverter(false);
       setConverterImgSrc(null);
       setConverterImgBuffer(null);
@@ -430,11 +538,13 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
       />
 
       {/* Loading Overlay */}
-      {loading && (
+      {loadingPhase !== 'idle' && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white p-6 border-2 border-black flex flex-col items-center gap-4 hard-shadow-lg animate-scale-in">
             <Loader2 className="w-10 h-10 animate-spin text-[#ff4d00]" />
-            <div className="text-lg font-bold tracking-widest uppercase mono">正在处理数据...</div>
+            <div className="text-lg font-bold tracking-widest uppercase mono">
+              {loadingPhase === 'reading' ? '正在读取文件...' : '正在解析 CSV...'}
+            </div>
             <div className="w-48 h-2 bg-gray-200 overflow-hidden relative">
               <div className="absolute inset-0 bg-[#ff4d00] w-1/2 h-full" style={{ animation: 'shimmer 1s infinite linear' }}></div>
             </div>
@@ -631,7 +741,7 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
                                  <div className="mt-2 px-2 py-1 bg-gray-50 border border-gray-200 rounded-sm flex justify-between items-center">
                                      <span className="text-[9px] font-bold text-gray-400">当前范围 (2%-98%):</span>
                                      <span className="text-[10px] font-black text-black mono">
-                                         {relativeRange.min.toFixed(3)} ~ {relativeRange.max.toFixed(3)}
+                                         {displayRange.min.toFixed(3)} ~ {displayRange.max.toFixed(3)}
                                      </span>
                                  </div>
                              </div>
@@ -785,6 +895,12 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
                   onClick={() => setMapDirection('y')} 
                   className={`px-3 py-2 text-[10px] font-black transition-all btn-press ${mapDirection === 'y' ? 'bg-[#ff4d00] text-white' : 'bg-white hover:bg-gray-100'}`}
                 >Y 方向</button>
+              </div>
+            )}
+            {pendingLayerKind && (
+              <div className="flex items-center gap-2 px-2 py-1 border border-orange-300 bg-orange-50 text-[10px] font-black text-orange-700 animate-fade-in">
+                <Loader2 size={12} className="animate-spin" />
+                {pendingLayerKind === 'gradient' ? '梯度图后台计算中' : '曲率图后台计算中'}
               </div>
             )}
           </div>

@@ -50,6 +50,82 @@ export interface DirectionalMaps {
   y: Float32Array;
 }
 
+export interface DisplayRange {
+  min: number;
+  max: number;
+}
+
+export type Direction = 'x' | 'y';
+export type DerivedLayerKind = 'gradient' | 'curvature';
+export type DerivedLayerKey = `${DerivedLayerKind}:${Direction}`;
+
+export interface DerivedLayerCacheEntry {
+  data: Float32Array;
+  range: DisplayRange;
+}
+
+export interface DerivedLayerWorkerPayload {
+  kind: DerivedLayerKind;
+  maps: DirectionalMaps;
+  ranges: Record<Direction, DisplayRange>;
+}
+
+export interface ParseCsvWorkerSuccessPayload {
+  datasetId: string;
+  grid: GridData;
+  range: DisplayRange;
+}
+
+export interface RegisterGridWorkerSuccessPayload {
+  datasetId: string;
+}
+
+export interface WorkerErrorPayload {
+  message: string;
+}
+
+export type DataWorkerRequest =
+  | {
+      type: 'parse-csv';
+      requestId: string;
+      datasetId: string;
+      text: string;
+    }
+  | {
+      type: 'register-grid';
+      requestId: string;
+      datasetId: string;
+      grid: GridData;
+    }
+  | {
+      type: 'compute-layer';
+      requestId: string;
+      datasetId: string;
+      kind: DerivedLayerKind;
+    };
+
+export type DataWorkerResponse =
+  | {
+      type: 'parse-success';
+      requestId: string;
+      payload: ParseCsvWorkerSuccessPayload;
+    }
+  | {
+      type: 'register-success';
+      requestId: string;
+      payload: RegisterGridWorkerSuccessPayload;
+    }
+  | {
+      type: 'layer-success';
+      requestId: string;
+      payload: DerivedLayerWorkerPayload;
+    }
+  | {
+      type: 'error';
+      requestId: string;
+      payload: WorkerErrorPayload;
+    };
+
 export type ViewMode = 'height' | 'gradient' | 'curvature';
 export type ToolType = 'box' | 'line' | 'pan';
 export type ChartAxis = 'horizontal' | 'vertical';

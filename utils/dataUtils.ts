@@ -1,4 +1,4 @@
-import { GridData } from "../types";
+import { DerivedLayerKey, DerivedLayerKind, Direction, DirectionalMaps, GridData } from '../types';
 
 /**
  * Replicates numpy.gradient for 2D data along a specific axis.
@@ -8,7 +8,7 @@ import { GridData } from "../types";
  * @param spacing Physical spacing along the axis
  * @param axis 'x' (axis 1) or 'y' (axis 0)
  */
-export const npGradient = (data: Float32Array, width: number, height: number, spacing: number, axis: 'x' | 'y'): Float32Array => {
+export const npGradient = (data: Float32Array, width: number, height: number, spacing: number, axis: Direction): Float32Array => {
   const grad = new Float32Array(data.length);
   const size = axis === 'x' ? width : height;
   const otherSize = axis === 'x' ? height : width;
@@ -35,13 +35,25 @@ export const npGradient = (data: Float32Array, width: number, height: number, sp
   return grad;
 };
 
-export const computeGradientMaps = (data: Float32Array, width: number, height: number, dx: number, dy: number) => {
+export const computeGradientMaps = (
+  data: Float32Array,
+  width: number,
+  height: number,
+  dx: number,
+  dy: number,
+): DirectionalMaps => {
   const x = npGradient(data, width, height, dx, 'x');
   const y = npGradient(data, width, height, -dy, 'y'); // Use -dy because rows are in descending Y order
   return { x, y };
 };
 
-export const computeCurvatureMaps = (data: Float32Array, width: number, height: number, dx: number, dy: number) => {
+export const computeCurvatureMaps = (
+  data: Float32Array,
+  width: number,
+  height: number,
+  dx: number,
+  dy: number,
+): DirectionalMaps => {
   const gradX = npGradient(data, width, height, dx, 'x');
   const gradY = npGradient(data, width, height, -dy, 'y');
   
@@ -79,8 +91,28 @@ export const computeCurvatureMap = (data: Float32Array, width: number, height: n
   return mag;
 };
 
+const normalizeCoordinateKey = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
+
+const toSortedFloat32 = (values: Set<number>, descending = false): Float32Array => {
+  const sorted = Array.from(values).sort((a, b) => (descending ? b - a : a - b));
+  return Float32Array.from(sorted);
+};
+
+export const getGridSpacing = (grid: GridData) => {
+  const xs = grid.xs as ArrayLike<number>;
+  const ys = grid.ys as ArrayLike<number>;
+
+  return {
+    dx: xs.length > 1 ? Math.abs((xs[1] ?? 0) - (xs[0] ?? 0)) || 1 : 1,
+    dy: ys.length > 1 ? Math.abs((ys[0] ?? 0) - (ys[1] ?? 0)) || 1 : 1,
+  };
+};
+
+export const buildDerivedLayerKey = (kind: DerivedLayerKind, direction: Direction): DerivedLayerKey =>
+  `${kind}:${direction}`;
+
 export const parseCSV = (text: string): GridData | null => {
-  const lines = text.split('\n');
+  const lines = text.split(/\r?\n/);
   const points: { x: number, y: number, z: number }[] = [];
   const uX = new Set<number>();
   const uY = new Set<number>();
@@ -94,8 +126,8 @@ export const parseCSV = (text: string): GridData | null => {
       const y = parseFloat(parts[1]);
       const z = parseFloat(parts[2]);
       if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
-        const xKey = Math.round(x * 1000000) / 1000000;
-        const yKey = Math.round(y * 1000000) / 1000000;
+        const xKey = normalizeCoordinateKey(x);
+        const yKey = normalizeCoordinateKey(y);
         points.push({ x: xKey, y: yKey, z });
         uX.add(xKey); uY.add(yKey);
       }
@@ -104,8 +136,8 @@ export const parseCSV = (text: string): GridData | null => {
 
   if (points.length === 0) return null;
 
-  const sX = Array.from(uX).sort((a, b) => a - b);
-  const sY = Array.from(uY).sort((a, b) => b - a);
+  const sX = toSortedFloat32(uX);
+  const sY = toSortedFloat32(uY, true);
   const w = sX.length;
   const h = sY.length;
   const grid = new Float32Array(w * h);
@@ -116,8 +148,11 @@ export const parseCSV = (text: string): GridData | null => {
     if (points[i].z > maxZ) maxZ = points[i].z;
   }
 
-  const xMap = new Map(sX.map((v, i) => [v, i]));
-  const yMap = new Map(sY.map((v, i) => [v, i]));
+  const xMap = new Map<number, number>();
+  const yMap = new Map<number, number>();
+
+  for (let i = 0; i < sX.length; i++) xMap.set(sX[i]!, i);
+  for (let i = 0; i < sY.length; i++) yMap.set(sY[i]!, i);
 
   for (let i = 0; i < points.length; i++) {
     const p = points[i];
