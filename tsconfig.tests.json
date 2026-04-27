@@ -12,6 +12,7 @@
   },
   "include": [
     "tests/**/*.spec.ts",
+    "utils/dataUtils.ts",
     "utils/rangeUtils.ts",
     "utils/processUtils.ts",
     "utils/mathUtils.ts",

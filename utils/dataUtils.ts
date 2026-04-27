@@ -93,10 +93,8 @@ export const computeCurvatureMap = (data: Float32Array, width: number, height: n
 
 const normalizeCoordinateKey = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
 
-const toSortedFloat32 = (values: Set<number>, descending = false): Float32Array => {
-  const sorted = Array.from(values).sort((a, b) => (descending ? b - a : a - b));
-  return Float32Array.from(sorted);
-};
+const toSortedNumbers = (values: Set<number>, descending = false): number[] =>
+  Array.from(values).sort((a, b) => (descending ? b - a : a - b));
 
 export const getGridSpacing = (grid: GridData) => {
   const xs = grid.xs as ArrayLike<number>;
@@ -136,8 +134,8 @@ export const parseCSV = (text: string): GridData | null => {
 
   if (points.length === 0) return null;
 
-  const sX = toSortedFloat32(uX);
-  const sY = toSortedFloat32(uY, true);
+  const sX = toSortedNumbers(uX);
+  const sY = toSortedNumbers(uY, true);
   const w = sX.length;
   const h = sY.length;
   const grid = new Float32Array(w * h);
