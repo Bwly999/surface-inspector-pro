@@ -466,10 +466,8 @@ const handleImageImport = (e: React.ChangeEvent<HTMLInputElement>) => {
   return (
     <div className="flex flex-col h-screen font-sans text-sm select-none relative" style={{ backgroundColor: THEME.bg, color: THEME.text }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-
-        * { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
+        * { font-family: "Plus Jakarta Sans", "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; }
+        .mono { font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
