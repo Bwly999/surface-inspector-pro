@@ -181,7 +181,12 @@ export interface P2LGroup {
   name: string;
   color: string;
   visible: boolean;
+  isLeastSquaresFit?: boolean;
   baseLine: { 
+    p1: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }, 
+    p2: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number } 
+  } | null;
+  originalBaseLine?: { 
     p1: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number }, 
     p2: { x: number, y: number, gridX: number, gridY: number, realX: number, realY: number } 
   } | null;

@@ -2,8 +2,8 @@ import React, { useMemo, useRef, useEffect, useState } from 'react';
 import * as echarts from 'echarts';
 import { GridData, SelectionBox, SelectionLine, ToolType, ChartAxis, MeasurementState, ChartToolType, ActiveLayer, MeasurementPreset } from '../types';
 import { THEME } from '../constants';
-import { pointToLineDistance, projectPointOntoLine } from '../utils/mathUtils';
-import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser, Star } from 'lucide-react';
+import { pointToLineDistance, projectPointOntoLine, fitLine2D } from '../utils/mathUtils';
+import { RotateCcw, Plus, MousePointer2, MoveHorizontal, MoveVertical, Slash, Info, Eye, EyeOff, Trash2, ChevronDown, ChevronRight, Layers, Save, History, Download, Upload, X, Edit2, RefreshCw, Eraser, Sigma } from 'lucide-react';
 import { useMeasurementHistory } from '../hooks/useMeasurementHistory';
 
 const P2L_COLORS = [
@@ -359,7 +359,9 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                     name: `基准线 ${groups.length + 1}`,
                                     color: P2L_COLORS[groups.length % P2L_COLORS.length],
                                     visible: true,
+                                    isLeastSquaresFit: false,
                                     baseLine: { p1: snappedPoint, p2: snappedPoint }, // Set P1 immediately
+                                    originalBaseLine: { p1: snappedPoint, p2: snappedPoint },
                                     points: []
                                 };
                                 return { 
@@ -375,12 +377,42 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                             // 2. Handle baseline drawing or point measurement
                             if (!group.baseLine) {
                                 // Case: Group exists but baseline not started (e.g. after "New Baseline" click)
-                                const updatedGroup = { ...group, baseLine: { p1: snappedPoint, p2: snappedPoint } };
+                                const updatedGroup = { 
+                                    ...group, 
+                                    baseLine: { p1: snappedPoint, p2: snappedPoint },
+                                    originalBaseLine: { p1: snappedPoint, p2: snappedPoint }
+                                };
                                 groups[groupIdx] = updatedGroup;
                                 return { ...prev, step: 'p1', p2lGroups: groups };
                             } else if (group.baseLine.p1.x === group.baseLine.p2.x && group.baseLine.p1.y === group.baseLine.p2.y) {
                                 // Case: Baseline has P1, now setting P2
-                                const updatedGroup = { ...group, baseLine: { p1: group.baseLine.p1, p2: snappedPoint } };
+                                let pUser1 = group.originalBaseLine?.p1 || group.baseLine.p1;
+                                let pUser2 = snappedPoint;
+
+                                let pFinal1 = { ...pUser1 };
+                                let pFinal2 = { ...pUser2 };
+
+                                if (group.isLeastSquaresFit && rawData && rawData.length > 0) {
+                                    const minX = Math.min(pUser1.x, pUser2.x);
+                                    const maxX = Math.max(pUser1.x, pUser2.x);
+                                    const fitPoints = rawData
+                                        .filter(pt => pt.x >= minX && pt.x <= maxX)
+                                        .map(pt => ({ x: pt.x, y: pt.y }));
+
+                                    if (fitPoints.length >= 2) {
+                                        const fit = fitLine2D(fitPoints);
+                                        if (fit) {
+                                            pFinal1.y = fit.k * pFinal1.x + fit.b;
+                                            pFinal2.y = fit.k * pFinal2.x + fit.b;
+                                        }
+                                    }
+                                }
+
+                                const updatedGroup = { 
+                                    ...group, 
+                                    baseLine: { p1: pFinal1, p2: pFinal2 },
+                                    originalBaseLine: { p1: pUser1, p2: pUser2 }
+                                };
                                 groups[groupIdx] = updatedGroup;
                                 return { ...prev, step: 'complete', p2lGroups: groups };
                             } else {
@@ -707,7 +739,9 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                 name: `基准线 ${prev.p2lGroups.length + 1}`,
                 color: P2L_COLORS[prev.p2lGroups.length % P2L_COLORS.length],
                 visible: true,
+                isLeastSquaresFit: false,
                 baseLine: null,
+                originalBaseLine: null,
                 points: []
             };
             return {
@@ -737,6 +771,55 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
         }));
     };
 
+    const toggleGroupFit = (groupId: string) => {
+        onSetMeasState(prev => {
+            const groups = prev.p2lGroups.map(group => {
+                if (group.id !== groupId) return group;
+
+                const newIsFit = !group.isLeastSquaresFit;
+                let p1 = group.originalBaseLine?.p1 || group.baseLine?.p1;
+                let p2 = group.originalBaseLine?.p2 || group.baseLine?.p2;
+
+                if (!p1 || !p2) return { ...group, isLeastSquaresFit: newIsFit };
+
+                let pFinal1 = { ...p1 };
+                let pFinal2 = { ...p2 };
+
+                if (newIsFit && rawData && rawData.length > 0) {
+                    const minX = Math.min(p1.x, p2.x);
+                    const maxX = Math.max(p1.x, p2.x);
+                    const fitPoints = rawData
+                        .filter(pt => pt.x >= minX && pt.x <= maxX)
+                        .map(pt => ({ x: pt.x, y: pt.y }));
+
+                    if (fitPoints.length >= 2) {
+                        const fit = fitLine2D(fitPoints);
+                        if (fit) {
+                            pFinal1.y = fit.k * pFinal1.x + fit.b;
+                            pFinal2.y = fit.k * pFinal2.x + fit.b;
+                        }
+                    }
+                }
+
+                const newBaseLine = { p1: pFinal1, p2: pFinal2 };
+                
+                // Recalculate distances for all points in this group
+                const newPoints = group.points.map(pt => ({
+                    ...pt,
+                    dist: pointToLineDistance(pt.x, pt.y, newBaseLine.p1.x, newBaseLine.p1.y, newBaseLine.p2.x, newBaseLine.p2.y)
+                }));
+
+                return {
+                    ...group,
+                    isLeastSquaresFit: newIsFit,
+                    baseLine: newBaseLine,
+                    points: newPoints
+                };
+            });
+            return { ...prev, p2lGroups: groups };
+        });
+    };
+
     const handleDeleteP2LPoint = (groupId: string, pointId: string) => {
         onSetMeasState(prev => ({
             ...prev,
@@ -753,14 +836,14 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                     <div className="p-2 border-b border-black/5 flex items-center justify-between bg-black/5">
                         <span className="text-[10px] font-bold text-gray-700 uppercase tracking-wider">P2L 测量组</span>
                         <div className="flex items-center gap-1">
-                            <button 
+                            <button
                                 onClick={handleCreateNewP2L}
                                 className="p-1 text-blue-600 hover:bg-white/50 rounded transition-colors"
                                 title="新建基准线"
                             >
                                 <Plus size={14} />
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setShowP2LPanel(false)}
                                 className="p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded transition-colors"
                             >
@@ -768,6 +851,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                             </button>
                         </div>
                     </div>
+
                     <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
                         {measState.p2lGroups.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4 text-center">
@@ -799,13 +883,23 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                             <button 
                                                 onClick={() => toggleP2LGroupVisibility(group.id)}
                                                 className={`p-1 rounded hover:bg-gray-100 ${group.visible ? 'text-blue-500' : 'text-gray-300'}`}
+                                                title="显示/隐藏"
                                             >
                                                 {group.visible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                            </button>
+
+                                            <button 
+                                                onClick={() => toggleGroupFit(group.id)}
+                                                className={`p-1 rounded hover:bg-gray-100 transition-colors ${group.isLeastSquaresFit ? 'text-orange-500 bg-orange-50' : 'text-gray-300'}`}
+                                                title="最小二乘拟合 (Sigma Fit)"
+                                            >
+                                                <Sigma size={12} />
                                             </button>
                                             
                                             <button 
                                                 onClick={() => handleDeleteP2LGroup(group.id)}
                                                 className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500"
+                                                title="删除组"
                                             >
                                                 <Trash2 size={12} />
                                             </button>
@@ -822,7 +916,7 @@ const ProfileChart: React.FC<ProfileChartProps> = ({
                                             <div className="px-1.5 pb-1.5 pt-0 border-t border-gray-50">
                                                 <div className="text-[9px] text-gray-400 mb-1 flex justify-between">
                                                     <span>点列表 ({group.points.length})</span>
-                                                    <span>距离(um)</span>
+                                                    <span>距离(mm)</span>
                                                 </div>
                                                 {group.points.length === 0 ? (
                                                     <div className="text-[9px] text-gray-300 italic py-1 text-center">无测量点</div>

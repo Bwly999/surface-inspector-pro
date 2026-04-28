@@ -116,3 +116,31 @@ export const pointToLineDistance = (px: number, py: number, x1: number, y1: numb
 
       return solve3x3(Matrix, Vector);
   };
+
+  /**
+   * Fits a line y = kx + b to a set of 2D points using Least Squares.
+   * Returns coefficients {k, b}.
+   */
+  export const fitLine2D = (points: {x: number, y: number}[]): {k: number, b: number} | null => {
+      const N = points.length;
+      if (N < 2) return null;
+
+      let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+      for (let i = 0; i < N; i++) {
+          sumX += points[i].x;
+          sumY += points[i].y;
+          sumXY += points[i].x * points[i].y;
+          sumXX += points[i].x * points[i].x;
+      }
+
+      const denominator = (N * sumXX - sumX * sumX);
+      if (Math.abs(denominator) < 1e-12) {
+          // Vertical line or all points are same x
+          return null;
+      }
+
+      const k = (N * sumXY - sumX * sumY) / denominator;
+      const b = (sumY - k * sumX) / N;
+
+      return { k, b };
+  };
