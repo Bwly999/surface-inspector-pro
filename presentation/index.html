@@ -40,7 +40,6 @@
     position: fixed;
     top: 50%; left: 50%;
     transform-origin: top left;
-    will-change: transform;
     background: #080808;
     box-shadow: 0 0 100px rgba(0,0,0,1);
   }
@@ -66,7 +65,7 @@
     font-family: 'JetBrains Mono', monospace;
     z-index: 100;
     user-select: none;
-    backdrop-blur: 10px;
+    backdrop-filter: blur(10px);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .counter:hover { 

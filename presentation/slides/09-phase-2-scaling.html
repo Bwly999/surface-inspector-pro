@@ -6,103 +6,228 @@
     <style>
         .phase-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
-            margin-top: 40px;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 60px;
+            margin-top: 20px;
+        }
+        .phase-tag {
+            color: var(--secondary);
+            font-family: var(--mono);
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .phase-title {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .phase-content {
+            font-size: 19px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.5);
+        }
+        .ai-studio-note {
+            background: rgba(0, 163, 204, 0.05);
+            border-left: 3px solid var(--secondary);
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-size: 16px;
         }
         .evolution-map {
             position: relative;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255,255,255,0.01);
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 12px;
+            padding: 40px 40px 40px 80px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            gap: 40px;
+            gap: 0;
+            min-height: 560px;
         }
-        .file-box {
-            background: #111;
-            border: 1px solid #333;
-            padding: 16px 24px;
+        
+        /* Side Labels */
+        .side-label {
+            position: absolute;
+            left: 20px;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.15);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .side-label::after {
+            content: '';
+            width: 1px;
+            height: 80px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Top: Chaotic Index */
+        .chaotic-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .file-box-giant {
+            width: 480px;
+            height: 160px;
+            background: #000;
+            border: 2px solid #ff0055;
+            border-radius: 8px;
+            position: relative;
+            padding: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
+        }
+        .chaos-content {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: #444;
+            line-height: 1.1;
+            white-space: pre;
+            transform: rotate(-0.5deg);
+        }
+        .chaos-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, #000 20%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .index-label {
+            color: #ff0055;
+            font-weight: 900;
+            font-size: 32px;
+            text-shadow: 0 0 10px #ff0055;
+            transform: translateY(10px);
+        }
+
+        /* Middle: Transformation Arrow */
+        .transform-arrow {
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 800;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        /* Bottom: Ordered Grid */
+        .ordered-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        .file-box-clean {
+            background: rgba(0, 163, 204, 0.08);
+            border: 1px solid var(--secondary);
+            padding: 10px;
             border-radius: 4px;
             font-family: var(--mono);
-            font-size: 14px;
-            color: #888;
-            position: relative;
-            width: 300px;
-            text-align: center;
-        }
-        .file-box.active {
-            border-color: var(--secondary);
+            font-size: 12px;
             color: var(--secondary);
-            background: rgba(0, 163, 204, 0.1);
-        }
-        .file-stack {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .connector-v {
-            width: 2px;
-            height: 40px;
-            background: linear-gradient(0deg, var(--secondary), transparent);
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 163, 204, 0.1);
         }
         .bottleneck-tag {
             background: #ff0055;
             color: #fff;
-            padding: 4px 12px;
-            font-size: 12px;
+            padding: 3px 10px;
+            font-size: 11px;
             font-weight: 800;
             border-radius: 4px;
             position: absolute;
-            top: -12px;
-            right: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="slide-content">
+    <div class="slide-content" style="padding: 60px 120px;">
         <div class="phase-layout">
             <div class="animate-slide-right">
-                <div class="phase-tag" style="color: var(--secondary);">PHASE 02 // THE_PIVOT</div>
-                <h2 class="phase-title">演进与瓶颈：<br><span class="gradient-text" style="background: linear-gradient(135deg, var(--secondary) 0%, #00ffd5 100%); -webkit-background-clip: text;">AI Studio 级开发</span></h2>
+                <div class="phase-tag">PHASE 02 // THE_PIVOT</div>
+                <h2 class="phase-title">演进与重构：<br><span class="gradient-text" style="background: linear-gradient(135deg, var(--secondary) 0%, #00ffd5 100%); -webkit-background-clip: text;">AI Studio 级工程化</span></h2>
                 <div class="phase-content">
-                    <p>随着功能增加，单文件 HTML 陷入了<strong>“维护泥潭”</strong>。逻辑耦合、样式堆叠、难以进行长期演进。</p>
-                    <p style="margin-top: 20px;"><strong>转向 AI Studio：</strong> 我们将项目升级为 React 工程。引入了 Hooks 状态管理、Three.js 专业渲染与模块化组件。项目从“一个 Demo”变成了“一套系统”。</p>
+                    <p>当单文件 HTML 的规模突破 2500 行，代码熵值达到临界点。任何微小的改动都会引发不可预知的回归错误。我们必须进行<strong>项目制工程化重构</strong>。</p>
+                    
+                    <div class="ai-studio-note">
+                        <strong style="color: var(--secondary); display: block; margin-bottom: 5px;">什么是 Google AI Studio？</strong>
+                        Google 最前沿的 AI 开发原型平台。它提供海量的上下文窗口（Context Window），能够一次性吞吐整个工程的代码库，是进行大规模代码重构、跨文件逻辑理解的最佳利器。
+                    </div>
+
+                    <p style="margin-top: 15px;">通过 AI Studio，我们完成了从 <strong>“线性堆叠”</strong> 到 <strong>“模块化架构”</strong> 的本质跨越。</p>
                 </div>
-                <div class="vibe-badge" style="background: var(--secondary);">MODULAR SCALING</div>
             </div>
 
-            <div class="evolution-map animate-fade">
-                <!-- Old state -->
-                <div class="file-box">
-                    <span class="bottleneck-tag">UNMAINTAINABLE</span>
-                    index.html (2000+ lines)
-                </div>
-                
-                <div class="connector-v"></div>
+            <div class="evolution-map animate-fade" style="animation-delay: 0.3s;">
+                <!-- Labels -->
+                <div class="side-label" style="top: 100px;">单文件 / SINGLE_FILE</div>
+                <div class="side-label" style="bottom: 100px;">工程化 / MODULAR_ENGINEERING</div>
 
-                <!-- New state -->
-                <div class="file-stack">
-                    <div class="file-box active">App.tsx</div>
-                    <div class="file-box active">ThreeDViewer.tsx</div>
-                    <div class="file-box active">Surface2DCanvas.tsx</div>
-                    <div class="file-box active">ProfileChart.tsx</div>
-                    <div class="file-box active">dataUtils.ts</div>
-                    <div class="file-box active">types.ts</div>
+                <!-- Top: Chaos -->
+                <div class="chaotic-container">
+                    <div class="file-box-giant">
+                        <div class="chaos-content">
+&lt;html&gt;&lt;style&gt;...2000 lines...&lt;/style&gt;
+&lt;body&gt;
+  &lt;div class="container"&gt;...&lt;/div&gt;
+  &lt;script&gt;
+    function calculate() { ...chaos logic... }
+    function render() { ...messy canvas... }
+    // FIXME: This breaks everything
+    window.addEventListener('resize', () => { ... })
+  &lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;
+                        </div>
+                        <div class="chaos-overlay">
+                            <div class="index-label">index.html</div>
+                        </div>
+                        <div class="bottleneck-tag" style="top: 10px; right: 10px;">熵值过载 / 2500+ 行</div>
+                    </div>
                 </div>
 
-                <div style="font-family: var(--mono); color: var(--secondary); font-size: 12px; text-transform: uppercase; margin-top: 20px;">
-                    // GOOGLE_AI_STUDIO_CONTEXT_WINDOW_FULL_UTILIZATION
+                <!-- Middle: The Transition -->
+                <div class="transform-arrow">
+                    <div style="margin-bottom: 5px; background: #080808; padding: 0 10px;">[ 项目工程化重构 ]</div>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5v14M19 12l-7 7-7-7"/>
+                    </svg>
+                    <div style="font-size: 10px; opacity: 0.6; background: #080808; padding: 0 10px;">POWERED BY GEMINI 1.5 PRO</div>
+                </div>
+
+                <!-- Bottom: Order -->
+                <div class="ordered-grid">
+                    <div class="file-box-clean">App.tsx</div>
+                    <div class="file-box-clean">ThreeDViewer.tsx</div>
+                    <div class="file-box-clean">Surface2DCanvas.tsx</div>
+                    <div class="file-box-clean">ProfileChart.tsx</div>
+                    <div class="file-box-clean">dataUtils.ts</div>
+                    <div class="file-box-clean">types.ts</div>
+                    <div class="file-box-clean">mathUtils.ts</div>
+                    <div class="file-box-clean">colorUtils.ts</div>
+                    <div class="file-box-clean">constants.ts</div>
                 </div>
             </div>
         </div>
 
-        <div class="slide-footer">
-            <div class="mono">Solving the Demo Bottleneck</div>
-            <div class="mono">Slide 09 / 11</div>
+        <div class="slide-footer" style="bottom: 40px;">
+            <div class="mono">Modular Architecture Transformation</div>
+            <div class="mono">第 09 / 11 页</div>
         </div>
     </div>
 </body>
