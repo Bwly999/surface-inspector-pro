@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .hero-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .logo-box {
+            width: 320px;
+            height: 140px;
+            margin-bottom: 60px;
+            position: relative;
+        }
+        .logo-bg {
+            position: absolute;
+            inset: 0;
+            background: var(--primary);
+            border-radius: 20px;
+            transform: rotate(2deg);
+            box-shadow: 0 20px 80px rgba(255, 77, 0, 0.4);
+        }
+        .logo-main {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            border: 4px solid #000;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-1deg);
+            overflow: hidden;
+        }
+        .title-main {
+            font-size: 140px;
+            font-weight: 900;
+            line-height: 0.9;
+            margin-bottom: 20px;
+            letter-spacing: -0.05em;
+        }
+        .subtitle {
+            font-size: 40px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        .version-badge {
+            margin-top: 40px;
+            font-size: 24px;
+            padding: 10px 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <div class="hero-container">
+            <!-- Animated Logo -->
+            <div class="logo-box animate-slide-up">
+                <div class="logo-bg"></div>
+                <div class="logo-main">
+                    <svg width="100%" height="100%" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 20H80" stroke="#ff4d00" stroke-width="0.5" opacity="0.1"/>
+                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="black" stroke-width="2" stroke-dasharray="4 2" />
+                        <rect x="39" y="0" width="15" height="40" fill="#ff4d00" opacity="0.3">
+                          <animate attributeName="x" values="-20;100;-20" dur="3s" repeatCount="indefinite" />
+                        </rect>
+                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#ff4d00" stroke-width="3" />
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="title-main animate-slide-up" style="animation-delay: 0.2s;">
+                SURFACE <br> <span class="gradient-text">INSPECTOR</span> PRO
+            </h1>
+            <p class="subtitle animate-slide-up" style="animation-delay: 0.4s;">
+                精密视觉分析工具的演进
+            </p>
+            <div class="version-badge badge animate-fade" style="animation-delay: 0.6s;">
+                Major Update v3.3
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Project Overview & Vibe Coding Journey</div>
+            <div class="mono">© 2026 Surface Inspector</div>
+        </div>
+    </div>
+</body>
+</html>

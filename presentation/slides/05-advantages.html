@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .adv-grid {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+        .adv-card {
+            padding: 40px;
+            border-left: 4px solid var(--primary);
+            background: linear-gradient(90deg, rgba(255, 77, 0, 0.05) 0%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .adv-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .adv-desc {
+            font-size: 20px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.5);
+        }
+        .stat-box {
+            margin-top: 10px;
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">项目核心优势 / <span class="gradient-text">PROJECT ADVANTAGES</span></h2>
+
+        <div class="adv-grid">
+            <!-- Advantage 1 -->
+            <div class="adv-card animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="adv-title">
+                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">P</span>
+                    极致性能与内存管理
+                </div>
+                <p class="adv-desc">全面采用 Float32Array 处理大规模点云数据，配合后台 Worker 异步计算，确保在大数据量下依然保持 60fps 的交互流畅度。</p>
+                <div class="stat-box">> MEMORY_OPTIMIZED: TRUE</div>
+            </div>
+
+            <!-- Advantage 2 -->
+            <div class="adv-card animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="adv-title">
+                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">A</span>
+                    工业级算法精度
+                </div>
+                <p class="adv-desc">内置 2%/98% 百分位剔除算法与自动量程映射，有效过滤极值干扰，精准捕捉 0.001mm 级的表面形貌微小变化。</p>
+                <div class="stat-box">> ACCURACY_TOLERANCE: 0.001mm</div>
+            </div>
+
+            <!-- Advantage 3 -->
+            <div class="adv-card animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="adv-title">
+                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">D</span>
+                    专业级视觉交互
+                </div>
+                <p class="adv-desc">摒弃通用 UI 的低密度设计，采用工业高对比度配色方案，配合热键拾取（T键）与两点式测量，显著提升分析效率。</p>
+                <div class="stat-box">> UX_DENSITY: INDUSTRIAL_HIGH</div>
+            </div>
+
+            <!-- Advantage 4 -->
+            <div class="adv-card animate-slide-up" style="animation-delay: 0.4s;">
+                <div class="adv-title">
+                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">M</span>
+                    模块化与可扩展性
+                </div>
+                <p class="adv-desc">清晰的数据流模型（GridData）与解耦的组件架构，支持快速集成第三方测量算法或扩展形貌衍生模式。</p>
+                <div class="stat-box">> ARCH_PATTERN: DECOUPLED</div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Setting New Standards in Web Metrology</div>
+            <div class="mono">Slide 05 / 11</div>
+        </div>
+    </div>
+</body>
+</html>

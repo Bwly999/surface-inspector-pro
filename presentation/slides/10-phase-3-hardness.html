@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .phase-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .terminal-ui {
+            background: #000;
+            border: 2px solid #222;
+            border-radius: 8px;
+            height: 600px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .terminal-header {
+            background: #111;
+            padding: 12px 20px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #222;
+        }
+        .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-body {
+            flex: 1;
+            padding: 20px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: #00ff00;
+            line-height: 1.4;
+        }
+        .term-line { margin-bottom: 6px; }
+        .term-prompt { color: var(--primary); font-weight: 800; margin-right: 10px; }
+        .term-output { color: #fff; opacity: 0.8; }
+        .term-comment { color: #555; font-style: italic; }
+        .term-tool { color: #00a3cc; font-weight: 700; }
+        
+        .hardness-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 14px;
+            font-weight: 900;
+            font-size: 16px;
+            box-shadow: 0 10px 30px rgba(255, 77, 0, 0.4);
+            transform: rotate(3deg);
+            z-index: 10;
+        }
+
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            font-size: 18px;
+        }
+        .comp-table th {
+            text-align: left;
+            color: var(--primary);
+            padding: 10px;
+            border-bottom: 2px solid var(--primary-dim);
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .comp-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+        }
+        .comp-table .better {
+            color: #fff;
+            font-weight: 700;
+        }
+        .comp-table .better::before {
+            content: '● ';
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <div class="phase-layout">
+            <!-- Left Side: Content & Comparison -->
+            <div class="animate-slide-right">
+                <div class="phase-tag">PHASE 03 // THE_HARDNESS_ENGINEERING</div>
+                <h2 class="phase-title">硬核交付：<br><span class="gradient-text">Gemini CLI 深度集成</span></h2>
+                
+                <div class="phase-content" style="font-size: 20px;">
+                    <p>在 <strong>Hardness</strong> 阶段，我们通过 <code>AGENTS.md</code> 定义领域专家，利用 <strong>Skills</strong> 沉淀设计哲学，通过 <strong>MCP</strong> 协议赋予 AI 操作本地工具（Tools）的能力。</p>
+                </div>
+
+                <!-- Comparison Table -->
+                <table class="comp-table animate-fade" style="animation-delay: 0.5s;">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">DIMENSION</th>
+                            <th style="width: 30%;">AI STUDIO (VIBE)</th>
+                            <th style="width: 30%;">GEMINI CLI (HARDNESS)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>开发闭环</td>
+                            <td>网页手动粘贴</td>
+                            <td class="better">自动 Tool 调用与自修复</td>
+                        </tr>
+                        <tr>
+                            <td>上下文感知</td>
+                            <td>依赖手动上传</td>
+                            <td class="better">本地文件系统全感知 (RAG)</td>
+                        </tr>
+                        <tr>
+                            <td>验证机制</td>
+                            <td>肉眼观察</td>
+                            <td class="better">TDD 驱动与自动化测试</td>
+                        </tr>
+                        <tr>
+                            <td>演进质量</td>
+                            <td>容易产生代码腐化</td>
+                            <td class="better">Skills 约束与 AGENTS 审核</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="vibe-badge" style="background: #000; border: 2px solid var(--primary); margin-top: 40px;">BEYOND CHAT: REAL ENGINEERING</div>
+            </div>
+
+            <!-- Right Side: Terminal Simulation -->
+            <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="terminal-ui">
+                    <div class="terminal-header">
+                        <div class="term-dot" style="background: #ff5f56;"></div>
+                        <div class="term-dot" style="background: #ffbd2e;"></div>
+                        <div class="term-dot" style="background: #27c93f;"></div>
+                        <span style="margin-left: auto; font-family: var(--mono); font-size: 10px; color: #444;">AGENTS.md LOADED</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="term-line"><span class="term-prompt">gemini-cli</span> activate-skill <span class="term-tool">huashu-design</span></div>
+                        <div class="term-line"><span class="term-output">> Skill loaded: Industrial Blueprint Grammar</span></div>
+                        
+                        <div class="term-line" style="margin-top: 15px;"><span class="term-prompt">gemini-cli</span> "Refactor ProfileChart with TDD"</div>
+                        <div class="term-line"><span class="term-output">> Invoking <span class="term-tool">codebase_investigator</span> via MCP...</span></div>
+                        <div class="term-line"><span class="term-output">> Researching measurement logic... [DONE]</span></div>
+                        
+                        <div class="term-line" style="margin-top: 15px;"><span class="term-comment">// Phase: TDD Verification</span></div>
+                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">run_shell_command</span> "pnpm test ProfileChart"</div>
+                        <div class="term-line"><span class="term-output" style="color: #ff5f56;">FAIL: 2 tests failed (Regression detected)</span></div>
+                        
+                        <div class="term-line" style="margin-top: 15px;"><span class="term-comment">// Self-Correction initiated by Agent</span></div>
+                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">replace</span> "utils/mathUtils.ts" (fix logic error)</div>
+                        <div class="term-line"><span class="term-output" style="color: #27c93f;">SUCCESS: All tests passed.</span></div>
+                        
+                        <div class="term-line" style="margin-top: 20px;"><span class="term-output" style="color: var(--primary); font-weight: 800;">[HARDNESS_REPORT]</span></div>
+                        <div class="term-line"><span class="term-output">- Type Safety: 100%</span></div>
+                        <div class="term-line"><span class="term-output">- Test Coverage: +15%</span></div>
+                        <div class="term-line"><span class="term-output">- AGENTS.md Compliance: OK</span></div>
+                    </div>
+                    <div class="hardness-badge animate-fade">HARDNESS</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">From "Feeling" to "Verifiable Engineering"</div>
+            <div class="mono">Slide 10 / 11</div>
+        </div>
+    </div>
+</body>
+</html>

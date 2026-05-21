@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .phase-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 40px;
+        }
+        .chat-ui {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        .chat-header {
+            background: #1a1a1a;
+            padding: 16px;
+            border-bottom: 1px solid #222;
+            font-size: 14px;
+            font-weight: 800;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        .chat-body {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .bubble {
+            padding: 16px;
+            border-radius: 8px;
+            max-width: 85%;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .bubble.user {
+            background: rgba(255,255,255,0.05);
+            align-self: flex-end;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .bubble.ai {
+            background: rgba(255, 77, 0, 0.1);
+            align-self: flex-start;
+            color: var(--primary);
+            border: 1px solid rgba(255, 77, 0, 0.2);
+        }
+        .phase-tag {
+            color: var(--primary);
+            font-family: var(--mono);
+            font-weight: 800;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .phase-title {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 30px;
+        }
+        .phase-content {
+            font-size: 24px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.5);
+        }
+        .vibe-badge {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 24px;
+            background: #ff4d00;
+            color: #fff;
+            font-weight: 900;
+            border-radius: 4px;
+            transform: skewX(-10deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <div class="phase-layout">
+            <div class="animate-slide-right">
+                <div class="phase-tag">PHASE 01 // THE_SPARK</div>
+                <h2 class="phase-title">灵感闪现：<br><span class="gradient-text">Gemini Chat Demo</span></h2>
+                <div class="phase-content">
+                    <p>一切始于对话。通过简单的自然语言描述，Gemini 在几秒钟内生成了第一个能够跑通高度图渲染的单文件 HTML。</p>
+                    <p style="margin-top: 20px;"><strong>"Vibe Coding" 的魅力：</strong> 极速原型验证，零摩擦的创意落地。这种“感觉对了”的开发模式，让复杂的 3D 设想瞬间触手可及。</p>
+                </div>
+                <div class="vibe-badge animate-fade">PURE VIBE EXPERIENCE</div>
+            </div>
+
+            <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="chat-ui">
+                    <div class="chat-header">
+                        <span>GEMINI 2.0 FLASH</span>
+                        <span class="mono">STABLE_CONNECTION</span>
+                    </div>
+                    <div class="chat-body">
+                        <div class="bubble user">帮我写一个基于 HTML5 Canvas 的表面高度图查看器，支持 CSV 导入，带热图着色。</div>
+                        <div class="bubble ai">没问题！这是一个完整的单文件 HTML Demo。我使用了高性能的 Float32Array 处理数据，并内置了 CoolWarm 色谱算法...</div>
+                        <div class="bubble ai" style="font-family: var(--mono); font-size: 12px; background: #000; border-color: #333; color: #666;">
+                            &lt;!DOCTYPE html&gt;<br>
+                            &lt;canvas id="view"&gt;&lt;/canvas&gt;<br>
+                            &lt;script&gt;<br>
+                            &nbsp;&nbsp;const data = new Float32Array(...);<br>
+                            &nbsp;&nbsp;// Vibe logic here...<br>
+                            &lt;/script&gt;
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">From Idea to Artifact in Seconds</div>
+            <div class="mono">Slide 07 / 11</div>
+        </div>
+    </div>
+</body>
+</html>

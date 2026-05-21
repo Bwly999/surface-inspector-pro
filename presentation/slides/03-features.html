@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+        .feature-card {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .visual-demo {
+            width: 100%;
+            height: 240px;
+            background: #111;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .visual-demo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+        }
+        .feature-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .feature-desc {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.4);
+        }
+        .feature-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(255, 77, 0, 0.1);
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">核心功能 / <span class="gradient-text">CORE CAPABILITIES</span></h2>
+        
+        <div class="features-grid">
+            <!-- 2D Heatmap -->
+            <div class="feature-card animate-slide-up" style="animation-delay: 0.1s;">
+                <div class="visual-demo">
+                    <img src="../../color_demo.png" alt="2D Heatmap">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(0deg, #080808 0%, transparent 50%);"></div>
+                </div>
+                <div>
+                    <span class="feature-pill">VISUALIZATION</span>
+                    <h3 class="feature-title">2D 高动态热图</h3>
+                    <p class="feature-desc">采用百分位剔除算法过滤背景噪点，支持多种色谱方案，实时展现微观形貌的梯度变化。</p>
+                </div>
+            </div>
+
+            <!-- 3D Viewer -->
+            <div class="feature-card animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="visual-demo">
+                    <!-- Fake 3D wireframe icon -->
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" style="opacity: 0.5;">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    <div style="position: absolute; bottom: 10px; right: 10px; font-family: var(--mono); font-size: 10px; color: #444;">RENDERER: THREE.JS</div>
+                </div>
+                <div>
+                    <span class="feature-pill">ANALYSIS</span>
+                    <h3 class="feature-title">3D 正交交互视图</h3>
+                    <p class="feature-desc">基于 Three.js 的高性能 3D 渲染，支持垂直拉伸对比、点位捕捉与自由旋转，全方位审视表面细节。</p>
+                </div>
+            </div>
+
+            <!-- Measurement -->
+            <div class="feature-card animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="visual-demo">
+                    <img src="../../p2l_demo.png" alt="P2L Measurement">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(0deg, #080808 0%, transparent 50%);"></div>
+                </div>
+                <div>
+                    <span class="feature-pill">MEASUREMENT</span>
+                    <h3 class="feature-title">多基准 P2L 测量</h3>
+                    <p class="feature-desc">支持 ΔZ、ΔXY 及多基准线 P2L 测量。实时生成剖面信号图，满足像素级精度的工业测量需求。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">High-Performance Visualization & Metrology</div>
+            <div class="mono">Slide 03 / 11</div>
+        </div>
+    </div>
+</body>
+</html>

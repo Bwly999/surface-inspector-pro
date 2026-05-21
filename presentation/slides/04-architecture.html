@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .arch-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        .arch-blueprint {
+            position: relative;
+            width: 1200px;
+            height: 600px;
+            border: 2px dashed rgba(255, 77, 0, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .arch-layer {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .arch-box {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid var(--primary);
+            padding: 24px 40px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+            min-width: 240px;
+            transition: all 0.3s;
+        }
+        .arch-box:hover {
+            background: rgba(255, 77, 0, 0.1);
+            transform: scale(1.05);
+        }
+        .arch-box::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; right: -2px;
+            width: 20px; height: 20px;
+            background: var(--primary);
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        }
+        .arch-box .label {
+            font-size: 14px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 0.1em;
+        }
+        .arch-box .val {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .connector {
+            position: absolute;
+            background: var(--primary-dim);
+            z-index: -1;
+        }
+        .tech-note {
+            position: absolute;
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">架构与硬性工程 / <span class="gradient-text">ARCHITECTURE & HARDNESS</span></h2>
+
+        <div class="arch-container">
+            <div class="arch-blueprint animate-fade">
+                <!-- Top Layer: UI/UX -->
+                <div class="arch-layer animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="arch-box">
+                        <span class="label">CORE ENGINE</span>
+                        <span class="val">REACT 19</span>
+                    </div>
+                    <div class="arch-box">
+                        <span class="label">STYLING</span>
+                        <span class="val">TAILWIND CSS</span>
+                    </div>
+                </div>
+
+                <!-- Mid Layer: Visualization -->
+                <div class="arch-layer animate-slide-up" style="animation-delay: 0.4s;">
+                    <div class="arch-box" style="border-color: var(--secondary);">
+                        <span class="label">3D RENDERER</span>
+                        <span class="val">THREE.JS</span>
+                    </div>
+                    <div class="arch-box" style="border-color: var(--secondary);">
+                        <span class="label">2D CANVAS</span>
+                        <span class="val">HTML5 API</span>
+                    </div>
+                    <div class="arch-box" style="border-color: var(--secondary);">
+                        <span class="label">CHARTING</span>
+                        <span class="val">ECHARTS 5</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Layer: Data (Hardness) -->
+                <div class="arch-layer animate-slide-up" style="animation-delay: 0.6s;">
+                    <div class="arch-box" style="background: rgba(255, 77, 0, 0.15); border-width: 4px;">
+                        <span class="label">COMPUTATION LAYER</span>
+                        <span class="val">WEB WORKERS</span>
+                    </div>
+                    <div class="arch-box" style="background: rgba(255, 77, 0, 0.15); border-width: 4px;">
+                        <span class="label">TYPE SYSTEM</span>
+                        <span class="val">TYPESCRIPT 5</span>
+                    </div>
+                </div>
+
+                <!-- Annotations -->
+                <div class="tech-note" style="top: 20px; left: 20px;">// SYSTEM_BACKBONE</div>
+                <div class="tech-note" style="bottom: 20px; right: 20px;">// DATA_STABILITY_ENGINE</div>
+                <div class="tech-note" style="top: 50%; left: -60px; transform: rotate(-90deg);">RELIABILITY</div>
+                <div class="tech-note" style="top: 50%; right: -60px; transform: rotate(90deg);">PERFORMANCE</div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Engineered for Precision & Stability</div>
+            <div class="mono">Slide 04 / 11</div>
+        </div>
+    </div>
+</body>
+</html>
