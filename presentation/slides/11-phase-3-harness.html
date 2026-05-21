@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .phase-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 60px;
+            margin-top: 20px;
+        }
+        .phase-tag {
+            color: var(--primary);
+            font-family: var(--mono);
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .phase-title {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .phase-content {
+            font-size: 19px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.5);
+        }
+        .harness-note {
+            background: rgba(255, 77, 0, 0.05);
+            border-left: 3px solid var(--primary);
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .evolution-map {
+            position: relative;
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 40px 40px 40px 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-height: 560px;
+        }
+
+        /* Side Labels */
+        .side-label {
+            position: absolute;
+            left: 20px;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.15);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .side-label::after {
+            content: '';
+            width: 1px;
+            height: 80px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .terminal-ui {
+            background: #000;
+            border: 2px solid #222;
+            border-radius: 12px;
+            height: 380px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .terminal-header {
+            background: #111;
+            padding: 10px 16px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #222;
+        }
+        .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-body {
+            flex: 1;
+            padding: 16px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: #00ff00;
+            line-height: 1.4;
+            overflow-y: auto;
+        }
+        .term-line { margin-bottom: 4px; }
+        .term-prompt { color: var(--primary); font-weight: 800; margin-right: 8px; }
+        .term-output { color: #fff; opacity: 0.8; }
+        .term-comment { color: #555; font-style: italic; }
+        .term-tool { color: #00a3cc; font-weight: 700; }
+        
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .comp-table th {
+            text-align: left;
+            color: var(--primary);
+            padding: 10px;
+            border-bottom: 2px solid var(--primary-dim);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .comp-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+        }
+        .comp-table .better {
+            color: #fff;
+            font-weight: 700;
+        }
+        .comp-table .better::before {
+            content: '● ';
+            color: var(--primary);
+        }
+        .vibe-badge {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 8px 20px;
+            background: #000;
+            border: 2px solid var(--primary);
+            color: #fff;
+            font-weight: 900;
+            border-radius: 4px;
+            transform: skewX(-10deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content" style="padding: 60px 120px;">
+        <div class="phase-layout">
+            <!-- Left Side: Content & Comparison -->
+            <div class="animate-slide-right">
+                <div class="phase-tag">PHASE 03 // THE_HARNESS_ENGINEERING</div>
+                <h2 class="phase-title">Harness 级交付：<br><span class="gradient-text">Gemini CLI 深度集成</span></h2>
+                
+                <div class="phase-content">
+                    <p>在 <strong>Harness</strong> 阶段，瓶颈不再是模型智能，而是<strong>基础设施</strong>。通过设计约束、反馈回路和结构化工作流，我们确保 AI 的输出具备工程级的可靠性。</p>
+                </div>
+
+                <div class="harness-note">
+                    <strong style="color: var(--primary); display: block; margin-bottom: 5px;">什么是 Harness Engineering？</strong>
+                    指围绕 AI Agent 构建约束机制与反馈回路的系统工程。利用 <strong>Gemini CLI</strong> 配合 <strong>MCP 工具</strong>、<strong>Skills</strong> 约束与 <strong>AGENTS.md</strong> 动态文档，将 LLM 转化为受控的工程生产力。
+                </div>
+
+                <div class="vibe-badge animate-fade" style="animation-delay: 0.7s;">INFRASTRUCTURE > INTELLIGENCE</div>
+            </div>
+
+            <!-- Right Side: Terminal & Table -->
+            <div class="evolution-map animate-fade" style="animation-delay: 0.3s;">
+                <div class="side-label" style="top: 100px;">约束机制 / CONSTRAINTS</div>
+                <div class="side-label" style="bottom: 100px;">持续改进 / FEEDBACK</div>
+
+                <!-- Terminal Simulation -->
+                <div class="terminal-ui">
+                    <div class="terminal-header">
+                        <div class="term-dot" style="background: #ff5f56;"></div>
+                        <div class="term-dot" style="background: #ffbd2e;"></div>
+                        <div class="term-dot" style="background: #27c93f;"></div>
+                        <span style="margin-left: auto; font-family: var(--mono); font-size: 10px; color: #444;">GEMINI_CLI_INTEGRATED</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="term-line"><span class="term-prompt">gemini-cli</span> "Fix ROI HUD overflow"</div>
+                        <div class="term-line"><span class="term-output">> Reading AGENTS.md for architecture rules...</span></div>
+                        <div class="term-line" style="margin-top: 5px;"><span class="term-comment">// Structured Execution Sequence</span></div>
+                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">activate_skill</span> "frontend-design"</div>
+                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">run_shell_command</span> "pnpm build"</div>
+                        <div class="term-line"><span class="term-output" style="color: #ff5f56;">FAIL: Type error in responsive logic</span></div>
+                        <div class="term-line"><span class="term-comment">// Self-Correction loop triggered</span></div>
+                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">replace</span> "presentation/slides/09.html"</div>
+                        <div class="term-line"><span class="term-output" style="color: #27c93f;">SUCCESS: Build complete. 0 errors.</span></div>
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <table class="comp-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">对比维度</th>
+                            <th style="width: 30%;">VIBE CODING</th>
+                            <th style="width: 35%;">HARNESS ENG (CLI)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>开发闭环</td>
+                            <td>手动复制粘贴</td>
+                            <td class="better">自动 Tool 调用与自修复</td>
+                        </tr>
+                        <tr>
+                            <td>上下文管理</td>
+                            <td>线性堆叠</td>
+                            <td class="better">分层架构与持久化记忆</td>
+                        </tr>
+                        <tr>
+                            <td>质量控制</td>
+                            <td>肉眼观察</td>
+                            <td class="better">Skills 约束与机械化执行</td>
+                        </tr>
+                        <tr>
+                            <td>知识沉淀</td>
+                            <td>散落在对话</td>
+                            <td class="better">AGENTS.md 动态反馈回路</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="slide-footer" style="bottom: 40px;">
+            <div class="mono">Designing Environments, Not Just Writing Code</div>
+            <div class="mono">第 11 / 12 页</div>
+        </div>
+    </div>
+</body>
+</html>
