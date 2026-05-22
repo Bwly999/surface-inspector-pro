@@ -6,25 +6,109 @@
     <style>
         .phase-layout {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 40px;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 30px;
             margin-top: 10px;
-            height: calc(100% - 140px);
+            height: calc(100% - 150px);
         }
         .phase-tag { color: var(--primary); font-family: var(--mono); font-weight: 800; margin-bottom: 8px; font-size: 16px; letter-spacing: 0.2em; }
-        .phase-title { font-size: 48px; font-weight: 800; margin-bottom: 15px; line-height: 1.1; }
-        
-        /* Deep Harness Explorer */
-        .harness-explorer {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
+        .phase-title { font-size: 44px; font-weight: 800; margin-bottom: 12px; line-height: 1.1; }
+
+        /* Architecture Tree Diagram - Refactored for Separation */
+        .arch-tree {
             display: flex;
             flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            gap: 25px;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
         }
+
+        .tree-main-row {
+            display: grid;
+            grid-template-columns: 1fr 60px 1fr;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .node-group {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        .hub-node {
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+        }
+        .hub-node.oc { border-color: var(--secondary); }
+        .hub-node.hr { border-color: var(--primary); border-width: 3px; }
+
+        /* Leaves for OpenCode - Properly contained */
+        .leaf-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        .leaf {
+            font-size: 10px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .leaf.skill { border-color: #a5b4fc; color: #a5b4fc; }
+        .leaf.mcp { border-color: #99f6e4; color: #99f6e4; }
+        .leaf.agent { border-color: #fbbf24; color: #fbbf24; }
+
+        /* Harness Side Specifics */
+        .hr-features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            flex: 1;
+        }
+        .hr-feature {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            padding-left: 15px;
+            position: relative;
+        }
+        .hr-feature::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+
+        .tree-arrow { 
+            font-size: 32px; 
+            color: rgba(255,255,255,0.1); 
+            text-align: center;
+            font-family: var(--mono);
+        }
+
+        /* Results Row */
+        .results-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
         .explorer-tabs {
             display: flex;
             background: rgba(0,0,0,0.4);
@@ -149,8 +233,51 @@
         <div class="phase-layout">
             <!-- Left: High Density Encyclopedia -->
             <div class="animate-slide-right">
-                <div class="phase-tag">PHASE 03 // DEEP_EXPLORER</div>
-                <h2 class="phase-title">Harness Engineering<br><span class="gradient-text">深度交互百科</span></h2>
+                <div class="phase-tag">PHASE 03 // SYSTEM_GOVERNANCE</div>
+                <h2 class="phase-title">针对“Dumb Zone”与失效模式：<br><span class="gradient-text">构建 Harness 约束治理体系</span></h2>
+
+                <!-- Refactored Architecture Tree Diagram -->
+                <div class="arch-tree animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="tree-main-row">
+                        <!-- Group 1: OpenCode & Capabilities -->
+                        <div class="node-group">
+                            <div class="hub-node oc">
+                                <div class="node-title">OpenCode</div>
+                                <div class="node-subtitle">AI 编码Agent</div>
+                            </div>
+                            <!-- Integrated Leaves -->
+                            <div class="leaf-grid">
+                                <div class="leaf skill">Skills 路由匹配</div>
+                                <div class="leaf mcp">MCP 能力扩展</div>
+                                <div class="leaf">Tool (R/W/Bash)</div>
+                                <div class="leaf agent">AGENTS.md 约束</div>
+                                <div class="leaf" style="grid-column: span 2;">LLM 推理引擎 (The Heart)</div>
+                            </div>
+                        </div>
+
+                        <div class="tree-arrow">→</div>
+
+                        <!-- Group 2: Harness Infrastructure -->
+                        <div class="node-group">
+                            <div class="hub-node hr">
+                                <div class="node-title">Harness Engineering</div>
+                                <div class="node-subtitle">工程约束治理体系</div>
+                            </div>
+                            <div class="hr-features">
+                                <div class="hr-feature">分层上下文架构</div>
+                                <div class="hr-feature">领域 Agent 专业化</div>
+                                <div class="hr-feature">机械化执行约束</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Common Strategic Outcomes -->
+                    <div class="results-row">
+                        <div class="result-pill blue">确定性产出</div>
+                        <div class="result-pill green">可维护系统</div>
+                        <div class="result-pill orange">持续演进</div>
+                    </div>
+                </div>
 
                 <div class="harness-explorer">
                     <div class="explorer-tabs">
@@ -225,14 +352,13 @@
 
                         <!-- Section 6: Industry Consensus -->
                         <div id="tab-cons" class="tab-content">
-                            <h3 class="content-h3">业界六大共识</h3>
+                            <h3 class="content-h3">业界共识</h3>
                             <ul class="content-list">
-                                <li><strong>共识 1：</strong> 瓶颈在基础设施，不在模型智能。</li>
-                                <li><strong>共识 2：</strong> 文档必须是活的反馈回路，不是静态制品。</li>
-                                <li><strong>共识 3：</strong> 思考与执行必须分离 (先规划再执行)。</li>
-                                <li><strong>共识 4：</strong> 上下文不是越多越好 (40% Smart Zone)。</li>
-                                <li><strong>共识 5：</strong> 约束必须机械化执行，不能靠文档记录。</li>
-                                <li><strong>共识 6：</strong> 角色转型：Relocating Rigor (严谨性从代码转移到系统)。</li>
+                                <li><strong>共识 1：</strong> 文档必须是活的反馈回路，不是静态制品。</li>
+                                <li><strong>共识 2：</strong> 思考与执行必须分离 (先规划再执行)。</li>
+                                <li><strong>共识 3：</strong> 上下文不是越多越好 (40% Smart Zone)。</li>
+                                <li><strong>共识 4：</strong> 约束必须机械化执行，不能靠文档记录。</li>
+                                <li><strong>共识 5：</strong> 角色转型：Relocating Rigor (严谨性从代码转移到系统)。</li>
                             </ul>
                         </div>
                     </div>
