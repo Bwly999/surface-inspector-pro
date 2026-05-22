@@ -1,0 +1,39 @@
+project-root/
+├── .opencode/
+│   ├── skills/                      # 开发核心skills
+│   │   ├── frontend-design    # 前端UI设计
+│   │   ├── git-commit    # git规范提交
+│   │   ├── react-best-practices      # React最佳实践指导
+│   │   ├── using-superpowers       # 需求确认+TDD驱动开发
+│   │   ├── find-docs               # 类库最新文档查询
+│   │   ├── chrome-devtools         # 操作浏览器
+│   │   └── ...                     # 项目自定义skill
+│   │       
+│   └── agents/
+│       ├── doc-writer/            # 文档编写专用 agent
+│       ├── constraint-guardian/   # 约束守护 agent
+│       └── code-reviewer/         # 代码审查 agent
+│
+├── docs/
+│   ├── 00-index.md               # 入口文档(AI 首读),文档的文档
+│   ├── 01-architecture/           # 架构文档（渐进式细化）
+│   │   ├── L0-spec.md             # 层0：基础原则
+│   │   ├── L1-boundaries.md         # 层1：不同模块边界
+│   │   ├── L2-decisions.md          # 层2：关键决策记录（ADR）
+│   │   └── L3-modules/              # 层3：模块详细设计
+│   ├── 02-api/                    # API 规范
+│   │   ├── spec/                     # OpenAPI / gRPC proto
+│   │   └── invariants.md            # API 不变式约束
+│   ├── 03-standards/              # 工程标准
+│   │   ├── code-style.md            # 代码风格
+│   │   └── ui-style.md               # UI风格
+│   └── 04-changelog/             # 变更记录
+│
+├── src/                         # 代码
+│
+├── tests/
+│   ├── e2e/                  # AI 辅助端到端测试
+│   ├── benchmark/            # 性能测试
+│   └── unittest/             # 单元测试
+├── AGENTS.md                      # 项目级 AI 行为指南, 核心原则
+└── README.md                      # 人类读的 README

@@ -18,9 +18,9 @@
         .arch-tree {
             display: flex;
             flex-direction: column;
-            gap: 25px;
-            margin-bottom: 30px;
-            padding: 30px;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
             background: rgba(255,255,255,0.01);
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 16px;
@@ -28,33 +28,53 @@
 
         .tree-main-row {
             display: grid;
-            grid-template-columns: 1fr 60px 1fr;
-            align-items: center;
-            gap: 20px;
+            grid-template-columns: 1fr 40px 1fr;
+            align-items: stretch;
+            gap: 15px;
         }
 
         .node-group {
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
-            padding: 20px;
-            height: 100%;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             position: relative;
         }
 
         .hub-node {
-            background: rgba(255,255,255,0.03);
-            border: 2px solid rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 10px;
+            border-radius: 10px;
             text-align: center;
             position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
-        .hub-node.oc { border-color: var(--secondary); }
-        .hub-node.hr { border-color: var(--primary); border-width: 3px; }
+        .hub-node.oc { 
+            border: 1px solid rgba(0, 163, 204, 0.4); 
+            background: linear-gradient(135deg, rgba(0, 163, 204, 0.1) 0%, transparent 100%);
+        }
+        .hub-node.hr { 
+            border: 1px solid var(--primary); 
+            background: linear-gradient(135deg, rgba(255, 77, 0, 0.1) 0%, transparent 100%);
+        }
+
+        .node-title { 
+            font-size: 16px; 
+            font-weight: 900; 
+            letter-spacing: 0.1em; 
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .node-subtitle { 
+            font-size: 10px; 
+            color: rgba(255,255,255,0.6); 
+            margin-top: 2px;
+            font-family: var(--mono);
+        }
 
         /* Leaves for OpenCode - Properly contained */
         .leaf-grid {
@@ -63,51 +83,113 @@
             gap: 8px;
         }
         .leaf {
-            font-size: 10px;
+            font-size: 9px;
             padding: 6px 10px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.08);
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.6);
             display: flex;
             align-items: center;
             gap: 6px;
             white-space: nowrap;
+            transition: all 0.2s;
         }
-        .leaf.skill { border-color: #a5b4fc; color: #a5b4fc; }
-        .leaf.mcp { border-color: #99f6e4; color: #99f6e4; }
-        .leaf.agent { border-color: #fbbf24; color: #fbbf24; }
+        .leaf:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+        .leaf.skill { border-color: rgba(129, 140, 248, 0.5); color: #a5b4fc; }
+        .leaf.mcp { border-color: rgba(45, 212, 191, 0.5); color: #99f6e4; }
+        .leaf.agent { border-color: rgba(251, 191, 36, 0.5); color: #fde047; }
+        .leaf.tool { border-color: rgba(148, 163, 184, 0.5); color: #f1f5f9; }
+        .leaf.heart { 
+            grid-column: span 2; 
+            border-color: #f43f5e; 
+            color: #fff; 
+            background: rgba(244, 63, 94, 0.1); 
+            font-weight: 800; 
+            justify-content: center; 
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.1);
+        }
 
         /* Harness Side Specifics */
         .hr-features {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             flex: 1;
         }
         .hr-feature {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            padding-left: 15px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 6px;
             position: relative;
+            padding-left: 24px;
         }
-        .hr-feature::before { content: '→'; position: absolute; left: 0; color: var(--primary); }
+        .hr-feature::before { 
+            content: '●'; 
+            position: absolute; 
+            left: 10px; 
+            color: var(--primary); 
+            font-size: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
 
         .tree-arrow { 
-            font-size: 32px; 
-            color: rgba(255,255,255,0.1); 
-            text-align: center;
+            font-size: 24px; 
+            color: rgba(255,255,255,0.2); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-family: var(--mono);
         }
 
-        /* Results Row */
+        /* Results Row - Styled as Strategic Outcomes */
         .results-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 12px;
             width: 100%;
         }
+        .result-pill {
+            padding: 8px 12px;
+            border-radius: 100px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .result-pill::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+        .result-pill:hover::before { transform: translateX(100%); }
+        .result-pill:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        .result-pill.blue   { background: rgba(0, 163, 204, 0.05); border: 1px solid rgba(0, 163, 204, 0.2); color: var(--secondary); }
+        .result-pill.green  { background: rgba(39, 201, 63, 0.05); border: 1px solid rgba(39, 201, 63, 0.2); color: #27c93f; }
+        .result-pill.orange { background: rgba(255, 77, 0, 0.05); border: 1px solid rgba(255, 77, 0, 0.2); color: var(--primary); }
+        .result-pill.blue::after   { content: '◈'; font-size: 8px; opacity: 0.6; }
+        .result-pill.green::after  { content: '◈'; font-size: 8px; opacity: 0.6; }
+        .result-pill.orange::after { content: '◈'; font-size: 8px; opacity: 0.6; }
 
         .explorer-tabs {
             display: flex;
@@ -235,6 +317,9 @@
             <div class="animate-slide-right">
                 <div class="phase-tag">PHASE 03 // SYSTEM_GOVERNANCE</div>
                 <h2 class="phase-title">针对“Dumb Zone”与失效模式：<br><span class="gradient-text">构建 Harness 约束治理体系</span></h2>
+                <div class="phase-subtitle-extra animate-slide-up" style="animation-delay: 0.1s; font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 25px; font-weight: 500; letter-spacing: 0.05em; border-left: 2px solid var(--primary); padding-left: 15px;">
+                    引入 <span style="color:var(--secondary); font-weight:800;">OpenCode</span> + <span style="color:var(--primary); font-weight:800;">Harness Engineering</span>，完成AI原生的项目工具链改造和工程约束
+                </div>
 
                 <!-- Refactored Architecture Tree Diagram -->
                 <div class="arch-tree animate-slide-up" style="animation-delay: 0.2s;">
@@ -249,13 +334,13 @@
                             <div class="leaf-grid">
                                 <div class="leaf skill">Skills 路由匹配</div>
                                 <div class="leaf mcp">MCP 能力扩展</div>
-                                <div class="leaf">Tool (R/W/Bash)</div>
+                                <div class="leaf tool">Tool (R/W/Bash)</div>
                                 <div class="leaf agent">AGENTS.md 约束</div>
-                                <div class="leaf" style="grid-column: span 2;">LLM 推理引擎 (The Heart)</div>
+                                <div class="leaf heart">LLM 推理引擎 (The Heart)</div>
                             </div>
                         </div>
 
-                        <div class="tree-arrow">→</div>
+                        <div class="tree-arrow">+</div>
 
                         <!-- Group 2: Harness Infrastructure -->
                         <div class="node-group">
@@ -271,7 +356,7 @@
                         </div>
                     </div>
 
-                    <!-- Common Strategic Outcomes -->
+                    <!-- Synergistic Strategic Outcomes -->
                     <div class="results-row">
                         <div class="result-pill blue">确定性产出</div>
                         <div class="result-pill green">可维护系统</div>
@@ -373,13 +458,121 @@
                     <div style="color:#444;">--------------------------</div>
                 </div>
 
-                <div class="stats-card">
-                    <h4 style="font-size: 14px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;">Benchmark Metrics</h4>
-                    <div class="stat-line"><span>Grok Fast 1 Accuracy</span><span class="stat-val">68.3%</span></div>
-                    <div class="stat-line"><span>Terminal Bench 2.0</span><span class="stat-val">56.2 pts</span></div>
-                    <div class="stat-line"><span>Context Smart Zone</span><span class="stat-val">40% Limit</span></div>
-                    <div class="stat-line"><span>Specialist Agents</span><span class="stat-val">19 Roles</span></div>
+                <!-- Pixel-Perfect Terminal File Tree -->
+                <div class="harness-workspace-tree animate-fade" style="animation-delay: 0.4s;">
+                    <div class="ws-header">/ project-root</div>
+                    <div class="ws-body">
+                        <ul class="tree-root-ul">
+                            <li>
+                                <div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">.opencode/</span></div>
+                                <ul>
+                                    <li>
+                                        <div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">skills/</span></div>
+                                        <ul>
+                                            <li><div class="node"><span class="icon-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></span><span class="name-file">frontend-design</span></div></li>
+                                            <li><div class="node"><span class="icon-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></span><span class="name-file">react-best-practices</span></div></li>
+                                        </ul>
+                                    </li>
+                                    <li><div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">agents/</span></div></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">docs/</span></div>
+                                <ul>
+                                    <li><div class="node"><span class="icon-file highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></span><span class="name-file highlight">00-index.md</span></div></li>
+                                    <li><div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">01-architecture/</span></div></li>
+                                </ul>
+                            </li>
+                            <li><div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">src/</span></div></li>
+                            <li><div class="node"><span class="icon-f"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></span><span class="name-f">tests/</span></div></li>
+                            <li><div class="node"><span class="icon-file core"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></span><span class="name-file core">AGENTS.md</span></div></li>
+                            <li><div class="node"><span class="icon-file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg></span><span class="name-file">README.md</span></div></li>
+                        </ul>
+                    </div>
                 </div>
+
+                <style>
+                    .harness-workspace-tree {
+                        background: #000;
+                        border: 1px solid #222;
+                        border-radius: 8px;
+                        padding: 20px;
+                        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+                    }
+                    .ws-header {
+                        font-size: 11px;
+                        color: #00a3cc;
+                        margin-bottom: 15px;
+                        font-weight: 800;
+                        letter-spacing: 1px;
+                    }
+                    .ws-body ul {
+                        list-style: none;
+                        padding-left: 18px;
+                        margin: 0;
+                        position: relative;
+                    }
+                    /* Vertical connector line */
+                    .ws-body ul::before {
+                        content: '';
+                        position: absolute;
+                        left: 4px;
+                        top: 0;
+                        bottom: 0;
+                        width: 1px;
+                        background: #333;
+                    }
+                    .ws-body li {
+                        position: relative;
+                        padding: 4px 0 4px 18px;
+                    }
+                    /* Horizontal branch line */
+                    .ws-body li::before {
+                        content: '';
+                        position: absolute;
+                        left: 4px;
+                        top: 14px;
+                        width: 12px;
+                        height: 1px;
+                        background: #333;
+                    }
+                    /* Cut vertical line for last child */
+                    .ws-body li:last-child::after {
+                        content: '';
+                        position: absolute;
+                        left: 4px;
+                        top: 14px;
+                        bottom: 0;
+                        width: 1px;
+                        background: #000; /* Overlays the background to hide the vertical line extension */
+                    }
+                    
+                    .node {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                    
+                    .icon-f { width: 14px; height: 14px; color: var(--primary); }
+                    .name-f { color: var(--primary); font-size: 11px; font-weight: 600; }
+                    
+                    .icon-file { width: 14px; height: 14px; color: #aaa; }
+                    .name-file { color: #aaa; font-size: 11px; }
+                    
+                    /* Semantic Highlights */
+                    .name-file.highlight { color: var(--secondary); font-weight: 800; }
+                    .icon-file.highlight { color: var(--secondary); }
+                    
+                    .name-file.core { color: #fff; font-weight: 800; }
+                    .icon-file.core { color: #fff; }
+                    
+                    /* SVG Adjustment */
+                    .node svg { width: 14px; height: 14px; display: block; }
+                    
+                    /* Hide previous attempts */
+                    .terminal-tree-container { display: none; }
+                </style>
 
                 <div style="background: rgba(255, 77, 0, 0.05); padding: 20px; border-radius: 8px; font-size: 14px; line-height: 1.5;">
                     <strong style="color: var(--primary);">Summary:</strong> Harness Engineering 是迈向百万行代码交付的唯一路径。严谨性不再消失，只是从一行行代码的推敲转移到了对环境约束的精心设计。
