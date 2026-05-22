@@ -37,7 +37,7 @@ export default function SurfaceInspector() {
   const [pendingLayerKind, setPendingLayerKind] = useState<DerivedLayerKind | null>(null);
 
   // Configuration State
-  const [activeMap, setActiveMap] = useState('coolwarm');
+  const [activeMap, setActiveMap] = useLocalStorage<string>('surface_active_map', 'coolwarm');
   const [viewMode, setViewMode] = useState<ViewMode>('height');
   const [tool, setTool] = useState<ToolType>('box');
   const [chartAxis, setChartAxis] = useState<ChartAxis>('horizontal');
@@ -45,8 +45,8 @@ export default function SurfaceInspector() {
   
   const [transform, setTransform] = useState<TransformState>({ k: 1, x: 0, y: 0 });
   
-  // Workspace Color Settings (Tab-local, decoupled from localStorage to prevent cross-window interference)
-  const [colorSettings, setColorSettings] = useState<ColorSettings>({ 
+  // Workspace Color Settings (Persistent)
+  const [colorSettings, setColorSettings] = useLocalStorage<ColorSettings>('surface_color_settings', { 
       mode: 'absolute', 
       min: -0.4, 
       max: 0.2 
