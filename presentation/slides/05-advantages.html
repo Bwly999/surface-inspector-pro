@@ -4,91 +4,199 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../style-shared.css">
     <style>
-        .adv-grid {
-            margin-top: 60px;
+        .top-row {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 40px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
         }
-        .adv-card {
-            padding: 40px;
-            border-left: 4px solid var(--primary);
-            background: linear-gradient(90deg, rgba(255, 77, 0, 0.05) 0%, transparent 100%);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .compact-card {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--primary);
         }
-        .adv-title {
-            font-size: 32px;
+        .compact-title {
+            font-size: 18px;
             font-weight: 800;
             color: #fff;
+            margin-bottom: 8px;
+        }
+        .compact-desc {
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+            line-height: 1.4;
+        }
+
+        .main-advantage-section {
+            margin-top: 60px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .section-header {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 24px;
         }
-        .adv-desc {
-            font-size: 20px;
-            line-height: 1.6;
-            color: rgba(255,255,255,0.5);
+        .section-line {
+            flex-grow: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary) 0%, transparent 100%);
         }
-        .stat-box {
-            margin-top: 10px;
+        .section-label {
             font-family: var(--mono);
             font-size: 14px;
             color: var(--primary);
             font-weight: 700;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.2em;
+        }
+
+        .advantage-focus-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .focus-card {
+            background: linear-gradient(180deg, rgba(255, 77, 0, 0.08) 0%, transparent 100%);
+            border: 1px solid rgba(255, 77, 0, 0.1);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transition: all 0.3s ease;
+        }
+        .focus-card:hover {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, rgba(255, 77, 0, 0.12) 0%, transparent 100%);
+        }
+        .focus-icon {
+            font-size: 48px;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+        .focus-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .focus-desc {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .comparison-bar {
+            margin-top: auto;
+            background: #111;
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 60px;
+        }
+        .compare-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .compare-tag {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+        .compare-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .compare-arrow {
+            font-size: 32px;
+            color: var(--primary);
         }
     </style>
 </head>
 <body>
     <div class="slide-content">
-        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">项目核心优势 / <span class="gradient-text">PROJECT ADVANTAGES</span></h2>
+        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">项目核心优势</h2>
 
-        <div class="adv-grid">
-            <!-- Advantage 1 -->
-            <div class="adv-card animate-slide-up" style="animation-delay: 0.1s;">
-                <div class="adv-title">
-                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">P</span>
-                    极致性能与内存管理
-                </div>
-                <p class="adv-desc">全面采用 Float32Array 处理大规模点云数据，配合后台 Worker 异步计算，确保在大数据量下依然保持 60fps 的交互流畅度。</p>
-                <div class="stat-box">> MEMORY_OPTIMIZED: TRUE</div>
+        <!-- Shrunken Top Row -->
+        <div class="top-row animate-slide-up" style="animation-delay: 0.1s;">
+            <div class="compact-card">
+                <div class="compact-title">极致性能</div>
+                <p class="compact-desc">Float32Array 与多线程计算，确保 60fps 实时交互。</p>
+            </div>
+            <div class="compact-card">
+                <div class="compact-title">工业精度</div>
+                <p class="compact-desc">0.001mm 级形貌捕捉，内置百分位异常剔除算法。</p>
+            </div>
+            <div class="compact-card">
+                <div class="compact-title">视觉交互</div>
+                <p class="compact-desc">高密度 UI 设计，配合热键与两点式极速分析。</p>
+            </div>
+            <div class="compact-card">
+                <div class="compact-title">模块架构</div>
+                <p class="compact-desc">GridData 数据驱动，支持算法与视图的快速扩展。</p>
+            </div>
+        </div>
+
+        <!-- New Large Advantage Section -->
+        <div class="main-advantage-section">
+            <div class="section-header animate-slide-up" style="animation-delay: 0.2s;">
+                <div class="section-label">分析精度模块 / ANALYSIS_PRECISION</div>
+                <div class="section-line"></div>
+                <h3 style="font-size: 28px; color: #fff;">点云数据分析核心竞争力</h3>
             </div>
 
-            <!-- Advantage 2 -->
-            <div class="adv-card animate-slide-up" style="animation-delay: 0.2s;">
-                <div class="adv-title">
-                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">A</span>
-                    工业级算法精度
+            <div class="advantage-focus-grid">
+                <!-- Point 1 -->
+                <div class="focus-card animate-slide-up" style="animation-delay: 0.3s;">
+                    <div class="focus-icon">📐</div>
+                    <div class="focus-title">强大灵活的测量工具</div>
+                    <p class="focus-desc">集成两点测距、矩形分析、线段剖面及 P2L 测量。支持实时计算 ΔZ, ΔXY 及 3D 欧氏距离，灵活应对各种复杂测量场景。</p>
                 </div>
-                <p class="adv-desc">内置 2%/98% 百分位剔除算法与自动量程映射，有效过滤极值干扰，精准捕捉 0.001mm 级的表面形貌微小变化。</p>
-                <div class="stat-box">> ACCURACY_TOLERANCE: 0.001mm</div>
+
+                <!-- Point 2 -->
+                <div class="focus-card animate-slide-up" style="animation-delay: 0.4s;">
+                    <div class="focus-icon">👁️</div>
+                    <div class="focus-title">卓越的可视化体验</div>
+                    <p class="focus-desc">高性能 2D 热力图结合 3D 正交/透视切换。通过动态伪彩色映射与对比度增强技术，让细微的表面缺陷在视觉上一目了然。</p>
+                </div>
+
+                <!-- Point 3 -->
+                <div class="focus-card animate-slide-up" style="animation-delay: 0.5s;">
+                    <div class="focus-icon">⚙️</div>
+                    <div class="focus-title">自定义导入与校平</div>
+                    <p class="focus-desc">支持 CSV、图像等多种格式导入。内置自动校平与基准面补偿算法，可一键修正采集过程中的物理倾斜，确保分析基准统一。</p>
+                </div>
             </div>
 
-            <!-- Advantage 3 -->
-            <div class="adv-card animate-slide-up" style="animation-delay: 0.3s;">
-                <div class="adv-title">
-                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">D</span>
-                    专业级视觉交互
+            <!-- Quantitative Transition Bar -->
+            <div class="comparison-bar animate-slide-up" style="animation-delay: 0.6s;">
+                <div class="compare-side">
+                    <div class="compare-tag">传统观察 (定性)</div>
+                    <div class="compare-value" style="color: rgba(255,255,255,0.4);">“这里似乎比那里高一点”</div>
                 </div>
-                <p class="adv-desc">摒弃通用 UI 的低密度设计，采用工业高对比度配色方案，配合热键拾取（T键）与两点式测量，显著提升分析效率。</p>
-                <div class="stat-box">> UX_DENSITY: INDUSTRIAL_HIGH</div>
-            </div>
-
-            <!-- Advantage 4 -->
-            <div class="adv-card animate-slide-up" style="animation-delay: 0.4s;">
-                <div class="adv-title">
-                    <span class="section-icon" style="width: 32px; height: 32px; font-size: 16px;">M</span>
-                    模块化与可扩展性
+                <div class="compare-arrow">→</div>
+                <div class="compare-side">
+                    <div class="compare-tag">准确定量 (定量)</div>
+                    <div class="compare-value"><span class="gradient-text">“高度差为 0.245mm，平面距离 1.520mm”</span></div>
                 </div>
-                <p class="adv-desc">清晰的数据流模型（GridData）与解耦的组件架构，支持快速集成第三方测量算法或扩展形貌衍生模式。</p>
-                <div class="stat-box">> ARCH_PATTERN: DECOUPLED</div>
+                <div class="compare-side" style="text-align: right; flex: 0.5;">
+                    <div class="badge">核心飞跃</div>
+                </div>
             </div>
         </div>
 
         <div class="slide-footer">
-            <div class="mono">Setting New Standards in Web Metrology</div>
+            <div class="mono">Surface Inspector Pro / Analysis Core</div>
             <div class="mono">Slide 05 / 12</div>
         </div>
     </div>

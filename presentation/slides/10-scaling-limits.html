@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        /* Ecosystem Bottleneck Card */
+        .bottleneck-card {
+            background: rgba(255, 77, 0, 0.05);
+            border: 1px solid rgba(255, 77, 0, 0.1);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .issue-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .issue-item:last-child { border: none; }
+        .issue-icon { color: var(--primary); font-size: 20px; flex-shrink: 0; }
+        .issue-content h4 { font-size: 18px; color: #fff; margin-bottom: 4px; }
+        .issue-content p { font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+        /* Dumb Zone Visualization */
+        .viz-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .token-bar-wrapper {
+            position: relative;
+            padding-top: 20px;
+        }
+        .token-bar {
+            height: 40px;
+            background: #111;
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .smart-zone { width: 40%; background: linear-gradient(90deg, #00ff88 0%, #ffcc00 100%); }
+        .dumb-zone { width: 60%; background: linear-gradient(90deg, #ffcc00 0%, #ff4d00 100%); position: relative; }
+        .dumb-zone::after {
+            content: "DUMB ZONE";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.3em;
+            color: #000;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.3; } }
+
+        .viz-label {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* Failure Modes Table */
+        .failure-grid {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .failure-card {
+            background: rgba(255, 0, 85, 0.05);
+            border-left: 3px solid #ff0055;
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-radius: 0 8px 8px 0;
+        }
+        .failure-tag {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 900;
+            color: #ff0055;
+            letter-spacing: 0.1em;
+            opacity: 0.6;
+        }
+        .failure-title { 
+            font-size: 22px; 
+            font-weight: 800; 
+            color: #fff; 
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .failure-title svg { color: #ff0055; flex-shrink: 0; }
+        .failure-desc { font-size: 15px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+
+        .warning-strip {
+            background: repeating-linear-gradient(45deg, #ff0055, #ff0055 10px, #000 10px, #000 20px);
+            height: 4px;
+            width: 100%;
+            margin-top: 20px;
+            opacity: 0.2;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800;">封闭工具的局限性与 <span class="gradient-text">AGENT 失效模式</span></h2>
+
+        <div class="grid-layout">
+            <!-- Left: Platform Limits -->
+            <div class="bottleneck-card animate-slide-right" style="animation-delay: 0.1s;">
+                <h3 style="font-size: 24px; margin-bottom: 10px;">平台束缚：生态孤岛</h3>
+                
+                <div class="issue-item">
+                    <div class="issue-icon">🚫</div>
+                    <div class="issue-content">
+                        <h4>缺失 AI Coding 生态</h4>
+                        <p>封闭的 Web 环境无法接入 MCP 协议与各种成熟的 Agent Skills。</p>
+                    </div>
+                </div>
+
+                <div class="issue-item">
+                    <div class="issue-icon">🚫</div>
+                    <div class="issue-content">
+                        <h4>工程能力脱节</h4>
+                        <p>无法集成原生 Git 版本控制，缺乏真实的 Shell 工具调用能力。</p>
+                    </div>
+                </div>
+
+                <div class="issue-item">
+                    <div class="issue-icon">🚫</div>
+                    <div class="issue-content">
+                        <h4>上下文管理僵化</h4>
+                        <p>缺乏细粒度的代码片段拾取机制，导致大量无效 Token 堆积。</p>
+                    </div>
+                </div>
+                
+                <div class="warning-strip"></div>
+            </div>
+
+            <!-- Right: Dumb Zone Visualization -->
+            <div class="viz-container animate-slide-up" style="animation-delay: 0.2s;">
+                <h3 style="font-size: 24px;">Token 效能陷阱：200K 上下文的真相</h3>
+                
+                <div class="token-bar-wrapper">
+                    <div class="viz-label">
+                        <span>CONTEXT_START [0%]</span>
+                        <span>EFFICIENCY_THRESHOLD [40%]</span>
+                        <span>WINDOW_MAX [100%]</span>
+                    </div>
+                    <div class="token-bar" style="border-color: rgba(255, 0, 85, 0.3);">
+                        <div class="smart-zone" style="background: linear-gradient(90deg, #00ffd5, #00a3cc);"></div>
+                        <div class="dumb-zone" style="background: #ff0055; opacity: 0.3; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 10px);"></div>
+                    </div>
+                    <div style="display: flex; margin-top: 12px; gap: 40px;">
+                        <div style="flex: 1;">
+                            <strong style="color: #00ffd5; font-size: 14px;">Smart Zone (前 40%)</strong>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px;">聚焦、准确的逻辑推理。Agent 拥有精炼、相关的上下文信息。</p>
+                        </div>
+                        <div style="flex: 1.5;">
+                            <strong style="color: #ff0055; font-size: 14px;">Dumb Zone (超过 40%)</strong>
+                            <p style="font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px;">幻觉、死循环、格式错误的工具调用。冗余信息严重损害输出质量。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 金句洞察框 -->
+                <div class="insight-box animate-slide-up" style="animation-delay: 0.6s; margin-top: 30px; padding: 24px; background: rgba(255, 0, 85, 0.08); border: 1px solid #ff0055; border-radius: 4px;">
+                    <div style="font-size: 20px; line-height: 1.5; font-weight: 700; color: #fff;">
+                        “卡住你的不是 Agent 写代码的能力，而是围绕它的<span style="color: #ff0055;">结构、工具和反馈机制</span>。”
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 12px; font-family: var(--mono); letter-spacing: 0.1em;">
+                        >> CRITICAL_INSIGHT: INFRASTRUCTURE_OVER_INTELLIGENCE
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Failure Modes -->
+        <div class="failure-grid">
+            <div class="failure-card animate-slide-up" style="animation-delay: 0.3s;">
+                <div class="failure-tag">FAILURE_MODE_01</div>
+                <h4 class="failure-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    试图一步到位
+                </h4>
+                <p class="failure-desc">倾向于在单次会话中完成所有任务，导致上下文迅速耗尽。下一个会话面对的是半成品、无文档的代码，难以恢复工作状态。</p>
+            </div>
+
+            <div class="failure-card animate-slide-up" style="animation-delay: 0.4s;">
+                <div class="failure-tag">FAILURE_MODE_02</div>
+                <h4 class="failure-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11"/></svg>
+                    过早宣布胜利
+                </h4>
+                <p class="failure-desc">当部分核心逻辑完成后，Agent 看到已有进展会产生满足感，直接宣布任务完成——即使还有大量细节功能未实现。</p>
+            </div>
+
+            <div class="failure-card animate-slide-up" style="animation-delay: 0.5s;">
+                <div class="failure-tag">FAILURE_MODE_03</div>
+                <h4 class="failure-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    拒绝验证测试
+                </h4>
+                <p class="failure-desc">在没有明确工程约束下，Agent 写完代码就标记为“完成”，跳过必要的单元测试与集成验证，导致 Bug 堆积。</p>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Phase 2 Crisis: Degenerative Agent Behaviors</div>
+            <div class="mono">Slide 10 / 12</div>
+        </div>
+    </div>
+</body>
+</html>

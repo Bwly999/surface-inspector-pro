@@ -6,232 +6,307 @@
     <style>
         .phase-layout {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 60px;
-            margin-top: 20px;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 40px;
+            margin-top: 10px;
+            height: calc(100% - 140px);
         }
-        .phase-tag {
-            color: var(--primary);
-            font-family: var(--mono);
-            font-weight: 800;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-        .phase-title {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-        .phase-content {
-            font-size: 19px;
-            line-height: 1.6;
-            color: rgba(255,255,255,0.5);
-        }
-        .harness-note {
-            background: rgba(255, 77, 0, 0.05);
-            border-left: 3px solid var(--primary);
-            padding: 15px 20px;
-            margin-top: 20px;
-            font-size: 16px;
-        }
-        .evolution-map {
-            position: relative;
-            background: rgba(255,255,255,0.01);
+        .phase-tag { color: var(--primary); font-family: var(--mono); font-weight: 800; margin-bottom: 8px; font-size: 16px; letter-spacing: 0.2em; }
+        .phase-title { font-size: 48px; font-weight: 800; margin-bottom: 15px; line-height: 1.1; }
+        
+        /* Deep Harness Explorer */
+        .harness-explorer {
+            background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 12px;
-            padding: 40px 40px 40px 80px;
             display: flex;
             flex-direction: column;
-            align-items: stretch;
-            min-height: 560px;
-        }
-
-        /* Side Labels */
-        .side-label {
-            position: absolute;
-            left: 20px;
-            writing-mode: vertical-lr;
-            transform: rotate(180deg);
-            font-family: var(--mono);
-            font-size: 11px;
-            font-weight: 800;
-            color: rgba(255,255,255,0.15);
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .side-label::after {
-            content: '';
-            width: 1px;
-            height: 80px;
-            background: rgba(255,255,255,0.1);
-        }
-
-        .terminal-ui {
-            background: #000;
-            border: 2px solid #222;
-            border-radius: 12px;
-            height: 380px;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
+            height: 100%;
             overflow: hidden;
-            position: relative;
-            margin-bottom: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
         }
-        .terminal-header {
-            background: #111;
-            padding: 10px 16px;
+        .explorer-tabs {
             display: flex;
-            gap: 8px;
-            border-bottom: 1px solid #222;
-        }
-        .term-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .terminal-body {
-            flex: 1;
-            padding: 16px;
-            font-family: var(--mono);
-            font-size: 11px;
-            color: #00ff00;
-            line-height: 1.4;
-            overflow-y: auto;
-        }
-        .term-line { margin-bottom: 4px; }
-        .term-prompt { color: var(--primary); font-weight: 800; margin-right: 8px; }
-        .term-output { color: #fff; opacity: 0.8; }
-        .term-comment { color: #555; font-style: italic; }
-        .term-tool { color: #00a3cc; font-weight: 700; }
-        
-        .comp-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 15px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .comp-table th {
-            text-align: left;
-            color: var(--primary);
-            padding: 10px;
-            border-bottom: 2px solid var(--primary-dim);
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 12px;
-        }
-        .comp-table td {
-            padding: 8px 10px;
+            background: rgba(0,0,0,0.4);
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0 10px;
+        }
+        .tab-btn {
+            padding: 15px 20px;
+            font-size: 13px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.4);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .tab-btn:hover { color: rgba(255,255,255,0.8); }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(255, 77, 0, 0.05);
+        }
+
+        .explorer-viewport {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .tab-content.active { display: block; }
+
+        /* Typography within content */
+        .content-h3 { font-size: 22px; color: var(--primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .content-h3::before { content: '>'; opacity: 0.5; }
+        .content-p { font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+        .content-list { list-style: none; margin-bottom: 25px; }
+        .content-list li { 
+            position: relative; 
+            padding-left: 20px; 
+            margin-bottom: 12px; 
+            font-size: 14px; 
+            line-height: 1.5;
             color: rgba(255,255,255,0.6);
         }
-        .comp-table .better {
-            color: #fff;
-            font-weight: 700;
+        .content-list li::before { 
+            content: '▪'; 
+            position: absolute; 
+            left: 0; 
+            color: var(--primary); 
+            font-size: 12px;
+            top: 2px;
         }
-        .comp-table .better::before {
-            content: '● ';
-            color: var(--primary);
+        .content-list strong { color: #fff; }
+
+        .highlight-box {
+            background: rgba(255, 77, 0, 0.05);
+            border: 1px solid rgba(255, 77, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
-        .vibe-badge {
-            display: inline-block;
-            margin-top: 24px;
-            padding: 8px 20px;
+
+        /* Right Side Layout */
+        .visual-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        .terminal-box {
             background: #000;
-            border: 2px solid var(--primary);
-            color: #fff;
-            font-weight: 900;
+            border: 1px solid #222;
+            border-radius: 8px;
+            height: 320px;
+            padding: 15px;
+            font-family: var(--mono);
+            font-size: 12px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 20px rgba(0,0,0,1);
+        }
+        .stats-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 13px;
+        }
+        .stat-val { color: var(--primary); font-weight: 800; font-family: var(--mono); }
+
+        .os-badge {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            padding: 6px 14px;
+            background: #000;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 800;
             border-radius: 4px;
-            transform: skewX(-10deg);
+            letter-spacing: 0.2em;
         }
     </style>
 </head>
 <body>
-    <div class="slide-content" style="padding: 60px 120px;">
+    <div class="slide-content">
+        <div class="os-badge animate-fade">HARNESS_OS_v3.3</div>
+
         <div class="phase-layout">
-            <!-- Left Side: Content & Comparison -->
+            <!-- Left: High Density Encyclopedia -->
             <div class="animate-slide-right">
-                <div class="phase-tag">PHASE 03 // THE_HARNESS_ENGINEERING</div>
-                <h2 class="phase-title">Harness 级交付：<br><span class="gradient-text">Gemini CLI 深度集成</span></h2>
-                
-                <div class="phase-content">
-                    <p>在 <strong>Harness</strong> 阶段，瓶颈不再是模型智能，而是<strong>基础设施</strong>。通过设计约束、反馈回路和结构化工作流，我们确保 AI 的输出具备工程级的可靠性。</p>
-                </div>
+                <div class="phase-tag">PHASE 03 // DEEP_EXPLORER</div>
+                <h2 class="phase-title">Harness Engineering<br><span class="gradient-text">深度交互百科</span></h2>
 
-                <div class="harness-note">
-                    <strong style="color: var(--primary); display: block; margin-bottom: 5px;">什么是 Harness Engineering？</strong>
-                    指围绕 AI Agent 构建约束机制与反馈回路的系统工程。利用 <strong>Gemini CLI</strong> 配合 <strong>MCP 工具</strong>、<strong>Skills</strong> 约束与 <strong>AGENTS.md</strong> 动态文档，将 LLM 转化为受控的工程生产力。
-                </div>
+                <div class="harness-explorer">
+                    <div class="explorer-tabs">
+                        <button class="tab-btn active" onclick="showTab('def')">定义</button>
+                        <button class="tab-btn" onclick="showTab('why')">必要性</button>
+                        <button class="tab-btn" onclick="showTab('pillars')">四大支柱</button>
+                        <button class="tab-btn" onclick="showTab('core')">核心组件</button>
+                        <button class="tab-btn" onclick="showTab('shift')">角色转变</button>
+                        <button class="tab-btn" onclick="showTab('cons')">业界共识</button>
+                    </div>
+                    <div class="explorer-viewport">
+                        <!-- Section 1: Definition -->
+                        <div id="tab-def" class="tab-content active">
+                            <h3 class="content-h3">什么是 Harness Engineering?</h3>
+                            <p class="content-p">围绕 AI Agent 设计和构建约束机制、反馈回路、工作流控制和持续改进循环的系统工程实践。解决 Agent 在强大生成能力背后的可靠性、一致性与可维护性问题。</p>
+                            <div class="highlight-box">
+                                <strong>核心类比：</strong> 马具 (Harness)。LLM 是蛮力十足的“马”，Harness 是将其力量引向正确方向的“缰绳与鞍具”。
+                            </div>
+                            <ul class="content-list">
+                                <li><strong>CPU 与 OS：</strong> 模型是 CPU，Harness 是操作系统。CPU 再强，OS 拉胯也白搭。</li>
+                                <li><strong>纠错即设计：</strong> 每当发现 Agent 犯错，就设计一个环境级解决方案，确保不再重犯。</li>
+                            </ul>
+                        </div>
 
-                <div class="vibe-badge animate-fade" style="animation-delay: 0.7s;">INFRASTRUCTURE > INTELLIGENCE</div>
+                        <!-- Section 2: Necessity -->
+                        <div id="tab-why" class="tab-content">
+                            <h3 class="content-h3">为什么需要 Harness?</h3>
+                            <div class="highlight-box">
+                                <strong>模型能力不是瓶颈：</strong> 实验证明，仅改变 Harness 的工具格式，Grok Accuracy 从 6.7% 跃升至 68.3%。
+                            </div>
+                            <h4 style="font-size: 14px; color: #fff; margin-bottom: 10px;">Agent 的典型失败模式：</h4>
+                            <ul class="content-list">
+                                <li><strong>One-shotting：</strong> 试图一步到位导致上下文耗尽，留下半成品。</li>
+                                <li><strong>过早宣布胜利：</strong> 看到部分进展即认为任务完成。</li>
+                                <li><strong>Dumb Zone 陷阱：</strong> 上下文占用超过 40% 后，模型开始产生幻觉、循环和错误调用。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Section 3: Four Pillars -->
+                        <div id="tab-pillars" class="tab-content">
+                            <h3 class="content-h3">Harness 四大支柱</h3>
+                            <ul class="content-list">
+                                <li><strong>上下文架构 (Context Arch)：</strong> 渐进式披露，分层上下文。区分热记忆、领域专家与冷记忆库。</li>
+                                <li><strong>Agent 专业化 (Specialization)：</strong> 角色拆解 (Research, Plan, Execute, Review)。19 个领域专家 Agent。</li>
+                                <li><strong>持久化记忆 (Persistent Mem)：</strong> 进度检入文件系统。通过 AGENTS.md 建立活的反馈回路。</li>
+                                <li><strong>结构化执行 (Structured Exec)：</strong> 思考与执行分离。理解 → 规划 → 执行 → 验证。审查计划比审查代码快。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Section 4: Core Components -->
+                        <div id="tab-core" class="tab-content">
+                            <h3 class="content-h3">核心组件详解</h3>
+                            <ul class="content-list">
+                                <li><strong>AGENTS.md：</strong> Agent 的 README。文档即反馈循环，不仅仅是静态制品。</li>
+                                <li><strong>机械化约束 (Mechanical Const)：</strong> Linter 报错即修复指令。如果无法机械化执行，Agent 必会偏离。</li>
+                                <li><strong>可观测性集成：</strong> 浏览器自动化 (Puppeteer)、DOM 快照、遥测驱动的 Bug 修复。</li>
+                                <li><strong>垃圾回收 (GC)：</strong> 熵管理 Agent。定期清理冗余代码与文档不一致，对抗熵增。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Section 5: Role Shift -->
+                        <div id="tab-shift" class="tab-content">
+                            <h3 class="content-h3">工程师角色的转变</h3>
+                            <div class="highlight-box">
+                                <strong>从“写代码”到“设计环境”：</strong> 核心工作是诊断 Agent 缺少什么才能可靠工作，焦点从实现转向赋能。
+                            </div>
+                            <ul class="content-list">
+                                <li><strong>规划即编码：</strong> 在审查计划之前不允许写代码。初始化 Agent 生成 200+ 功能列表并追踪状态。</li>
+                                <li><strong>Agent 队长：</strong> 负责思考 Agent 如何融入团队工作流，管理清理吞吐量与生成吞吐量。</li>
+                            </ul>
+                        </div>
+
+                        <!-- Section 6: Industry Consensus -->
+                        <div id="tab-cons" class="tab-content">
+                            <h3 class="content-h3">业界六大共识</h3>
+                            <ul class="content-list">
+                                <li><strong>共识 1：</strong> 瓶颈在基础设施，不在模型智能。</li>
+                                <li><strong>共识 2：</strong> 文档必须是活的反馈回路，不是静态制品。</li>
+                                <li><strong>共识 3：</strong> 思考与执行必须分离 (先规划再执行)。</li>
+                                <li><strong>共识 4：</strong> 上下文不是越多越好 (40% Smart Zone)。</li>
+                                <li><strong>共识 5：</strong> 约束必须机械化执行，不能靠文档记录。</li>
+                                <li><strong>共识 6：</strong> 角色转型：Relocating Rigor (严谨性从代码转移到系统)。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Right Side: Terminal & Table -->
-            <div class="evolution-map animate-fade" style="animation-delay: 0.3s;">
-                <div class="side-label" style="top: 100px;">约束机制 / CONSTRAINTS</div>
-                <div class="side-label" style="bottom: 100px;">持续改进 / FEEDBACK</div>
-
-                <!-- Terminal Simulation -->
-                <div class="terminal-ui">
-                    <div class="terminal-header">
-                        <div class="term-dot" style="background: #ff5f56;"></div>
-                        <div class="term-dot" style="background: #ffbd2e;"></div>
-                        <div class="term-dot" style="background: #27c93f;"></div>
-                        <span style="margin-left: auto; font-family: var(--mono); font-size: 10px; color: #444;">GEMINI_CLI_INTEGRATED</span>
-                    </div>
-                    <div class="terminal-body">
-                        <div class="term-line"><span class="term-prompt">gemini-cli</span> "Fix ROI HUD overflow"</div>
-                        <div class="term-line"><span class="term-output">> Reading AGENTS.md for architecture rules...</span></div>
-                        <div class="term-line" style="margin-top: 5px;"><span class="term-comment">// Structured Execution Sequence</span></div>
-                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">activate_skill</span> "frontend-design"</div>
-                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">run_shell_command</span> "pnpm build"</div>
-                        <div class="term-line"><span class="term-output" style="color: #ff5f56;">FAIL: Type error in responsive logic</span></div>
-                        <div class="term-line"><span class="term-comment">// Self-Correction loop triggered</span></div>
-                        <div class="term-line"><span class="term-prompt">tool_call</span> <span class="term-tool">replace</span> "presentation/slides/09.html"</div>
-                        <div class="term-line"><span class="term-output" style="color: #27c93f;">SUCCESS: Build complete. 0 errors.</span></div>
-                    </div>
+            <!-- Right: Visual Context -->
+            <div class="visual-stack animate-fade" style="animation-delay: 0.3s;">
+                <div class="terminal-box" id="terminal">
+                    <!-- Terminal lines will be typed here -->
+                    <div style="color:var(--primary); font-weight:800;">[SYSTEM INITIALIZING]</div>
+                    <div style="color:#444;">--------------------------</div>
                 </div>
 
-                <!-- Comparison Table -->
-                <table class="comp-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 35%;">对比维度</th>
-                            <th style="width: 30%;">VIBE CODING</th>
-                            <th style="width: 35%;">HARNESS ENG (CLI)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>开发闭环</td>
-                            <td>手动复制粘贴</td>
-                            <td class="better">自动 Tool 调用与自修复</td>
-                        </tr>
-                        <tr>
-                            <td>上下文管理</td>
-                            <td>线性堆叠</td>
-                            <td class="better">分层架构与持久化记忆</td>
-                        </tr>
-                        <tr>
-                            <td>质量控制</td>
-                            <td>肉眼观察</td>
-                            <td class="better">Skills 约束与机械化执行</td>
-                        </tr>
-                        <tr>
-                            <td>知识沉淀</td>
-                            <td>散落在对话</td>
-                            <td class="better">AGENTS.md 动态反馈回路</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="stats-card">
+                    <h4 style="font-size: 14px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;">Benchmark Metrics</h4>
+                    <div class="stat-line"><span>Grok Fast 1 Accuracy</span><span class="stat-val">68.3%</span></div>
+                    <div class="stat-line"><span>Terminal Bench 2.0</span><span class="stat-val">56.2 pts</span></div>
+                    <div class="stat-line"><span>Context Smart Zone</span><span class="stat-val">40% Limit</span></div>
+                    <div class="stat-line"><span>Specialist Agents</span><span class="stat-val">19 Roles</span></div>
+                </div>
+
+                <div style="background: rgba(255, 77, 0, 0.05); padding: 20px; border-radius: 8px; font-size: 14px; line-height: 1.5;">
+                    <strong style="color: var(--primary);">Summary:</strong> Harness Engineering 是迈向百万行代码交付的唯一路径。严谨性不再消失，只是从一行行代码的推敲转移到了对环境约束的精心设计。
+                </div>
             </div>
         </div>
 
-        <div class="slide-footer" style="bottom: 40px;">
+        <div class="slide-footer">
             <div class="mono">Designing Environments, Not Just Writing Code</div>
-            <div class="mono">第 11 / 12 页</div>
+            <div class="mono">Slide 11 / 12</div>
         </div>
     </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(pane => pane.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Terminal text typing effect
+        const terminal = document.getElementById('terminal');
+        const script = [
+            "> Reading AGENTS.md...",
+            "> Loading mechanical constraints...",
+            "> INVOKE: Planning Agent (v3.3)",
+            "> Status: Generating 200+ feature checkpoints",
+            "> INVOKE: Specialist Agent #12 (ThreeJS)",
+            "> Tool: activate_skill 'frontend-design'",
+            "> Linter: Blocked. Shader logic in wrong directory.",
+            "> Correcting: Moving to /utils/shaders/...",
+            "> Success: Zero-shot sustainability verified.",
+            "> GC Agent: Entropy cleaned. 0 inconsistencies."
+        ];
+        
+        let lineIdx = 0;
+        function typeLine() {
+            if (lineIdx < script.length) {
+                const div = document.createElement('div');
+                div.style.marginBottom = '6px';
+                div.style.color = script[lineIdx].includes('Success') ? '#27c93f' : 
+                                 (script[lineIdx].includes('Blocked') ? '#ff5f56' : '#fff');
+                div.innerHTML = script[lineIdx];
+                terminal.appendChild(div);
+                terminal.scrollTop = terminal.scrollHeight;
+                lineIdx++;
+                setTimeout(typeLine, 800 + Math.random() * 500);
+            }
+        }
+        setTimeout(typeLine, 1500);
+    </script>
 </body>
 </html>
+
+
