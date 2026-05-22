@@ -52,6 +52,7 @@
     background: #080808;
   }
   .counter {
+    display: none;
     position: fixed;
     bottom: 32px;
     right: 32px;
@@ -168,7 +169,8 @@
     if (idx < 0 || idx >= deck.length) return;
     current = idx;
     frame.src = deck[idx].file;
-    counter.innerHTML = `${idx + 1} / ${deck.length} <span class="label">${deck[idx].label || ''}</span>`;
+    // counter.innerHTML = `${idx + 1} / ${deck.length} <span class="label">${deck[idx].label || ''}</span>`;
+    counter.innerHTML = `${idx + 1} / ${deck.length}`;
     try { localStorage.setItem(storageKey, String(idx)); } catch (_) {}
     if (location.hash !== '#' + (idx + 1)) {
       history.replaceState(null, '', '#' + (idx + 1));

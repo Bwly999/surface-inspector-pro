@@ -11,83 +11,105 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding-bottom: 60px;
+            padding-bottom: 80px;
         }
-        .final-quote {
-            font-size: 48px;
-            font-weight: 800;
-            line-height: 1.4;
-            max-width: 1000px;
-            margin-bottom: 50px;
+
+        .synthesis-section {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-bottom: 80px;
+            width: 100%;
         }
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            width: 1000px;
-            margin-top: 30px;
-        }
-        .contact-item {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 24px;
-            border-radius: 12px;
-            transition: all 0.3s;
-        }
-        .contact-item:hover {
-            border-color: var(--primary);
-            background: rgba(255, 77, 0, 0.05);
-            transform: translateY(-10px);
-        }
-        .contact-label {
-            font-size: 12px;
-            color: rgba(255,255,255,0.3);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-        }
-        .contact-val {
-            font-size: 18px;
-            font-weight: 700;
+
+        .golden-sentence {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
             color: #fff;
         }
-        .thanks-msg {
-            margin-top: 60px;
-            opacity: 0.3;
+        
+        .golden-sentence .highlight {
+            background: linear-gradient(135deg, var(--primary) 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .vision-section {
+            opacity: 0.5;
+            transition: opacity 0.5s;
+            max-width: 900px;
+        }
+        .vision-section:hover { opacity: 1; }
+
+        .future-title {
             font-family: var(--mono);
-            letter-spacing: 0.3em;
             font-size: 14px;
+            color: var(--primary);
+            letter-spacing: 0.5em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .final-quote {
+            font-size: 28px;
+            font-weight: 500;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+        }
+        .final-quote span { color: #fff; font-weight: 800; }
+
+        .thanks-msg {
+            position: absolute;
+            bottom: 120px;
+            opacity: 0.15;
+            font-family: var(--mono);
+            letter-spacing: 1em;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        /* Ambient Glow Effect */
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 77, 0, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(50px);
         }
     </style>
 </head>
 <body>
-    <div class="slide-content" style="padding: 60px 120px;">
-        <div class="conclusion-container">
-            <h2 class="animate-slide-up" style="font-size: 48px; font-weight: 800; margin-bottom: 40px;">未来展望 / <span class="gradient-text">FUTURE VISION</span></h2>
-            
-            <p class="final-quote animate-slide-up" style="animation-delay: 0.2s;">
-                从对话框中的 <span class="gradient-text">Vibe</span> 开始，<br>
-                在本地工程的 <span class="gradient-text">Harness</span> 中升华。<br>
-                我们将持续推动精密视觉工具的边界。
-            </p>
+    <div class="slide-content" style="padding: 0 100px;">
+        <div class="ambient-glow animate-pulse"></div>
 
-            <div class="contact-grid animate-fade" style="animation-delay: 0.4s;">
-                <div class="contact-item">
-                    <div class="contact-label">INTERNAL_REPO</div>
-                    <div class="contact-val mono">surface-inspector-pro</div>
+        <div class="conclusion-container">
+            <div class="synthesis-section">
+                <div class="golden-sentence animate-slide-up" style="animation-delay: 0.1s;">
+                    <span class="highlight">想法是关键</span>，AI 驱动实现极致敏捷的 Demo
                 </div>
-                <div class="contact-item">
-                    <div class="contact-label">CURRENT_VERSION</div>
-                    <div class="contact-val mono">v3.3 (Stable)</div>
+                <div class="golden-sentence animate-slide-up" style="animation-delay: 0.2s;">
+                    <span class="highlight">判断力愈发重要</span>，人做决策与规划，AI 做实现与验证
                 </div>
-                <div class="contact-item">
-                    <div class="contact-label">ENGINEERING_METHOD</div>
-                    <div class="contact-val mono">Gemini CLI / Harness</div>
+                <div class="golden-sentence animate-slide-up" style="animation-delay: 0.3s;">
+                    <span class="highlight">严谨性并未消失</span>，只是重新定位，从写代码转向设计环境
                 </div>
             </div>
 
-            <div class="thanks-msg animate-fade" style="animation-delay: 0.6s;">
+            <div class="vision-section animate-slide-up" style="animation-delay: 0.5s;">
+                <div class="future-title">FUTURE VISION</div>
+                <p class="final-quote">
+                    从对话框中的 <span>Vibe</span> 开始，在本地工程的 <span>Harness</span> 中升华。<br>
+                    将持续推动精密点云数据可视化工具的边界，构建 AI 原生的工业软件新范式。
+                </p>
+            </div>
+
+            <div class="thanks-msg animate-fade" style="animation-delay: 0.8s;">
                 THANKS FOR YOUR ATTENTION
             </div>
         </div>

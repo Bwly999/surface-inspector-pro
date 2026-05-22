@@ -27,23 +27,75 @@
             margin-bottom: 40px;
         }
         .intro-desc {
-            font-size: 32px;
-            line-height: 1.6;
-            color: rgba(255,255,255,0.6);
+            font-size: 28px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.7);
+            border-left: 3px solid var(--primary);
+            padding-left: 30px;
+            margin-bottom: 50px;
+            position: relative;
         }
-        .feature-list {
-            margin-top: 60px;
-            display: flex;
+        .intro-desc strong { color: #fff; font-weight: 800; }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
+            margin-top: 40px;
         }
-        .feature-tag {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px 24px;
-            border-radius: 8px;
+        .feature-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .feature-card:hover {
+            background: rgba(255, 77, 0, 0.05);
+            border-color: rgba(255, 77, 0, 0.3);
+            transform: translateY(-5px);
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 30px; height: 30px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+            opacity: 0.3;
+        }
+        .card-icon {
+            font-size: 24px;
+            margin-bottom: 15px;
+            opacity: 0.8;
+            display: block;
+        }
+        .card-title {
             font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .card-meta {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .hud-ornament {
+            position: absolute;
+            right: 0;
+            top: -20px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: rgba(255,255,255,0.1);
+            text-align: right;
+            line-height: 1.2;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -54,15 +106,35 @@
             <div class="animate-slide-right">
                 <div class="section-icon" style="width: 120px; height: 120px; font-size: 60px; margin-bottom: 40px;">1</div>
                 <h2 class="intro-title">项目概览<br><span class="gradient-text">PROJECT OVERVIEW</span></h2>
+                <div style="font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.2); letter-spacing: 0.5em; margin-top: 20px;">
+                    ENGINEERING_SPEC_V3.3
+                </div>
             </div>
-            <div class="animate-slide-up" style="animation-delay: 0.3s;">
+            <div class="animate-slide-up" style="animation-delay: 0.3s; position: relative;">
+                <div class="hud-ornament">
+                    SYS_LOAD: OPTIMAL<br>
+                    CORE_ENGINE: VITE_V6<br>
+                    VIZ_DRV: THREE_JS
+                </div>
                 <p class="intro-desc">
-                    Surface Inspector Pro 是一款专注于<strong>表面形貌分析与工业级微观测量</strong>的 Web 应用。通过高性能可视化引擎，将复杂的点云数据转化为直观、可交互的测量洞察。
+                    白光点云分析工具 是一款专注于<strong>点云图形貌分析与工业级微观测量</strong>的 Web 应用。通过高性能可视化引擎，将复杂的点云数据转化为直观、可交互的测量洞察。
                 </p>
-                <div class="feature-list">
-                    <div class="feature-tag">微观形貌分析</div>
-                    <div class="feature-tag">高精度 2D/3D 渲染</div>
-                    <div class="feature-tag">自动化测量流水线</div>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <span class="card-icon">🔬</span>
+                        <div class="card-title">微观形貌分析</div>
+                        <div class="card-meta">Surface Topography</div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="card-icon">⚡</span>
+                        <div class="card-title">高精度 2D/3D 渲染</div>
+                        <div class="card-meta">High-Precision Viz</div>
+                    </div>
+                    <div class="feature-card">
+                        <span class="card-icon">⚙️</span>
+                        <div class="card-title">梯度/曲率图一键转换</div>
+                        <div class="card-meta">Grad/Curv Map Conv</div>
+                    </div>
                 </div>
             </div>
         </div>
