@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            height: 100%;
+            align-items: center;
+            gap: 100px;
+        }
+        .part-number {
+            font-size: 300px;
+            font-weight: 900;
+            color: rgba(255, 77, 0, 0.05);
+            position: absolute;
+            left: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            line-height: 1;
+        }
+        .intro-title {
+            font-size: 80px;
+            font-weight: 800;
+            margin-bottom: 40px;
+        }
+        .intro-desc {
+            font-size: 32px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.6);
+        }
+        .feature-list {
+            margin-top: 60px;
+            display: flex;
+            gap: 20px;
+        }
+        .feature-tag {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <div class="part-number animate-fade">01</div>
+        <div class="split-layout">
+            <div class="animate-slide-right">
+                <div class="section-icon" style="width: 120px; height: 120px; font-size: 60px; margin-bottom: 40px;">1</div>
+                <h2 class="intro-title">项目概览<br><span class="gradient-text">PROJECT OVERVIEW</span></h2>
+            </div>
+            <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                <p class="intro-desc">
+                    Surface Inspector Pro 是一款专注于<strong>表面形貌分析与工业级微观测量</strong>的 Web 应用。通过高性能可视化引擎，将复杂的点云数据转化为直观、可交互的测量洞察。
+                </p>
+                <div class="feature-list">
+                    <div class="feature-tag">微观形貌分析</div>
+                    <div class="feature-tag">高精度 2D/3D 渲染</div>
+                    <div class="feature-tag">自动化测量流水线</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Part 1: Defining Professional Metrology</div>
+            <div class="mono">Slide 02 / 12</div>
+        </div>
+    </div>
+</body>
+</html>

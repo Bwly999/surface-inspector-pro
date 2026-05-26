@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            height: 100%;
+            align-items: center;
+            gap: 100px;
+        }
+        .part-number {
+            font-size: 300px;
+            font-weight: 900;
+            color: rgba(255, 77, 0, 0.05);
+            position: absolute;
+            left: -50px;
+            top: 50%;
+            transform: translateY(-50%);
+            line-height: 1;
+        }
+        .intro-title {
+            font-size: 80px;
+            font-weight: 800;
+            margin-bottom: 40px;
+        }
+        .intro-desc {
+            font-size: 32px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.6);
+        }
+        .journey-line {
+            margin-top: 60px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--primary);
+        }
+        .journey-node {
+            padding: 8px 20px;
+            border: 2px solid var(--primary);
+            border-radius: 4px;
+        }
+        .journey-arrow {
+            color: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content">
+        <div class="part-number animate-fade">02</div>
+        <div class="split-layout">
+            <div class="animate-slide-right">
+                <div class="section-icon" style="width: 120px; height: 120px; font-size: 60px; margin-bottom: 40px;">2</div>
+                <h2 class="intro-title">Vibe Coding<br><span class="gradient-text">开发历程回顾</span></h2>
+            </div>
+            <div class="animate-slide-up" style="animation-delay: 0.3s;">
+                <p class="intro-desc">
+                    该项目不仅是一次技术挑战，更是一场关于 <strong>AI 驱动工程（AI-Driven Engineering）</strong> 的深度实践。从最初的灵感闪现，到严密的工程化交付，我们见证了 Vibe Coding 的进化。
+                </p>
+                <div class="journey-line">
+                    <div class="journey-node">THE SPARK</div>
+                    <div class="journey-arrow">→</div>
+                    <div class="journey-node">THE PIVOT</div>
+                    <div class="journey-arrow">→</div>
+                    <div class="journey-node" style="background: var(--primary); color: white;">THE HARDNESS</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer">
+            <div class="mono">Part 2: The Evolution of AI-Driven Coding</div>
+            <div class="mono">Slide 06 / 12</div>
+        </div>
+    </div>
+</body>
+</html>

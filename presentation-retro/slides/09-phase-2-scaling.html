@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .phase-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 60px;
+            margin-top: 20px;
+        }
+        .phase-tag {
+            color: var(--secondary);
+            font-family: var(--mono);
+            font-weight: 800;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .phase-title {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .phase-content {
+            font-size: 19px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.5);
+        }
+        .ai-studio-note {
+            background: rgba(0, 163, 204, 0.05);
+            border-left: 3px solid var(--secondary);
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .evolution-map {
+            position: relative;
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            min-height: 560px;
+        }
+        
+        /* Top: Chaotic Index */
+        .chaotic-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .file-box-giant {
+            width: 480px;
+            height: 160px;
+            background: #000;
+            border: 2px solid #ff0055;
+            border-radius: 8px;
+            position: relative;
+            padding: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
+        }
+        .chaos-content {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: #444;
+            line-height: 1.1;
+            white-space: pre;
+            transform: rotate(-0.5deg);
+        }
+        .chaos-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, #000 20%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .index-label {
+            color: #ff0055;
+            font-weight: 900;
+            font-size: 32px;
+            text-shadow: 0 0 10px #ff0055;
+            transform: translateY(10px);
+        }
+
+        /* Module Labels (Chaotic) */
+        .module-label {
+            position: absolute;
+            padding: 2px 8px;
+            font-size: 10px;
+            font-family: var(--mono);
+            background: rgba(255, 0, 85, 0.15);
+            border: 1px solid rgba(255, 0, 85, 0.4);
+            color: #ff0055;
+            border-radius: 3px;
+            white-space: nowrap;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Middle: Transformation Arrow */
+        .transform-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .transform-bar {
+            width: 100%;
+            height: 40px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .transform-bar::before {
+            content: '';
+            position: absolute;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 163, 204, 0.2), transparent);
+            animation: flow 3s infinite linear;
+        }
+        @keyframes flow {
+            to { left: 100%; }
+        }
+        .transform-text {
+            color: var(--secondary);
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.3em;
+            text-shadow: 0 0 10px rgba(0, 163, 204, 0.5);
+            z-index: 2;
+        }
+
+        /* Bottom: Engineering Container */
+        .engineering-container {
+            width: 100%;
+            background: rgba(0, 163, 204, 0.03);
+            border: 1px solid rgba(0, 163, 204, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+        .engineering-header {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #080808;
+            padding: 0 10px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--secondary);
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
+        .ordered-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        .file-box-clean {
+            background: rgba(0, 163, 204, 0.08);
+            border: 1px solid rgba(0, 163, 204, 0.4);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--secondary);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .file-box-clean:hover {
+            background: rgba(0, 163, 204, 0.15);
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        /* OPTIMIZED: Cyber-Engineering ROI HUD */
+        .engineering-roi-footer {
+            margin-top: auto;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, rgba(2, 8, 12, 0.95) 0%, rgba(1, 4, 6, 0.98) 100%);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 163, 204, 0.2);
+            border-top: 2px solid rgba(0, 163, 204, 0.4);
+            border-radius: 2px;
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), inset 0 0 40px rgba(0, 163, 204, 0.03);
+            overflow: hidden;
+            min-height: 380px;
+        }
+        
+        /* HUD Scanline Effect */
+        .engineering-roi-footer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.3;
+        }
+
+        /* Tech Header */
+        .hud-header {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            display: flex;
+            gap: 15px;
+            font-family: var(--mono);
+            font-size: 9px;
+            color: rgba(0, 163, 204, 0.5);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            z-index: 5;
+        }
+
+        .roi-left {
+            padding: 60px 40px 40px 40px;
+            border-right: 1px solid rgba(0, 163, 204, 0.15);
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            position: relative;
+        }
+        .roi-right {
+            padding: 60px 40px 40px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at 70% 30%, rgba(0, 163, 204, 0.08) 0%, transparent 60%);
+            position: relative;
+        }
+
+        .roi-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+            background: rgba(0, 163, 204, 0.02);
+            border: 1px solid rgba(0, 163, 204, 0.1);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .roi-card:hover {
+            background: rgba(0, 163, 204, 0.06);
+            border-color: var(--secondary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .roi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 4px;
+            border-top: 1px solid var(--secondary);
+            border-left: 1px solid var(--secondary);
+        }
+
+        .roi-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .roi-icon-box {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 163, 204, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(0, 163, 204, 0.1);
+        }
+
+        .roi-title {
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .roi-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+            margin-top: 2px;
+        }
+
+        /* Hero Stats Visualizer */
+        .dashboard-stats {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-main {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+        }
+        .turn-number {
+            font-family: var(--mono);
+            font-size: 100px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 0.8;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 40px rgba(0, 255, 213, 0.3);
+        }
+        .turn-label-box {
+            text-align: left;
+        }
+        .turn-label-box .unit {
+            font-size: 18px;
+            color: var(--secondary);
+            font-weight: 900;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .turn-label-box .desc {
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .allocation-gauge {
+            width: 100%;
+            margin-top: 40px;
+            position: relative;
+        }
+        .gauge-bar {
+            width: 100%;
+            height: 48px;
+            background: rgba(255,255,255,0.05);
+            display: flex;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .bar-seg {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-family: var(--mono);
+            font-size: 18px;
+            font-weight: 900;
+        }
+        .seg-feature {
+            width: 70%;
+            background: linear-gradient(90deg, #00ffd5, #00a3cc);
+            color: #000;
+        }
+        .seg-bug {
+            width: 30%;
+            background: #ff0055;
+            color: #fff;
+            justify-content: flex-end;
+            background-image: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+        }
+        
+        .seg-label {
+            position: absolute;
+            top: -22px;
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+
+        .roi-summary {
+            margin-top: 45px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 255, 213, 0.05);
+            border-left: 3px solid var(--secondary);
+        }
+        .roi-summary .gain {
+            font-family: var(--mono);
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--secondary);
+        }
+        .roi-summary .context {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            text-align: right;
+        }
+
+        /* HUD Data Bits */
+        .hud-data-bit {
+            position: absolute;
+            font-family: var(--mono);
+            font-size: 8px;
+            color: rgba(0, 163, 204, 0.3);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content" style="padding: 60px 120px 40px 120px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div class="phase-layout" style="flex: 1;">
+            <div class="animate-slide-right">
+                <div class="phase-tag">PHASE 02 // THE_PIVOT</div>
+                <h2 class="phase-title">演进与重构：<br><span class="gradient-text" style="background: linear-gradient(135deg, var(--secondary) 0%, #00ffd5 100%); -webkit-background-clip: text;">AI Studio 级工程化</span></h2>
+                <div class="phase-content">
+                    <p>当单文件 HTML 的规模突破 2500 行，代码熵值达到临界点。任何微小的改动都会引发不可预知的回归错误。我们必须进行<strong>项目制工程化重构</strong>。</p>
+                    
+                    <div class="ai-studio-note">
+                        <strong style="color: var(--secondary); display: block; margin-bottom: 5px;">什么是 AI Studio？</strong>
+                        这是一个在线网页版的 <strong>Vibe Coding</strong> 平台，支持前端项目以工程化的结构进行 vibe coding 开发。它提供海量的上下文窗口 (Context Window)，能够一次性吞吐整个工程的代码库，是进行大规模代码重构、跨文件逻辑理解的最佳利器。
+                    </div>
+
+                    <p style="margin-top: 15px;">通过 AI Studio，我们完成了从 <strong>“线性堆叠”</strong> 到 <strong>“模块化架构”</strong> 的本质跨越。</p>
+                </div>
+            </div>
+
+            <div class="evolution-map animate-fade" style="animation-delay: 0.3s;">
+                <!-- Top: Chaos -->
+                <div class="chaotic-container">
+                    <div class="file-box-giant">
+                        <div class="chaos-content">
+&lt;html&gt;&lt;style&gt;...2000 lines...&lt;/style&gt;
+&lt;body&gt;
+  &lt;div class="container"&gt;...&lt;/div&gt;
+  &lt;script&gt;
+    function calculate() { ...chaos logic... }
+    function render() { ...messy canvas... }
+    // FIXME: This breaks everything
+    window.addEventListener('resize', () => { ... })
+  &lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;
+                        </div>
+                        <div class="chaos-overlay">
+                            <div class="index-label">index.html</div>
+                        </div>
+
+                        <!-- Chaotic Module Labels -->
+                        <div class="module-label" style="top: 20px; left: 30px; transform: rotate(-5deg);">ThreeJS Config</div>
+                        <div class="module-label" style="top: 45px; right: 40px; transform: rotate(3deg);">Data Processing</div>
+                        <div class="module-label" style="bottom: 30px; left: 50px; transform: rotate(-2deg);">Event Handlers</div>
+                        <div class="module-label" style="top: 80px; left: 15px; transform: rotate(10deg);">Math Utils</div>
+                        <div class="module-label" style="bottom: 50px; right: 20px; transform: rotate(-8deg);">UI Components</div>
+                        <div class="module-label" style="top: 10px; right: 80px; transform: rotate(15deg);">Color Palettes</div>
+                    </div>
+                    <div class="bottleneck-tag" style="top: -10px; right: 30px;">熵值过载 / 2500+ 行</div>
+                </div>
+
+                <!-- Middle: The Transition -->
+                <div class="transform-section">
+                    <div class="transform-bar">
+                        <div class="transform-text">项目工程化重构</div>
+                    </div>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" style="margin-top: -5px; filter: drop-shadow(0 0 5px var(--secondary));">
+                        <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                    </svg>
+                </div>
+
+                <!-- Bottom: Order (Engineering Container) -->
+                <div class="engineering-container">
+                    <div class="engineering-header">PROJECT_RESTRUCTURED_V3.0</div>
+                    <div class="ordered-grid">
+                        <div class="file-box-clean">App.tsx</div>
+                        <div class="file-box-clean">ThreeDViewer.tsx</div>
+                        <div class="file-box-clean">Surface2DCanvas.tsx</div>
+                        <div class="file-box-clean">ProfileChart.tsx</div>
+                        <div class="file-box-clean">dataUtils.ts</div>
+                        <div class="file-box-clean">types.ts</div>
+                        <div class="file-box-clean">mathUtils.ts</div>
+                        <div class="file-box-clean">colorUtils.ts</div>
+                        <div class="file-box-clean">constants.ts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTIMIZED: Cyber-Engineering ROI HUD -->
+        <div class="engineering-roi-footer animate-slide-up" style="animation-delay: 0.5s;">
+            <div class="hud-header">
+                <span>Vibe 开发效率指标</span>
+                <span style="opacity: 0.3;">|</span>
+                <span>子系统: ROIFX-09</span>
+            </div>
+
+            <div class="hud-data-bit" style="bottom: 10px; right: 10px;">坐标: 31.2304 / 121.4737</div>
+            <div class="hud-data-bit" style="top: 15px; right: 20px;">版本: 3.0.42_稳定版</div>
+
+            <div class="roi-left">
+                <div class="roi-card">
+                    <div class="roi-card-header">
+                        <div class="roi-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                        </div>
+                        <div class="roi-title">精准 Context 投放</div>
+                    </div>
+                    <div class="roi-desc">精准隔离无关代码，从根源上消除由于上下文污染导致的 AI 逻辑幻觉。</div>
+                </div>
+                <div class="roi-card">
+                    <div class="roi-card-header">
+                        <div class="roi-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div class="roi-title">零回归重构边界</div>
+                    </div>
+                    <div class="roi-desc">模块化接口保障了重构安全，AI 可精准识别代码变更的影响范围。</div>
+                </div>
+                <div class="roi-card">
+                    <div class="roi-card-header">
+                        <div class="roi-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                        <div class="roi-title">局部迭代效率</div>
+                    </div>
+                    <div class="roi-desc">单个组件独立 Vibe 调试，实现 UI 与核心算法逻辑的并行迭代。</div>
+                </div>
+                <div class="roi-card">
+                    <div class="roi-card-header">
+                        <div class="roi-icon-box">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        </div>
+                        <div class="roi-title">熵值结构化抑制</div>
+                    </div>
+                    <div class="roi-desc">重构完成后，工程逻辑复杂度由指数级爆炸回归为线性平稳增长。</div>
+                </div>
+            </div>
+            
+            <div class="roi-right">
+                <div class="dashboard-stats">
+                    <div class="stat-main">
+                        <div class="turn-number">30</div>
+                        <div class="turn-label-box">
+                            <span class="unit">轮对话</span>
+                            <span class="desc">Vibe 开发周期投入</span>
+                        </div>
+                    </div>
+                    
+                    <div class="allocation-gauge">
+                        <div class="seg-label" style="left: 0;">功能工程与优化</div>
+                        <div class="seg-label" style="right: 0;">系统稳定性修复</div>
+                        <div class="gauge-bar">
+                            <div class="bar-seg seg-feature">21</div>
+                            <div class="bar-seg seg-bug">09</div>
+                        </div>
+                    </div>
+                    
+                    <div class="roi-summary">
+                        <div class="gain">开发效率提升 +40%</div>
+                        <div class="context">
+                            对比第 8 页：修复成本占比<br>
+                            从 50% 显著优化至 <span style="color:var(--secondary); font-weight:800;">30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-footer" style="padding-top: 20px; position: static;">
+            <div class="mono">Modular Architecture Transformation</div>
+            <div class="mono">第 09 / 12 页</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style-shared.css">
+    <style>
+        .crisis-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            text-align: center;
+            padding-top: 40px;
+        }
+        .header-box {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .warning-svg {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 0 20px rgba(255, 0, 85, 0.5));
+        }
+        .crisis-title {
+            font-size: 72px;
+            font-weight: 900;
+            color: #fff;
+            margin: 0;
+        }
+        .subtitle {
+            font-size: 28px; 
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 20px;
+        }
+        .spaghetti-visual {
+            width: 100%;
+            height: 220px;
+            margin: 10px 0;
+            position: relative;
+            background: rgba(255, 0, 85, 0.02);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .chaos-line {
+            position: absolute;
+            stroke: #ff0055;
+            stroke-width: 1;
+            opacity: 0.15;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 1200px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: rgba(255, 0, 85, 0.05);
+            border: 1px solid rgba(255, 0, 85, 0.2);
+            padding: 16px;
+            border-radius: 8px;
+        }
+        .metric-val {
+            font-family: var(--mono);
+            font-size: 28px;
+            font-weight: 800;
+            color: #ff0055;
+            margin-bottom: 4px;
+        }
+        .metric-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+        .effort-breakdown {
+            margin-top: 30px;
+            width: 1100px;
+            background: rgba(255, 0, 85, 0.08);
+            border: 1px solid rgba(255, 0, 85, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            text-align: left;
+            box-shadow: 0 15px 40px rgba(255, 0, 85, 0.1);
+        }
+        .breakdown-header {
+            background: rgba(255, 0, 85, 0.2);
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #ff0055;
+            border-bottom: 1px solid rgba(255, 0, 85, 0.2);
+        }
+        .breakdown-body {
+            display: flex;
+            padding: 20px 32px;
+            gap: 40px;
+            align-items: center;
+        }
+        .breakdown-item {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .item-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .item-text strong {
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+        }
+        .item-text span {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.4;
+        }
+        .breakdown-divider {
+            width: 1px;
+            height: 50px;
+            background: rgba(255, 0, 85, 0.2);
+        }
+        .alert-bar {
+            background: #ff0055;
+            color: #fff;
+            padding: 8px 40px;
+            font-weight: 900;
+            font-size: 22px;
+            transform: rotate(-1deg);
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-content" style="background-image: radial-gradient(rgba(255,0,85,0.05) 1px, transparent 1px); padding: 40px 100px;">
+        <div class="crisis-layout">
+            <div class="header-box animate-slide-up">
+                <svg class="warning-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 9V14" stroke="#ff0055" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M12 17.01L12.01 16.9989" stroke="#ff0055" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M10.29 3.86L1.82 18C1.64537 18.3024 1.55299 18.6453 1.55201 18.9945C1.55103 19.3437 1.64151 19.6871 1.81445 19.9898C1.98738 20.2925 2.23635 20.5441 2.53641 20.7196C2.83647 20.8951 3.17705 20.9885 3.5234 20.99H20.4766C20.8229 20.9885 21.1635 20.8951 21.4636 20.7196C21.7636 20.5441 22.0126 20.2925 22.1855 19.9898C22.3585 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5318 3.56612 13.2807 3.32314 12.9812 3.15451C12.6817 2.98588 12.3438 2.89746 12 2.89746C11.6562 2.89746 11.3183 2.98588 11.0188 3.15451C10.7193 3.32314 10.4682 3.56612 10.29 3.86V3.86Z" stroke="#ff0055" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h2 class="crisis-title">临界点：<span style="color: #ff0055;">单文件的终局</span></h2>
+            </div>
+            
+            <p class="subtitle animate-slide-up" style="animation-delay: 0.1s;">
+                当 "Vibe" 遇到规模，混沌便开始产生。
+            </p>
+
+            <div class="spaghetti-visual animate-fade" style="animation-delay: 0.3s;">
+                <svg width="100%" height="100%">
+                    <path d="M100,50 Q400,250 800,50 T1500,200" class="chaos-line" fill="none" />
+                    <path d="M200,250 Q600,50 1200,250 T1800,100" class="chaos-line" fill="none" />
+                    <path d="M50,150 Q900,300 1700,50" class="chaos-line" fill="none" />
+                    <path d="M300,300 Q100,100 1900,280" class="chaos-line" fill="none" />
+                    <text x="50%" y="60%" text-anchor="middle" font-family="var(--mono)" font-size="48" fill="#ff0055" font-weight="900" style="opacity: 0.8;">熵值过载：开发陷入混沌</text>
+                </svg>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card animate-slide-up" style="animation-delay: 0.4s;">
+                    <div class="metric-val">26 轮</div>
+                    <div class="metric-label">对话总数</div>
+                </div>
+                <div class="metric-card animate-slide-up" style="animation-delay: 0.5s;">
+                    <div class="metric-val">2500+</div>
+                    <div class="metric-label">代码行数</div>
+                </div>
+                <div class="metric-card animate-slide-up" style="animation-delay: 0.6s;">
+                    <div class="metric-val">1 : 1.78</div>
+                    <div class="metric-label">修复/Bug 比例</div>
+                </div>
+                <div class="metric-card animate-slide-up" style="animation-delay: 0.7s;">
+                    <div class="metric-val">∞</div>
+                    <div class="metric-label">回归泥潭</div>
+                </div>
+            </div>
+
+            <!-- Effort Breakdown Component -->
+            <div class="effort-breakdown animate-fade" style="animation-delay: 1.0s;">
+                <div class="breakdown-header mono">> 混乱根源分析 / CHAOS_ROOT_CAUSE</div>
+                <div class="breakdown-body">
+                    <div class="breakdown-item">
+                        <div style="font-size: 28px;">⚡</div>
+                        <div class="item-text">
+                            <strong>9 轮对话</strong> 用于功能开发
+                            <span>完成测量、色谱、坐标提示等核心需求</span>
+                        </div>
+                    </div>
+                    <div class="breakdown-divider"></div>
+                    <div class="breakdown-item">
+                        <div style="font-size: 28px;">🛠️</div>
+                        <div class="item-text">
+                            <strong style="color: #ff0055;">16 轮对话</strong> 耗费在 Bug 修复
+                            <span>深陷“改一个坏两个”的单文件死循环</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert-bar animate-slide-up" style="animation-delay: 1.2s;">
+                亟需系统化代码拆分：从 "Demo" 进化为 "Engine"
+            </div>
+        </div>
+
+        <div class="slide-footer" style="bottom: 30px;">
+            <div class="mono" style="color: #ff0055;">严重故障：单文件瓶颈</div>
+            <div class="mono">第 08 / 12 页</div>
+        </div>
+    </div>
+</body>
+</html>
+            <div class="mono" style="color: #ff0055;">严重故障：单文件瓶颈</div>
+            <div class="mono">第 08 / 12 页</div>
+        </div>
+    </div>
+</body>
+</html>
