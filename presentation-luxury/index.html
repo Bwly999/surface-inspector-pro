@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Surface Inspector Pro - Vibe Coding Journey (Swiss Edition)</title>
+<title>Surface Inspector Pro - Vibe Coding Journey (Obsidian Luxury Gold)</title>
 <!--
   Surface Inspector Pro Presentation Aggregator
   Architecture: Multi-file slide deck
-  Style: Swiss Minimalist & Editorial
+  Style: Luxury Obsidian Gold (Solid black obsidian & gold accents)
 -->
 
 <script>
@@ -30,54 +30,56 @@
 </script>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;600;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Space+Mono&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%;
-    background: #f6f5f0;
+    background: #08080a;
     overflow: hidden;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Cinzel', serif;
   }
   #stage {
     position: fixed;
     top: 50%; left: 50%;
     transform-origin: top left;
-    background: #f6f5f0;
-    box-shadow: 0 0 100px rgba(0,0,0,0.1), 0 0 2px #151515;
+    background: #08080a;
+    box-shadow: 0 0 100px rgba(0,0,0,0.95);
+    border: 1px solid rgba(212, 175, 55, 0.15);
   }
   iframe {
     width: 100%;
     height: 100%;
     border: 0;
     display: block;
-    background: #f6f5f0;
+    background: #08080a;
   }
   .counter {
     position: fixed;
     bottom: 32px;
     right: 32px;
-    background: #ffffff;
-    border: 2px solid #151515;
-    color: #151515;
-    padding: 8px 18px;
-    font-size: 14px;
-    font-weight: 800;
+    background: #111114;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 700;
     letter-spacing: 0.1em;
     font-family: 'Space Mono', monospace;
     z-index: 100;
     user-select: none;
-    box-shadow: 4px 4px 0px #151515;
-    transition: all 0.2s ease-out;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .counter:hover { 
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #151515;
+    background: #1e1e24;
+    border-color: #d4af37;
+    box-shadow: 0 15px 40px rgba(212, 175, 55, 0.1);
   }
   .counter .label { 
-    color: #0033cc; 
+    color: #c5a059; 
     margin-left: 12px; 
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
   }
   .nav-zone {
@@ -93,31 +95,31 @@
     position: absolute;
     top: 50%; transform: translateY(-50%);
     width: 60px; height: 60px;
-    background: #ffffff;
-    border: 2px solid #151515;
-    color: #151515;
+    background: #111114;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 32px;
     opacity: 0;
-    transition: all 0.2s ease-out;
-    font-weight: 800;
-    box-shadow: 4px 4px 0px #151515;
+    transition: all 0.3s;
+    font-weight: 400;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   }
   .nav-zone.left  .nav-hint { left: 40px; }
   .nav-zone.right .nav-hint { right: 40px; }
   .nav-zone:hover .nav-hint { 
     opacity: 1; 
-    transform: translate(-2px, -50%);
-    box-shadow: 6px 6px 0px #151515;
+    background: #1e1e24;
+    border-color: #d4af37;
   }
 
   /* Print Support */
   @media print {
     @page { size: 1920px 1080px; margin: 0; }
-    html, body { background: #f6f5f0; overflow: visible; height: auto; }
-    #stage { position: static; transform: none !important; box-shadow: none; }
+    html, body { background: #08080a; overflow: visible; height: auto; }
+    #stage { position: static; transform: none !important; box-shadow: none; border: 0; }
     .counter, .nav-zone { display: none !important; }
     .print-stack { display: block; }
     .print-stack iframe {
@@ -150,7 +152,7 @@
   const frame = document.getElementById('frame');
   const counter = document.getElementById('counter');
   const printStack = document.getElementById('printStack');
-  const storageKey = 'deck-index-surface-pro-swiss';
+  const storageKey = 'deck-index-surface-pro-luxury';
   let current = 0;
 
   stage.style.width  = W + 'px';

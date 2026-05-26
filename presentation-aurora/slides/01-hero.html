@@ -11,6 +11,7 @@
             justify-content: center;
             align-items: center;
             text-align: center;
+            position: relative;
         }
         .logo-box {
             width: 320px;
@@ -21,32 +22,40 @@
         .logo-bg {
             position: absolute;
             inset: 0;
-            background: transparent;
-            border: 2px dashed var(--secondary);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            border-radius: 24px;
             transform: rotate(2deg);
+            box-shadow: 0 20px 80px rgba(0, 240, 255, 0.3);
+            opacity: 0.8;
+            filter: blur(1px);
         }
         .logo-main {
             position: absolute;
             inset: 0;
-            background: #030804;
-            border: 2px solid var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             transform: rotate(-1deg);
             overflow: hidden;
-            box-shadow: 0 0 15px rgba(51, 255, 51, 0.4);
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 30px 60px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
         .title-main {
-            font-size: 110px;
-            font-weight: 400;
+            font-size: 140px;
+            font-weight: 900;
             line-height: 0.9;
-            margin-bottom: 20px;
-            letter-spacing: 0.05em;
+            margin-bottom: 25px;
+            letter-spacing: -0.05em;
         }
         .subtitle {
-            font-size: 32px;
-            color: var(--secondary);
+            font-size: 40px;
+            font-weight: 400;
+            color: rgba(226, 232, 240, 0.6);
             letter-spacing: 0.2em;
             text-transform: uppercase;
         }
@@ -60,28 +69,28 @@
 <body>
     <div class="slide-content">
         <div class="hero-container">
-            <!-- Animated Logo -->
+            <!-- Glassmorphic Animated Logo -->
             <div class="logo-box animate-slide-up">
                 <div class="logo-bg"></div>
                 <div class="logo-main">
                     <svg width="100%" height="100%" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M0 20H80" stroke="#33ff33" stroke-width="0.5" opacity="0.3"/>
-                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#ffb000" stroke-width="2" stroke-dasharray="2 2" />
-                        <rect x="39" y="0" width="15" height="40" fill="#33ff33" opacity="0.2">
+                        <path d="M0 20H80" stroke="rgba(255, 255, 255, 0.1)" stroke-width="0.5" />
+                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-dasharray="4 2" />
+                        <rect x="39" y="0" width="15" height="40" fill="var(--primary)" opacity="0.25">
                         </rect>
-                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="#33ff33" stroke-width="2" />
+                        <path d="M5 30C15 25 25 35 40 20C55 5 65 25 75 20" stroke="var(--primary)" stroke-width="3" />
                     </svg>
                 </div>
             </div>
 
             <h1 class="title-main animate-slide-up" style="animation-delay: 0.2s;">
-                SURFACE <br> <span class="gradient-text">&lt;INSPECTOR&gt;</span> PRO
+                SURFACE <br> <span class="gradient-text">INSPECTOR</span> PRO
             </h1>
             <p class="subtitle animate-slide-up" style="animation-delay: 0.4s;">
-                [ Precision Visual Analytics Evolution ]
+                精密视觉分析工具的演进
             </p>
             <div class="version-badge badge animate-fade" style="animation-delay: 0.6s;">
-                VER 3.3 // MAJOR RELEASE
+                Major Update v3.3
             </div>
         </div>
 

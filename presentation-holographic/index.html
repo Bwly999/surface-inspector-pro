@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Surface Inspector Pro - Vibe Coding Journey (Retro Terminal Edition)</title>
+<title>Surface Inspector Pro - Vibe Coding Journey (Iridescent Holographic)</title>
 <!--
   Surface Inspector Pro Presentation Aggregator
   Architecture: Multi-file slide deck
-  Style: Retro CRT Terminal (Phosphor Green)
+  Style: Iridescent Holographic Light (Luminous light mode & rainbow shadows)
 -->
 
 <script>
@@ -30,74 +30,76 @@
 </script>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@700&family=Share+Tech+Mono&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  
-  @keyframes crt-flicker {
-    0% { opacity: 0.98; }
-    50% { opacity: 1; }
-    100% { opacity: 0.99; }
-  }
-
   html, body {
     height: 100%;
-    background: #030804;
+    background: #f5f7fb;
     overflow: hidden;
-    font-family: 'Share Tech Mono', monospace;
-    animation: crt-flicker 0.15s infinite;
+    font-family: 'DM Sans', sans-serif;
   }
   
+  /* Shifting background glows */
   body::before {
-    content: " ";
-    display: block;
+    content: "";
     position: absolute;
-    top: 0; left: 0; bottom: 0; right: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-    z-index: 999;
-    background-size: 100% 6px;
-    pointer-events: none;
+    top: -30%; left: -30%;
+    width: 160%; height: 160%;
+    background: 
+        radial-gradient(circle at 10% 10%, rgba(255, 133, 227, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 20%, rgba(123, 251, 245, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+    filter: blur(100px);
+    z-index: 0;
   }
-  
+
   #stage {
     position: fixed;
     top: 50%; left: 50%;
     transform-origin: top left;
-    background: #030804;
-    box-shadow: 0 0 100px rgba(0,0,0,1), inset 0 0 50px rgba(51, 255, 51, 0.1);
+    background: #ffffff;
+    box-shadow: 
+        0 30px 90px rgba(255, 133, 227, 0.15), 
+        0 10px 30px rgba(123, 251, 245, 0.15);
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.7);
+    z-index: 10;
   }
   iframe {
     width: 100%;
     height: 100%;
     border: 0;
     display: block;
-    background: #030804;
+    background: transparent;
   }
   .counter {
     position: fixed;
     bottom: 32px;
     right: 32px;
-    background: rgba(3, 12, 4, 0.9);
-    border: 1px solid #33ff33;
-    color: #33ff33;
-    padding: 8px 18px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    color: #1e293b;
+    padding: 10px 24px;
+    border-radius: 99px;
     font-size: 14px;
-    font-weight: 400;
-    letter-spacing: 0.1em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     font-family: 'Share Tech Mono', monospace;
     z-index: 100;
     user-select: none;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+    box-shadow: 0 10px 30px rgba(255, 133, 227, 0.1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .counter:hover { 
-    background: rgba(51, 255, 51, 0.1);
-    box-shadow: 0 0 20px rgba(51, 255, 51, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(255, 133, 227, 0.2);
   }
   .counter .label { 
-    color: #ffb000; 
+    color: #c026d3; 
     margin-left: 12px; 
-    font-weight: 400;
+    font-weight: 700;
     text-transform: uppercase;
   }
   .nav-zone {
@@ -113,30 +115,33 @@
     position: absolute;
     top: 50%; transform: translateY(-50%);
     width: 60px; height: 60px;
-    background: rgba(3, 12, 4, 0.9);
-    border: 1px solid #33ff33;
-    color: #33ff33;
+    border-radius: 99px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    color: #1e293b;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 32px;
     opacity: 0;
     transition: all 0.3s;
-    box-shadow: 0 0 10px rgba(51, 255, 51, 0.2);
+    font-weight: 700;
+    box-shadow: 0 10px 30px rgba(255, 133, 227, 0.1);
   }
   .nav-zone.left  .nav-hint { left: 40px; }
   .nav-zone.right .nav-hint { right: 40px; }
   .nav-zone:hover .nav-hint { 
     opacity: 1; 
-    background: rgba(51, 255, 51, 0.1);
-    box-shadow: 0 0 20px rgba(51, 255, 51, 0.4);
+    transform: translate(0, -50%) scale(1.05);
+    color: #c026d3;
+    box-shadow: 0 15px 35px rgba(255, 133, 227, 0.2);
   }
 
   /* Print Support */
   @media print {
     @page { size: 1920px 1080px; margin: 0; }
-    html, body { background: #030804; overflow: visible; height: auto; }
-    #stage { position: static; transform: none !important; box-shadow: none; }
+    html, body { background: #f5f7fb; overflow: visible; height: auto; }
+    #stage { position: static; transform: none !important; box-shadow: none; border: 0; }
     .counter, .nav-zone { display: none !important; }
     .print-stack { display: block; }
     .print-stack iframe {
@@ -169,7 +174,7 @@
   const frame = document.getElementById('frame');
   const counter = document.getElementById('counter');
   const printStack = document.getElementById('printStack');
-  const storageKey = 'deck-index-surface-pro-retro';
+  const storageKey = 'deck-index-surface-pro-holographic';
   let current = 0;
 
   stage.style.width  = W + 'px';
